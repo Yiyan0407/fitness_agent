@@ -1,0 +1,6 @@
+[server]
+port = 8502
+
+[client]
+# 关闭默认多页导航，避免与自定义侧边栏重复
+showSidebarNavigation = false

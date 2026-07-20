@@ -1,0 +1,821 @@
+[
+  {
+    "id": "barbell_squat",
+    "name": "杠铃深蹲",
+    "muscle": "腿",
+    "equipment": "杠铃",
+    "tips": "膝盖朝脚尖方向，核心收紧，深度到大腿平行或更深"
+  },
+  {
+    "id": "front_squat",
+    "name": "前蹲",
+    "muscle": "腿",
+    "equipment": "杠铃",
+    "tips": "肘抬高，躯干更直立，对上背要求高"
+  },
+  {
+    "id": "goblet_squat",
+    "name": "高脚杯深蹲",
+    "muscle": "腿",
+    "equipment": "哑铃",
+    "tips": "适合初学者学深蹲模式"
+  },
+  {
+    "id": "hack_squat",
+    "name": "哈克深蹲",
+    "muscle": "腿",
+    "equipment": "器械",
+    "tips": "腰背贴靠垫，可控深度练股四"
+  },
+  {
+    "id": "leg_press",
+    "name": "腿举",
+    "muscle": "腿",
+    "equipment": "器械",
+    "tips": "腰背贴紧靠垫，避免膝盖完全锁死"
+  },
+  {
+    "id": "bulgarian_split_squat",
+    "name": "保加利亚分腿蹲",
+    "muscle": "腿",
+    "equipment": "哑铃",
+    "tips": "后脚垫高，躯干微前倾，前腿主导"
+  },
+  {
+    "id": "walking_lunge",
+    "name": "行走弓步",
+    "muscle": "腿",
+    "equipment": "哑铃",
+    "tips": "躯干直立，前膝不超过脚尖过多"
+  },
+  {
+    "id": "reverse_lunge",
+    "name": "后撤弓步",
+    "muscle": "腿",
+    "equipment": "哑铃",
+    "tips": "对膝盖通常更友好，重心稳"
+  },
+  {
+    "id": "step_up",
+    "name": "上台阶",
+    "muscle": "腿",
+    "equipment": "哑铃",
+    "tips": "用前腿发力上台，避免后腿借力蹬"
+  },
+  {
+    "id": "leg_extension",
+    "name": "腿伸展",
+    "muscle": "股四头",
+    "equipment": "器械",
+    "tips": "避免弹振，膝盖不适则减小幅度"
+  },
+  {
+    "id": "leg_curl",
+    "name": "腿弯举",
+    "muscle": "腘绳肌",
+    "equipment": "器械",
+    "tips": "控制离心，顶峰稍停"
+  },
+  {
+    "id": "seated_leg_curl",
+    "name": "坐姿腿弯举",
+    "muscle": "腘绳肌",
+    "equipment": "器械",
+    "tips": "髋屈曲位练腘绳，控制回程"
+  },
+  {
+    "id": "romanian_deadlift",
+    "name": "罗马尼亚硬拉",
+    "muscle": "腿/臀",
+    "equipment": "杠铃",
+    "tips": "髋主导，杠铃贴近腿，感受腘绳肌拉伸"
+  },
+  {
+    "id": "dumbbell_rdl",
+    "name": "哑铃罗马尼亚硬拉",
+    "muscle": "腿/臀",
+    "equipment": "哑铃",
+    "tips": "家/健身房均可，髋铰链模式"
+  },
+  {
+    "id": "stiff_leg_deadlift",
+    "name": "直腿硬拉",
+    "muscle": "腘绳肌",
+    "equipment": "杠铃",
+    "tips": "膝微屈固定，强调腘绳拉伸，勿弓背"
+  },
+  {
+    "id": "good_morning",
+    "name": "早安式",
+    "muscle": "后链",
+    "equipment": "杠铃",
+    "tips": "轻重量学髋铰链，腰背中立"
+  },
+  {
+    "id": "hip_thrust",
+    "name": "臀推",
+    "muscle": "臀",
+    "equipment": "杠铃",
+    "tips": "下巴收，顶峰挤压臀部，避免过度伸腰"
+  },
+  {
+    "id": "glute_bridge",
+    "name": "臀桥",
+    "muscle": "臀",
+    "equipment": "自重/杠铃",
+    "tips": "肩着地，顶峰夹臀，可单腿进阶"
+  },
+  {
+    "id": "cable_kickback",
+    "name": "绳索踢腿",
+    "muscle": "臀",
+    "equipment": "绳索",
+    "tips": "髋伸展主导，腰不要过度反弓"
+  },
+  {
+    "id": "abduction_machine",
+    "name": "髋外展机",
+    "muscle": "臀中肌",
+    "equipment": "器械",
+    "tips": "控制节奏，可作热身或收尾"
+  },
+  {
+    "id": "adduction_machine",
+    "name": "髋内收机",
+    "muscle": "内收肌",
+    "equipment": "器械",
+    "tips": "勿用过大重量猛拉"
+  },
+  {
+    "id": "calf_raise",
+    "name": "提踵",
+    "muscle": "小腿",
+    "equipment": "器械",
+    "tips": "顶峰挤压，完整活动范围"
+  },
+  {
+    "id": "seated_calf_raise",
+    "name": "坐姿提踵",
+    "muscle": "小腿",
+    "equipment": "器械",
+    "tips": "更侧重比目鱼肌"
+  },
+  {
+    "id": "donkey_calf_raise",
+    "name": "驴式提踵",
+    "muscle": "小腿",
+    "equipment": "器械",
+    "tips": "髋屈曲位拉长大腿，强化腓肠肌拉伸"
+  },
+  {
+    "id": "bench_press",
+    "name": "杠铃卧推",
+    "muscle": "胸",
+    "equipment": "杠铃",
+    "tips": "肩胛后收下沉，杠落胸中下部，手腕竖直"
+  },
+  {
+    "id": "dumbbell_press",
+    "name": "哑铃卧推",
+    "muscle": "胸",
+    "equipment": "哑铃",
+    "tips": "底部充分拉伸，顶部不碰哑铃"
+  },
+  {
+    "id": "incline_press",
+    "name": "上斜卧推",
+    "muscle": "上胸",
+    "equipment": "杠铃/哑铃",
+    "tips": "凳面约30度，避免肩部过度前伸"
+  },
+  {
+    "id": "incline_dumbbell_press",
+    "name": "上斜哑铃卧推",
+    "muscle": "上胸",
+    "equipment": "哑铃",
+    "tips": "活动度更好，注意肩稳定"
+  },
+  {
+    "id": "decline_press",
+    "name": "下斜卧推",
+    "muscle": "下胸",
+    "equipment": "杠铃/哑铃",
+    "tips": "下胸刺激更强，注意固定脚"
+  },
+  {
+    "id": "machine_chest_press",
+    "name": "器械推胸",
+    "muscle": "胸",
+    "equipment": "器械",
+    "tips": "轨迹固定，适合力竭或新手"
+  },
+  {
+    "id": "cable_fly",
+    "name": "绳索夹胸",
+    "muscle": "胸",
+    "equipment": "绳索",
+    "tips": "肘微屈，挤压胸肌，控制回程"
+  },
+  {
+    "id": "pec_deck",
+    "name": "蝴蝶机夹胸",
+    "muscle": "胸",
+    "equipment": "器械",
+    "tips": "肩胛稳定，不要耸肩前探"
+  },
+  {
+    "id": "dumbbell_fly",
+    "name": "哑铃飞鸟",
+    "muscle": "胸",
+    "equipment": "哑铃",
+    "tips": "肘保持微屈，底部有拉伸感即可，勿过度"
+  },
+  {
+    "id": "incline_dumbbell_fly",
+    "name": "上斜哑铃飞鸟",
+    "muscle": "上胸",
+    "equipment": "哑铃",
+    "tips": "上斜位拉伸上胸，重量宜轻"
+  },
+  {
+    "id": "push_up",
+    "name": "俯卧撑",
+    "muscle": "胸",
+    "equipment": "自重",
+    "tips": "身体一条直线，可垫高或跪姿降低难度"
+  },
+  {
+    "id": "diamond_push_up",
+    "name": "钻石俯卧撑",
+    "muscle": "胸/三头",
+    "equipment": "自重",
+    "tips": "手成菱形，更侧重三头与内侧胸"
+  },
+  {
+    "id": "chest_dip",
+    "name": "双杠臂屈伸（胸）",
+    "muscle": "胸/三头",
+    "equipment": "自重",
+    "tips": "躯干前倾、肘外展，更偏胸；肩不适则停"
+  },
+  {
+    "id": "landmine_press",
+    "name": "地雷管推举",
+    "muscle": "胸/肩",
+    "equipment": "杠铃",
+    "tips": "单侧推，对肩友好的推类变式"
+  },
+  {
+    "id": "deadlift",
+    "name": "硬拉",
+    "muscle": "后链",
+    "equipment": "杠铃",
+    "tips": "中立脊柱，杠贴近小腿，髋膝协同发力"
+  },
+  {
+    "id": "sumo_deadlift",
+    "name": "相扑硬拉",
+    "muscle": "后链/腿",
+    "equipment": "杠铃",
+    "tips": "站距宽、趾外展，行程较短"
+  },
+  {
+    "id": "trap_bar_deadlift",
+    "name": "六角杠硬拉",
+    "muscle": "后链",
+    "equipment": "六角杠",
+    "tips": "更直立，对下背压力通常较小"
+  },
+  {
+    "id": "barbell_row",
+    "name": "杠铃划船",
+    "muscle": "背",
+    "equipment": "杠铃",
+    "tips": "髋铰链俯身，拉向下腹，避免甩腰"
+  },
+  {
+    "id": "pendlay_row",
+    "name": "潘德雷划船",
+    "muscle": "背",
+    "equipment": "杠铃",
+    "tips": "每组从地面启动，爆发上拉、控制下放"
+  },
+  {
+    "id": "dumbbell_row",
+    "name": "单臂哑铃划船",
+    "muscle": "背",
+    "equipment": "哑铃",
+    "tips": "对侧手撑凳，肘贴身向髋拉"
+  },
+  {
+    "id": "chest_supported_row",
+    "name": "胸托划船",
+    "muscle": "背",
+    "equipment": "器械/哑铃",
+    "tips": "减少借力，专注上背收缩"
+  },
+  {
+    "id": "seated_row",
+    "name": "坐姿划船",
+    "muscle": "背",
+    "equipment": "器械",
+    "tips": "躯干稳定，肩胛后收，避免过度后仰"
+  },
+  {
+    "id": "cable_row",
+    "name": "绳索划船",
+    "muscle": "背",
+    "equipment": "绳索",
+    "tips": "可换握把改变刺激角度"
+  },
+  {
+    "id": "t_bar_row",
+    "name": "T杠划船",
+    "muscle": "背",
+    "equipment": "器械",
+    "tips": "胸托版更稳，注意肩胛后收"
+  },
+  {
+    "id": "lat_pulldown",
+    "name": "高位下拉",
+    "muscle": "背",
+    "equipment": "器械",
+    "tips": "先沉肩再下拉，拉至锁骨附近"
+  },
+  {
+    "id": "close_grip_pulldown",
+    "name": "窄握高位下拉",
+    "muscle": "背",
+    "equipment": "器械",
+    "tips": "更偏下背阔肌厚度"
+  },
+  {
+    "id": "pull_up",
+    "name": "引体向上",
+    "muscle": "背",
+    "equipment": "自重",
+    "tips": "全程控制，可借助弹力带或器械辅助"
+  },
+  {
+    "id": "chin_up",
+    "name": "反手引体",
+    "muscle": "背/二头",
+    "equipment": "自重",
+    "tips": "反手握，二头参与更多"
+  },
+  {
+    "id": "assisted_pull_up",
+    "name": "辅助引体",
+    "muscle": "背",
+    "equipment": "器械",
+    "tips": "用配重减轻体重，练完整动作"
+  },
+  {
+    "id": "straight_arm_pulldown",
+    "name": "直臂下压",
+    "muscle": "背阔肌",
+    "equipment": "绳索",
+    "tips": "臂微屈固定，用背阔把杆拉向大腿"
+  },
+  {
+    "id": "face_pull",
+    "name": "面拉",
+    "muscle": "肩后/上背",
+    "equipment": "绳索",
+    "tips": "拉向面部，外旋肩，改善肩部健康"
+  },
+  {
+    "id": "shrug",
+    "name": "耸肩",
+    "muscle": "斜方肌",
+    "equipment": "杠铃/哑铃",
+    "tips": "直上直下，勿大幅转肩"
+  },
+  {
+    "id": "rack_pull",
+    "name": "架上硬拉",
+    "muscle": "背/后链",
+    "equipment": "杠铃",
+    "tips": "从膝上启动，强化锁定期"
+  },
+  {
+    "id": "ohp",
+    "name": "杠铃推举",
+    "muscle": "肩",
+    "equipment": "杠铃",
+    "tips": "核心收紧，头稍后让，推至头顶锁定"
+  },
+  {
+    "id": "dumbbell_shoulder_press",
+    "name": "哑铃推肩",
+    "muscle": "肩",
+    "equipment": "哑铃",
+    "tips": "坐姿更稳，避免过度弓腰"
+  },
+  {
+    "id": "arnold_press",
+    "name": "阿诺德推举",
+    "muscle": "肩",
+    "equipment": "哑铃",
+    "tips": "旋转上推，活动度要求较高"
+  },
+  {
+    "id": "machine_shoulder_press",
+    "name": "器械推肩",
+    "muscle": "肩",
+    "equipment": "器械",
+    "tips": "轨迹稳，适合力竭"
+  },
+  {
+    "id": "lateral_raise",
+    "name": "侧平举",
+    "muscle": "侧肩",
+    "equipment": "哑铃",
+    "tips": "轻重量高控制，肘微屈，拇指略低于小指"
+  },
+  {
+    "id": "cable_lateral_raise",
+    "name": "绳索侧平举",
+    "muscle": "侧肩",
+    "equipment": "绳索",
+    "tips": "张力更持续，适合雕刻中束"
+  },
+  {
+    "id": "front_raise",
+    "name": "前平举",
+    "muscle": "前肩",
+    "equipment": "哑铃",
+    "tips": "推类已够前束时不必过量"
+  },
+  {
+    "id": "rear_delt_fly",
+    "name": "反向飞鸟",
+    "muscle": "后肩",
+    "equipment": "哑铃",
+    "tips": "俯身或器械，感受肩胛后收"
+  },
+  {
+    "id": "rear_delt_machine",
+    "name": "反向蝴蝶机",
+    "muscle": "后肩",
+    "equipment": "器械",
+    "tips": "胸贴靠垫，夹后束而非甩臂"
+  },
+  {
+    "id": "upright_row",
+    "name": "直立划船",
+    "muscle": "肩/斜方",
+    "equipment": "杠铃/绳索",
+    "tips": "肘勿过高，肩不适者慎做或改绳索宽握"
+  },
+  {
+    "id": "cuba_press",
+    "name": "古巴推举",
+    "muscle": "肩袖/肩",
+    "equipment": "哑铃",
+    "tips": "外旋+推举组合，重量要轻"
+  },
+  {
+    "id": "barb_curl",
+    "name": "杠铃弯举",
+    "muscle": "肱二头",
+    "equipment": "杠铃",
+    "tips": "肘固定，避免借力甩动"
+  },
+  {
+    "id": "ez_bar_curl",
+    "name": "曲杆弯举",
+    "muscle": "肱二头",
+    "equipment": "曲杆",
+    "tips": "腕部更自然，减少不适"
+  },
+  {
+    "id": "dumbbell_curl",
+    "name": "哑铃弯举",
+    "muscle": "肱二头",
+    "equipment": "哑铃",
+    "tips": "可坐姿或站姿，顶峰外旋"
+  },
+  {
+    "id": "hammer_curl",
+    "name": "锤式弯举",
+    "muscle": "肱二头/前臂",
+    "equipment": "哑铃",
+    "tips": "中立握，适合肘部友好训练"
+  },
+  {
+    "id": "incline_curl",
+    "name": "上斜弯举",
+    "muscle": "肱二头",
+    "equipment": "哑铃",
+    "tips": "长头拉伸更充分，重量宜轻"
+  },
+  {
+    "id": "preacher_curl",
+    "name": "牧师凳弯举",
+    "muscle": "肱二头",
+    "equipment": "器械/杠铃",
+    "tips": "固定上臂，强调底部控制"
+  },
+  {
+    "id": "cable_curl",
+    "name": "绳索弯举",
+    "muscle": "肱二头",
+    "equipment": "绳索",
+    "tips": "张力持续，适合泵感收尾"
+  },
+  {
+    "id": "concentration_curl",
+    "name": "专注弯举",
+    "muscle": "肱二头",
+    "equipment": "哑铃",
+    "tips": "肘抵大腿内侧，单侧孤立"
+  },
+  {
+    "id": "tricep_pushdown",
+    "name": "绳索下压",
+    "muscle": "肱三头",
+    "equipment": "绳索",
+    "tips": "肘贴身侧，顶峰伸直但不锁死弹振"
+  },
+  {
+    "id": "rope_pushdown",
+    "name": "绳索下压（绳把）",
+    "muscle": "肱三头",
+    "equipment": "绳索",
+    "tips": "末端外展分开，强化外侧头感知"
+  },
+  {
+    "id": "skull_crusher",
+    "name": "仰卧臂屈伸",
+    "muscle": "肱三头",
+    "equipment": "杠铃/哑铃",
+    "tips": "肘稳定，下放至额侧或头后"
+  },
+  {
+    "id": "overhead_tricep_ext",
+    "name": "过头臂屈伸",
+    "muscle": "肱三头",
+    "equipment": "哑铃/绳索",
+    "tips": "强调长头拉伸，肘朝前上方"
+  },
+  {
+    "id": "close_grip_bench",
+    "name": "窄握卧推",
+    "muscle": "肱三头/胸",
+    "equipment": "杠铃",
+    "tips": "握距略窄于肩，肘贴近身体"
+  },
+  {
+    "id": "tricep_dip",
+    "name": "双杠臂屈伸（三头）",
+    "muscle": "肱三头",
+    "equipment": "自重",
+    "tips": "躯干更直立，肘贴近身体"
+  },
+  {
+    "id": "bench_dip",
+    "name": "凳上臂屈伸",
+    "muscle": "肱三头",
+    "equipment": "自重",
+    "tips": "肩不适者减少下降深度"
+  },
+  {
+    "id": "wrist_curl",
+    "name": "腕弯举",
+    "muscle": "前臂",
+    "equipment": "哑铃/杠铃",
+    "tips": "小重量多次，控制手腕活动"
+  },
+  {
+    "id": "reverse_wrist_curl",
+    "name": "反向腕弯举",
+    "muscle": "前臂",
+    "equipment": "哑铃/杠铃",
+    "tips": "练前臂伸肌，重量更轻"
+  },
+  {
+    "id": "farmer_carry",
+    "name": "农夫行走",
+    "muscle": "全身/核心/前臂",
+    "equipment": "哑铃",
+    "tips": "挺胸收腹，短距离多次"
+  },
+  {
+    "id": "plank",
+    "name": "平板支撑",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "骨盆中立，臀部不塌不撅"
+  },
+  {
+    "id": "side_plank",
+    "name": "侧平板",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "身体一条直线，练侧核心稳定"
+  },
+  {
+    "id": "dead_bug",
+    "name": "死虫",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "腰贴地，对侧手脚伸展交替"
+  },
+  {
+    "id": "bird_dog",
+    "name": "鸟狗式",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "对侧手脚伸直，骨盆不晃"
+  },
+  {
+    "id": "hanging_knee_raise",
+    "name": "悬垂抬膝",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "避免甩腿，用腹肌卷起骨盆"
+  },
+  {
+    "id": "hanging_leg_raise",
+    "name": "悬垂举腿",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "直腿版更难，先掌握抬膝"
+  },
+  {
+    "id": "cable_crunch",
+    "name": "绳索卷腹",
+    "muscle": "核心",
+    "equipment": "绳索",
+    "tips": "骨盆卷动，不是单纯屈髋"
+  },
+  {
+    "id": "ab_wheel",
+    "name": "健腹轮",
+    "muscle": "核心",
+    "equipment": "器械",
+    "tips": "从膝撑开始，腰不塌陷"
+  },
+  {
+    "id": "russian_twist",
+    "name": "俄罗斯转体",
+    "muscle": "核心",
+    "equipment": "自重/哑铃",
+    "tips": "旋转来自胸椎，勿猛甩腰"
+  },
+  {
+    "id": "mountain_climber",
+    "name": "登山跑",
+    "muscle": "核心/有氧",
+    "equipment": "自重",
+    "tips": "髋稳定，膝盖朝胸口方向"
+  },
+  {
+    "id": "pallof_press",
+    "name": "帕洛夫推压",
+    "muscle": "核心",
+    "equipment": "绳索",
+    "tips": "抗旋转核心训练，躯干别跟着转"
+  },
+  {
+    "id": "sit_up",
+    "name": "仰卧起坐",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "可屈膝进行，颈部勿过度用力"
+  },
+  {
+    "id": "crunch",
+    "name": "卷腹",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "肩胛离地即可，强调腹部收缩"
+  },
+  {
+    "id": "bike",
+    "name": "功率车/单车",
+    "muscle": "有氧",
+    "equipment": "器械",
+    "tips": "用作热身或有氧收尾"
+  },
+  {
+    "id": "treadmill",
+    "name": "跑步机快走/慢跑",
+    "muscle": "有氧",
+    "equipment": "器械",
+    "tips": "根据恢复情况调节配速与时长"
+  },
+  {
+    "id": "incline_walk",
+    "name": "跑步机爬坡走",
+    "muscle": "有氧/腿",
+    "equipment": "器械",
+    "tips": "坡度步行，对关节通常更友好"
+  },
+  {
+    "id": "row_machine",
+    "name": "划船机",
+    "muscle": "有氧/全身",
+    "equipment": "器械",
+    "tips": "腿-髋-臂顺序发力，注意腰背中立"
+  },
+  {
+    "id": "elliptical",
+    "name": "椭圆机",
+    "muscle": "有氧",
+    "equipment": "器械",
+    "tips": "低冲击有氧，适合恢复日"
+  },
+  {
+    "id": "stair_climber",
+    "name": "爬楼机",
+    "muscle": "有氧/腿",
+    "equipment": "器械",
+    "tips": "躯干直立，勿过度扶把手借力"
+  },
+  {
+    "id": "jump_rope",
+    "name": "跳绳",
+    "muscle": "有氧",
+    "equipment": "绳",
+    "tips": "前脚掌轻落地，可作为热身"
+  },
+  {
+    "id": "burpee",
+    "name": "波比跳",
+    "muscle": "有氧/全身",
+    "equipment": "自重",
+    "tips": "高强度间歇用，注意落地缓冲"
+  },
+  {
+    "id": "box_jump",
+    "name": "跳箱",
+    "muscle": "爆发/腿",
+    "equipment": "箱子",
+    "tips": "轻落地，高度量力而行"
+  },
+  {
+    "id": "kettlebell_swing",
+    "name": "壶铃摆荡",
+    "muscle": "后链/有氧",
+    "equipment": "壶铃",
+    "tips": "髋铰链爆发，不是深蹲式上下蹲"
+  },
+  {
+    "id": "battle_rope",
+    "name": "战绳",
+    "muscle": "有氧/肩臂",
+    "equipment": "战绳",
+    "tips": "微屈髋，用全身发力甩绳"
+  },
+  {
+    "id": "cat_cow",
+    "name": "猫牛式",
+    "muscle": "活动度",
+    "equipment": "自重",
+    "tips": "热身脊柱屈伸，缓慢呼吸配合"
+  },
+  {
+    "id": "world_greatest_stretch",
+    "name": "世界最好拉伸",
+    "muscle": "活动度",
+    "equipment": "自重",
+    "tips": "弓步+旋转+腘绳拉伸，综合热身"
+  },
+  {
+    "id": "hip_flexor_stretch",
+    "name": "髋屈肌拉伸",
+    "muscle": "活动度",
+    "equipment": "自重",
+    "tips": "后腿跪姿，骨盆轻微后倾"
+  },
+  {
+    "id": "thoracic_opener",
+    "name": "胸椎开合",
+    "muscle": "活动度",
+    "equipment": "自重",
+    "tips": "改善含胸圆肩，推拉日前很有用"
+  },
+  {
+    "id": "band_pull_apart",
+    "name": "弹力带面拉/拉开",
+    "muscle": "肩后/上背",
+    "equipment": "弹力带",
+    "tips": "热身肩胛与后束，轻阻力多次"
+  },
+  {
+    "id": "foam_roll",
+    "name": "泡沫轴放松",
+    "muscle": "恢复",
+    "equipment": "泡沫轴",
+    "tips": "酸痛部位缓慢滚动，避开关节骨突"
+  },
+  {
+    "id": "sauna_walk",
+    "name": "放松散步",
+    "muscle": "恢复",
+    "equipment": "无",
+    "tips": "训练后低强度散步促进恢复"
+  }
+]

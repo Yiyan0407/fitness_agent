@@ -73,7 +73,27 @@ class Repository:
             "fat_target_g",
             "notes",
         }
-        updates = {k: v for k, v in fields.items() if k in allowed and v is not None}
+        # 这些字段允许显式传入 None，表示清空（设置页用 0 表示「没有」）
+        nullable = {
+            "age",
+            "sleep_hours",
+            "weight_kg",
+            "target_weight_kg",
+            "body_fat_pct",
+            "target_body_fat_pct",
+            "height_cm",
+            "calorie_target",
+            "protein_target_g",
+            "carb_target_g",
+            "fat_target_g",
+        }
+        updates: dict[str, Any] = {}
+        for k, v in fields.items():
+            if k not in allowed:
+                continue
+            if v is None and k not in nullable:
+                continue
+            updates[k] = v
         if not updates:
             return self.get_profile()
         sets = ", ".join(f"{k} = ?" for k in updates)
@@ -136,6 +156,132 @@ class Repository:
         data = dict(row)
         data["content"] = self._loads_json(data.pop("content_json"), default={})
         return data
+
+    @staticmethod
+    def _normalize_weekday(weekday: str) -> str:
+        raw = (weekday or "").strip().lower()
+        aliases = {
+            "周一": "monday",
+            "星期一": "monday",
+            "周二": "tuesday",
+            "星期二": "tuesday",
+            "周三": "wednesday",
+            "星期三": "wednesday",
+            "周四": "thursday",
+            "星期四": "thursday",
+            "周五": "friday",
+            "星期五": "friday",
+            "周六": "saturday",
+            "星期六": "saturday",
+            "周日": "sunday",
+            "周天": "sunday",
+            "星期日": "sunday",
+            "今天": "__today__",
+            "今日": "__today__",
+            "mon": "monday",
+            "tue": "tuesday",
+            "wed": "wednesday",
+            "thu": "thursday",
+            "fri": "friday",
+            "sat": "saturday",
+            "sun": "sunday",
+        }
+        if raw in aliases:
+            mapped = aliases[raw]
+            if mapped == "__today__":
+                return WEEKDAY_KEYS[date.today().weekday()]
+            return mapped
+        if raw in WEEKDAY_KEYS:
+            return raw
+        raise ValueError(f"无法识别星期: {weekday}（请用 monday..sunday 或 周一..周日）")
+
+    def _empty_week_content(self) -> dict[str, Any]:
+        return {
+            key: {"name": "休息", "rest": True, "exercises": []}
+            for key in WEEKDAY_KEYS
+        }
+
+    def update_plan_day(
+        self,
+        weekday: str,
+        day: dict[str, Any],
+        *,
+        sync_today: bool = True,
+    ) -> dict[str, Any]:
+        """Patch a single weekday in the active weekly plan (create plan if missing)."""
+        key = self._normalize_weekday(weekday)
+        plan = self.get_current_plan()
+        content = dict(plan["content"]) if plan else self._empty_week_content()
+        if not isinstance(day, dict):
+            raise ValueError("day 必须是对象")
+        content[key] = day
+        saved = self.save_plan(content, name=(plan or {}).get("name") or "当前计划")
+        if sync_today:
+            self.sync_today_from_plan_if_idle()
+        return saved
+
+    def mutate_plan_exercise(
+        self,
+        weekday: str,
+        *,
+        action: str,
+        exercise_name: str | None = None,
+        new_exercise: dict[str, Any] | None = None,
+        sync_today: bool = True,
+    ) -> dict[str, Any]:
+        """Add / remove / replace one exercise inside a weekday of the weekly template."""
+        key = self._normalize_weekday(weekday)
+        plan = self.get_current_plan()
+        content = dict(plan["content"]) if plan else self._empty_week_content()
+        day = content.get(key) or {"name": WEEKDAY_CN[key], "rest": False, "exercises": []}
+        if not isinstance(day, dict):
+            day = {"name": WEEKDAY_CN[key], "rest": False, "exercises": []}
+        exercises = list(day.get("exercises") or [])
+        act = (action or "").strip().lower()
+
+        if act == "add":
+            if not new_exercise or not (new_exercise.get("name") or new_exercise.get("exercise")):
+                raise ValueError("add 需要 new_exercise，且包含 name")
+            exercises.append(new_exercise)
+            day["rest"] = False
+        elif act == "remove":
+            if not exercise_name:
+                raise ValueError("remove 需要 exercise_name")
+            before = len(exercises)
+            exercises = [
+                ex
+                for ex in exercises
+                if (ex.get("name") or ex.get("exercise") or "") != exercise_name
+            ]
+            if len(exercises) == before:
+                raise ValueError(f"计划中未找到动作: {exercise_name}")
+            if not exercises:
+                day["rest"] = True
+        elif act == "replace":
+            if not exercise_name or not new_exercise:
+                raise ValueError("replace 需要 exercise_name 与 new_exercise")
+            found = False
+            for i, ex in enumerate(exercises):
+                if (ex.get("name") or ex.get("exercise") or "") == exercise_name:
+                    merged = dict(ex)
+                    merged.update(new_exercise)
+                    if "name" not in merged and "exercise" not in merged:
+                        merged["name"] = exercise_name
+                    exercises[i] = merged
+                    found = True
+                    break
+            if not found:
+                raise ValueError(f"计划中未找到动作: {exercise_name}")
+            day["rest"] = False
+        else:
+            raise ValueError("action 必须是 add / remove / replace")
+
+        day["exercises"] = exercises
+        content[key] = day
+        saved = self.save_plan(content, name=(plan or {}).get("name") or "当前计划")
+        if sync_today:
+            self.sync_today_from_plan_if_idle()
+        return {"ok": True, "weekday": key, "day": day, "plan": saved}
 
     def get_plan_for_date(self, target: date | None = None) -> dict[str, Any] | None:
         plan = self.get_current_plan()
@@ -400,6 +546,280 @@ class Repository:
     def sync_today_from_plan_if_idle(self, target: date | None = None) -> list[dict[str, Any]]:
         """After plan template save: refresh today only if not started."""
         return self.ensure_today_sets_from_plan(target, force=True)
+
+    def resync_today_from_plan(
+        self,
+        target_date: str | None = None,
+        *,
+        wipe_completed: bool = False,
+    ) -> dict[str, Any]:
+        """Force rebuild today's sets from the weekly template.
+
+        wipe_completed=False: only rebuild if no completed sets (same as UI safe reset).
+        wipe_completed=True: delete all today's sets (including completed) then reseed.
+        """
+        target = date.fromisoformat(target_date) if target_date else date.today()
+        workout = self.get_or_create_workout(target)
+        existing = self.get_sets(workout["id"])
+        completed_any = any(s.get("completed") for s in existing)
+        if completed_any and not wipe_completed:
+            return {
+                "ok": False,
+                "error": "今日已有完成组，如需强制覆盖请设 wipe_completed=true",
+                "sets": existing,
+            }
+        if existing:
+            self.conn.execute("DELETE FROM sets WHERE workout_id = ?", (workout["id"],))
+            self.conn.execute(
+                "UPDATE workouts SET status = 'planned' WHERE id = ?",
+                (workout["id"],),
+            )
+            self.conn.commit()
+        sets = self.ensure_today_sets_from_plan(target, force=True)
+        return {"ok": True, "date": target.isoformat(), "sets": sets}
+
+    def add_today_exercise(
+        self,
+        exercise_name: str,
+        *,
+        sets: int = 3,
+        reps: int | str | None = None,
+        weight_kg: float | None = None,
+        notes: str = "",
+        target_date: str | None = None,
+        also_update_plan: bool = False,
+    ) -> dict[str, Any]:
+        """Append a planned exercise (incomplete sets) to today's workout."""
+        name = self.resolve_exercise_name(exercise_name)
+        target = date.fromisoformat(target_date) if target_date else date.today()
+        workout = self.get_or_create_workout(target)
+        existing = [
+            s for s in self.get_sets(workout["id"]) if s["exercise_name"] == name
+        ]
+        if existing:
+            return {
+                "ok": False,
+                "error": f"今日已有动作 {name}，请用 replace_today_exercise 或先删除",
+                "sets": existing,
+            }
+        day = {
+            "exercises": [
+                {
+                    "name": name,
+                    "sets": int(sets),
+                    "reps": reps if reps is not None else "8-12",
+                    "weight_kg": weight_kg,
+                    "notes": notes or "",
+                }
+            ]
+        }
+        self._seed_sets_from_day_plan(workout["id"], day)
+        self.conn.commit()
+        if also_update_plan:
+            key = WEEKDAY_KEYS[target.weekday()]
+            self.mutate_plan_exercise(
+                key,
+                action="add",
+                new_exercise={
+                    "name": name,
+                    "sets": int(sets),
+                    "reps": reps if reps is not None else "8-12",
+                    "weight_kg": weight_kg,
+                    "notes": notes or "",
+                },
+                sync_today=False,
+            )
+        return {
+            "ok": True,
+            "exercise_name": name,
+            "sets": [s for s in self.get_sets(workout["id"]) if s["exercise_name"] == name],
+        }
+
+    def delete_today_exercise(
+        self,
+        exercise_name: str,
+        *,
+        include_completed: bool = True,
+        target_date: str | None = None,
+        also_update_plan: bool = False,
+    ) -> dict[str, Any]:
+        """Remove an exercise from today's sets."""
+        target = date.fromisoformat(target_date) if target_date else date.today()
+        workout = self.get_or_create_workout(target)
+        # Match exact name first; also try resolved canonical name
+        names = {exercise_name.strip()}
+        resolved = self.resolve_exercise_name(exercise_name)
+        names.add(resolved)
+        if include_completed:
+            cur = self.conn.execute(
+                f"""
+                DELETE FROM sets
+                WHERE workout_id = ? AND exercise_name IN ({",".join("?" * len(names))})
+                """,
+                (workout["id"], *names),
+            )
+        else:
+            cur = self.conn.execute(
+                f"""
+                DELETE FROM sets
+                WHERE workout_id = ? AND exercise_name IN ({",".join("?" * len(names))})
+                  AND completed = 0
+                """,
+                (workout["id"], *names),
+            )
+        self.conn.commit()
+        deleted = int(cur.rowcount or 0)
+        if also_update_plan and deleted:
+            key = WEEKDAY_KEYS[target.weekday()]
+            for n in names:
+                try:
+                    self.mutate_plan_exercise(
+                        key, action="remove", exercise_name=n, sync_today=False
+                    )
+                    break
+                except ValueError:
+                    continue
+        return {
+            "ok": deleted > 0,
+            "deleted_sets": deleted,
+            "exercise_names_tried": sorted(names),
+            "sets": self.get_sets(workout["id"]),
+        }
+
+    def replace_today_exercise(
+        self,
+        old_name: str,
+        new_name: str,
+        *,
+        weight_kg: float | None = None,
+        reps: int | None = None,
+        sets: int | None = None,
+        notes: str | None = None,
+        target_date: str | None = None,
+        also_update_plan: bool = True,
+    ) -> dict[str, Any]:
+        """Replace one exercise in today's sets (and optionally in the weekly template)."""
+        target = date.fromisoformat(target_date) if target_date else date.today()
+        workout = self.get_or_create_workout(target)
+        canonical_new = self.resolve_exercise_name(new_name)
+        old_candidates = {old_name.strip(), self.resolve_exercise_name(old_name)}
+        rows = self.conn.execute(
+            f"""
+            SELECT * FROM sets
+            WHERE workout_id = ? AND exercise_name IN ({",".join("?" * len(old_candidates))})
+            ORDER BY set_index, id
+            """,
+            (workout["id"], *old_candidates),
+        ).fetchall()
+        if not rows:
+            return {
+                "ok": False,
+                "error": f"今日未找到动作: {old_name}",
+                "tried": sorted(old_candidates),
+            }
+
+        matched_old = rows[0]["exercise_name"]
+        # Rename existing rows
+        for row in rows:
+            fields: dict[str, Any] = {"exercise_name": canonical_new}
+            if weight_kg is not None and not row["completed"]:
+                fields["weight_kg"] = weight_kg
+            if reps is not None and not row["completed"]:
+                fields["reps"] = reps
+            if notes is not None:
+                fields["notes"] = notes
+            self.update_set(row["id"], **fields)
+
+        current = [
+            s
+            for s in self.get_sets(workout["id"])
+            if s["exercise_name"] == canonical_new
+        ]
+        if sets is not None:
+            desired = max(1, int(sets))
+            if len(current) < desired:
+                last = current[-1] if current else None
+                for _ in range(desired - len(current)):
+                    self.add_planned_set(
+                        workout["id"],
+                        canonical_new,
+                        weight_kg=weight_kg if weight_kg is not None else (last or {}).get("weight_kg"),
+                        reps=reps if reps is not None else (last or {}).get("reps"),
+                        notes=notes or "",
+                    )
+            elif len(current) > desired:
+                # Drop trailing incomplete sets first, then any extras
+                extras = sorted(current, key=lambda s: (s["set_index"], s["id"]), reverse=True)
+                to_drop = len(current) - desired
+                for s in extras:
+                    if to_drop <= 0:
+                        break
+                    if not s.get("completed"):
+                        self.delete_set(s["id"])
+                        to_drop -= 1
+                if to_drop > 0:
+                    remaining = [
+                        s
+                        for s in self.get_sets(workout["id"])
+                        if s["exercise_name"] == canonical_new
+                    ]
+                    remaining = sorted(
+                        remaining, key=lambda s: (s["set_index"], s["id"]), reverse=True
+                    )
+                    for s in remaining:
+                        if to_drop <= 0:
+                            break
+                        self.delete_set(s["id"])
+                        to_drop -= 1
+
+        if also_update_plan:
+            key = WEEKDAY_KEYS[target.weekday()]
+            new_ex: dict[str, Any] = {"name": canonical_new}
+            if sets is not None:
+                new_ex["sets"] = int(sets)
+            else:
+                new_ex["sets"] = len(
+                    [
+                        s
+                        for s in self.get_sets(workout["id"])
+                        if s["exercise_name"] == canonical_new
+                    ]
+                )
+            if weight_kg is not None:
+                new_ex["weight_kg"] = weight_kg
+            if reps is not None:
+                new_ex["reps"] = reps
+            if notes is not None:
+                new_ex["notes"] = notes
+            try:
+                self.mutate_plan_exercise(
+                    key,
+                    action="replace",
+                    exercise_name=matched_old,
+                    new_exercise=new_ex,
+                    sync_today=False,
+                )
+            except ValueError:
+                # Old name only existed in today's sets — add to plan
+                self.mutate_plan_exercise(
+                    key,
+                    action="add",
+                    new_exercise=new_ex,
+                    sync_today=False,
+                )
+
+        return {
+            "ok": True,
+            "old_name": matched_old,
+            "new_name": canonical_new,
+            "also_update_plan": also_update_plan,
+            "sets": [
+                s
+                for s in self.get_sets(workout["id"])
+                if s["exercise_name"] == canonical_new
+            ],
+            "today": self.get_today_workout(target.isoformat()),
+        }
 
     def get_today_workout(self, target_date: str | None = None) -> dict[str, Any]:
         target = date.fromisoformat(target_date) if target_date else date.today()
@@ -692,6 +1112,7 @@ class Repository:
         weight_kg: float | None = None,
         reps: int | None = None,
         weight_delta: float | None = None,
+        reps_delta: int | None = None,
     ) -> int:
         """Update all incomplete sets of an exercise (mid-workout adjustment)."""
         rows = self.conn.execute(
@@ -710,6 +1131,9 @@ class Repository:
                 fields["weight_kg"] = max(0.0, current + weight_delta)
             if reps is not None:
                 fields["reps"] = reps
+            elif reps_delta is not None:
+                current = int(row["reps"] or 0)
+                fields["reps"] = max(0, current + int(reps_delta))
             if fields:
                 self.update_set(row["id"], **fields)
         return len(rows)
@@ -845,18 +1269,61 @@ class Repository:
         if not needle:
             return None
         items = self.list_exercises()
-        for ex in items:
-            if ex.get("name") == needle or ex.get("name_en") == needle:
-                return ex
-        low = needle.lower()
-        for ex in items:
-            if low == str(ex.get("name") or "").lower() or low == str(ex.get("name_en") or "").lower():
-                return ex
+
+        def _exact(candidates: list[str]) -> dict[str, Any] | None:
+            for cand in candidates:
+                if not cand:
+                    continue
+                for ex in items:
+                    if ex.get("name") == cand or ex.get("name_en") == cand:
+                        return ex
+                low = cand.lower()
+                for ex in items:
+                    if low == str(ex.get("name") or "").lower() or low == str(
+                        ex.get("name_en") or ""
+                    ).lower():
+                        return ex
+            return None
+
+        hit = _exact([needle])
+        if hit:
+            return hit
+
+        # Strip equipment words then exact-match (上斜杠铃卧推 -> 上斜卧推)
+        stripped = needle
+        for token in ("史密斯机", "史密斯", "杠铃", "哑铃", "绳索", "器械", "坐姿", "站姿"):
+            stripped = stripped.replace(token, "")
+        stripped = stripped.strip()
+        if stripped and stripped != needle:
+            hit = _exact([stripped])
+            if hit:
+                return hit
+
+        # Contained-name fuzzy: prefer the longest library name contained in needle
+        # (avoids 上斜杠铃卧推 matching 杠铃卧推 instead of 上斜卧推 after strip miss)
+        best: dict[str, Any] | None = None
+        best_len = -1
         for ex in items:
             n = str(ex.get("name") or "")
-            if needle in n or n in needle:
-                return ex
-        return None
+            en = str(ex.get("name_en") or "")
+            for label in (n, en):
+                if not label:
+                    continue
+                if label in needle or needle in label:
+                    if len(label) > best_len:
+                        best = ex
+                        best_len = len(label)
+        return best
+
+    def resolve_exercise_name(self, name: str) -> str:
+        """Map free-text exercise name to library canonical name when possible."""
+        needle = (name or "").strip()
+        if not needle:
+            return needle
+        matched = self.get_exercise_by_name(needle)
+        if matched and matched.get("name"):
+            return str(matched["name"])
+        return needle
 
     # --- nutrition / meals ---
 
@@ -912,6 +1379,32 @@ class Repository:
         cur = self.conn.execute("DELETE FROM meals WHERE id = ?", (meal_id,))
         self.conn.commit()
         return cur.rowcount > 0
+
+    def update_meal(self, meal_id: int, **fields: Any) -> dict[str, Any]:
+        allowed = {
+            "meal_type",
+            "name",
+            "calories",
+            "protein_g",
+            "carb_g",
+            "fat_g",
+            "notes",
+            "date",
+        }
+        updates = {k: v for k, v in fields.items() if k in allowed and v is not None}
+        if "name" in updates and not str(updates["name"]).strip():
+            raise ValueError("菜名不能为空")
+        if not updates:
+            row = self.conn.execute("SELECT * FROM meals WHERE id = ?", (meal_id,)).fetchone()
+            return dict(row) if row else {}
+        sets_sql = ", ".join(f"{k} = ?" for k in updates)
+        self.conn.execute(
+            f"UPDATE meals SET {sets_sql} WHERE id = ?",
+            [*updates.values(), meal_id],
+        )
+        self.conn.commit()
+        row = self.conn.execute("SELECT * FROM meals WHERE id = ?", (meal_id,)).fetchone()
+        return dict(row) if row else {}
 
     def get_meals(self, target_date: str | None = None) -> list[dict[str, Any]]:
         ds = target_date or date.today().isoformat()
@@ -1190,3 +1683,10 @@ class Repository:
                 ).fetchall()
                 result = [dict(r) for r in rows]
         return result
+
+    def delete_body_metrics(self, target_date: str) -> bool:
+        cur = self.conn.execute(
+            "DELETE FROM body_metrics WHERE date = ?", (target_date,)
+        )
+        self.conn.commit()
+        return cur.rowcount > 0

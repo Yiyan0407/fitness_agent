@@ -1,4 +1,4 @@
-"""LangChain tools for the fitness coach agent."""
+"""LangChain tools for the fitness coach agent — full CRUD over user data."""
 
 from __future__ import annotations
 
@@ -12,6 +12,21 @@ from bootstrap import get_repo
 
 def _ok(data: Any) -> str:
     return json.dumps(data, ensure_ascii=False, default=str)
+
+
+def _parse_json_obj(raw: str, *, label: str = "JSON") -> dict[str, Any]:
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ValueError(f"{label} 解析失败: {exc}") from exc
+    if not isinstance(data, dict):
+        raise ValueError(f"{label} 必须是对象")
+    return data
+
+
+# ---------------------------------------------------------------------------
+# Profile
+# ---------------------------------------------------------------------------
 
 
 @tool
@@ -78,6 +93,11 @@ def update_profile(
     return _ok({"updated": True, "profile": updated})
 
 
+# ---------------------------------------------------------------------------
+# Weekly plan template
+# ---------------------------------------------------------------------------
+
+
 @tool
 def get_current_plan() -> str:
     """获取当前生效的训练计划（按周一到周日的安排）。"""
@@ -89,7 +109,7 @@ def get_current_plan() -> str:
 
 @tool
 def save_plan(content_json: str, name: str = "当前计划") -> str:
-    """保存或替换一周训练计划。
+    """保存或替换一周训练计划（整周覆盖）。
 
     content_json 必须是 JSON 字符串。每个训练日应包含 4～6 个动作（复合为主 + 孤立辅助），
     不要只写一个动作。格式示例：
@@ -106,15 +126,70 @@ def save_plan(content_json: str, name: str = "当前计划") -> str:
       "sunday": {"name": "休息", "rest": true, "exercises": []}
     }
     键名使用 monday..sunday。动作名称优先使用 list_exercises 返回的名称。
+    若只需改某一天/某一个动作，优先用 update_plan_day 或 mutate_plan_exercise。
     """
     try:
         content = json.loads(content_json)
     except json.JSONDecodeError as exc:
         return _ok({"ok": False, "error": f"JSON 解析失败: {exc}"})
     plan = get_repo().save_plan(content, name=name)
-    # 计划更新后，若今日尚未开始打卡，自动按新计划刷新今日动作
     get_repo().sync_today_from_plan_if_idle()
     return _ok({"ok": True, "plan": plan})
+
+
+@tool
+def update_plan_day(weekday: str, day_json: str, sync_today: bool = True) -> str:
+    """只更新周计划中某一天（不全量重写一周）。
+
+    weekday: monday..sunday 或 周一..周日 / 今天。
+    day_json 示例：{"name":"胸肩推","rest":false,"exercises":[{"name":"杠铃卧推","sets":3,"reps":"8-10","weight_kg":30}]}
+    sync_today=true 时：若今日尚未开始打卡，会按新模板刷新今日组数。
+    """
+    try:
+        day = _parse_json_obj(day_json, label="day_json")
+        plan = get_repo().update_plan_day(weekday, day, sync_today=sync_today)
+        return _ok({"ok": True, "plan": plan})
+    except (ValueError, json.JSONDecodeError) as exc:
+        return _ok({"ok": False, "error": str(exc)})
+
+
+@tool
+def mutate_plan_exercise(
+    weekday: str,
+    action: str,
+    exercise_name: Optional[str] = None,
+    new_exercise_json: Optional[str] = None,
+    sync_today: bool = True,
+) -> str:
+    """在周计划某一天里增删改单个动作（模板层）。
+
+    action: add / remove / replace
+    - add: 需要 new_exercise_json，如 {"name":"上斜卧推","sets":3,"reps":"10-12","weight_kg":40}
+    - remove: 需要 exercise_name
+    - replace: 需要 exercise_name + new_exercise_json（用新动作替换旧动作）
+    weekday 可用「今天」。换器械/换动作优先用本工具（改模板）+ replace_today_exercise（改今日）。
+    """
+    try:
+        new_ex = None
+        if new_exercise_json:
+            new_ex = _parse_json_obj(new_exercise_json, label="new_exercise_json")
+            if new_ex.get("name"):
+                new_ex["name"] = get_repo().resolve_exercise_name(str(new_ex["name"]))
+        result = get_repo().mutate_plan_exercise(
+            weekday,
+            action=action,
+            exercise_name=exercise_name,
+            new_exercise=new_ex,
+            sync_today=sync_today,
+        )
+        return _ok(result)
+    except (ValueError, json.JSONDecodeError) as exc:
+        return _ok({"ok": False, "error": str(exc)})
+
+
+# ---------------------------------------------------------------------------
+# Today workout / sets
+# ---------------------------------------------------------------------------
 
 
 @tool
@@ -133,9 +208,13 @@ def log_set(
     notes: str = "",
     target_date: Optional[str] = None,
 ) -> str:
-    """记录一组训练（动作名、重量kg、次数、RPE 可选）。"""
+    """记录一组已完成的训练（动作名、重量kg、次数、RPE 可选）。
+
+    注意：本工具只追加打卡，不会删除旧动作。换动作请用 replace_today_exercise。
+    """
+    name = get_repo().resolve_exercise_name(exercise_name)
     row = get_repo().log_set(
-        exercise_name=exercise_name,
+        exercise_name=name,
         weight_kg=weight_kg,
         reps=reps,
         rpe=rpe,
@@ -148,10 +227,219 @@ def log_set(
 
 
 @tool
+def update_set(
+    set_id: int,
+    exercise_name: Optional[str] = None,
+    set_index: Optional[int] = None,
+    weight_kg: Optional[float] = None,
+    reps: Optional[int] = None,
+    rpe: Optional[float] = None,
+    completed: Optional[bool] = None,
+    notes: Optional[str] = None,
+) -> str:
+    """按 set_id 修改某一组（重量/次数/RPE/是否完成/动作名等）。"""
+    fields: dict[str, Any] = {}
+    if exercise_name is not None:
+        fields["exercise_name"] = get_repo().resolve_exercise_name(exercise_name)
+    if set_index is not None:
+        fields["set_index"] = set_index
+    if weight_kg is not None:
+        fields["weight_kg"] = weight_kg
+    if reps is not None:
+        fields["reps"] = reps
+    if rpe is not None:
+        fields["rpe"] = rpe
+    if completed is not None:
+        fields["completed"] = completed
+    if notes is not None:
+        fields["notes"] = notes
+    row = get_repo().update_set(int(set_id), **fields)
+    return _ok({"ok": True, "set": row})
+
+
+@tool
+def delete_set(set_id: int) -> str:
+    """按 set_id 删除某一组打卡记录。"""
+    get_repo().delete_set(int(set_id))
+    return _ok({"ok": True, "set_id": set_id})
+
+
+@tool
+def add_today_exercise(
+    exercise_name: str,
+    sets: int = 3,
+    reps: str = "8-12",
+    weight_kg: Optional[float] = None,
+    notes: str = "",
+    target_date: Optional[str] = None,
+    also_update_plan: bool = False,
+) -> str:
+    """在今日打卡列表中新增一个动作（生成未完成的计划组）。
+
+    also_update_plan=true 时同时写入周计划模板对应星期。
+    """
+    result = get_repo().add_today_exercise(
+        exercise_name,
+        sets=sets,
+        reps=reps,
+        weight_kg=weight_kg,
+        notes=notes,
+        target_date=target_date,
+        also_update_plan=also_update_plan,
+    )
+    return _ok(result)
+
+
+@tool
+def delete_today_exercise(
+    exercise_name: str,
+    include_completed: bool = True,
+    target_date: Optional[str] = None,
+    also_update_plan: bool = False,
+) -> str:
+    """从今日打卡列表删除某个动作的全部组。
+
+    include_completed=false 时只删未完成组（等同跳过剩余）。
+    also_update_plan=true 时同时从周计划模板对应星期移除。
+    """
+    result = get_repo().delete_today_exercise(
+        exercise_name,
+        include_completed=include_completed,
+        target_date=target_date,
+        also_update_plan=also_update_plan,
+    )
+    return _ok(result)
+
+
+@tool
+def replace_today_exercise(
+    old_name: str,
+    new_name: str,
+    weight_kg: Optional[float] = None,
+    reps: Optional[int] = None,
+    sets: Optional[int] = None,
+    notes: Optional[str] = None,
+    target_date: Optional[str] = None,
+    also_update_plan: bool = True,
+) -> str:
+    """把今日某个动作替换成另一个（真正替换，不是追加）。
+
+    用户说「把上斜哑铃卧推换成上斜杠铃卧推」时必须用本工具。
+    默认 also_update_plan=true，同时改周计划模板，避免今日与计划不一致。
+    动作名会尽量映射到动作库标准名（如上斜杠铃卧推→上斜卧推）。
+    """
+    result = get_repo().replace_today_exercise(
+        old_name,
+        new_name,
+        weight_kg=weight_kg,
+        reps=reps,
+        sets=sets,
+        notes=notes,
+        target_date=target_date,
+        also_update_plan=also_update_plan,
+    )
+    return _ok(result)
+
+
+@tool
+def skip_remaining_sets(
+    exercise_name: Optional[str] = None,
+    target_date: Optional[str] = None,
+) -> str:
+    """跳过/删除未完成组。不传 exercise_name 则跳过今日全部剩余组。"""
+    workout = get_repo().get_today_workout(target_date)["workout"]
+    n = get_repo().skip_remaining_sets(workout["id"], exercise_name)
+    return _ok({"ok": True, "deleted_incomplete_sets": n})
+
+
+@tool
+def apply_to_remaining_sets(
+    exercise_name: str,
+    weight_kg: Optional[float] = None,
+    reps: Optional[int] = None,
+    weight_delta: Optional[float] = None,
+    reps_delta: Optional[int] = None,
+    target_date: Optional[str] = None,
+) -> str:
+    """批量调整某动作今日剩余未完成组的重量/次数。
+    weight_delta 如 -2.5 表示减 2.5kg；reps_delta 如 -1 表示次数减 1。
+    """
+    workout = get_repo().get_today_workout(target_date)["workout"]
+    n = get_repo().apply_to_remaining_sets(
+        workout["id"],
+        exercise_name,
+        weight_kg=weight_kg,
+        reps=reps,
+        weight_delta=weight_delta,
+        reps_delta=reps_delta,
+    )
+    return _ok({"ok": True, "updated_sets": n})
+
+
+@tool
+def update_workout(
+    status: Optional[str] = None,
+    notes: Optional[str] = None,
+    calories_burned: Optional[float] = None,
+    calories_burned_note: Optional[str] = None,
+    clear_calories_burned: bool = False,
+    target_date: Optional[str] = None,
+) -> str:
+    """更新某日训练会话状态/备注/消耗热量。status: planned / in_progress / done。"""
+    workout = get_repo().get_today_workout(target_date)["workout"]
+    row = get_repo().update_workout(
+        workout["id"],
+        status=status,
+        notes=notes,
+        calories_burned=calories_burned,
+        calories_burned_note=calories_burned_note,
+        clear_calories_burned=clear_calories_burned,
+    )
+    return _ok({"ok": True, "workout": row})
+
+
+@tool
+def resync_today_from_plan(
+    target_date: Optional[str] = None,
+    wipe_completed: bool = False,
+) -> str:
+    """按周计划模板重建今日组数。
+
+    wipe_completed=false（默认）：若已有完成组则拒绝，避免误删打卡。
+    wipe_completed=true：清空今日全部组（含已完成）后按模板重建——需用户明确要求。
+    """
+    return _ok(get_repo().resync_today_from_plan(target_date, wipe_completed=wipe_completed))
+
+
+# ---------------------------------------------------------------------------
+# History / progress
+# ---------------------------------------------------------------------------
+
+
+@tool
 def get_recent_history(days: int = 14) -> str:
     """获取近 N 天的训练历史摘要，用于判断是否该加重量或减量。"""
     days = max(1, min(int(days), 60))
     return _ok(get_repo().get_recent_history(days))
+
+
+@tool
+def get_exercise_progress(exercise_name: Optional[str] = None, days: int = 60) -> str:
+    """查看某动作（或不限动作）近 N 天完成组的重量/次数进度。"""
+    days = max(1, min(int(days), 180))
+    name = get_repo().resolve_exercise_name(exercise_name) if exercise_name else None
+    return _ok(get_repo().get_exercise_progress(name, days=days))
+
+
+@tool
+def get_day_detail(target_date: Optional[str] = None) -> str:
+    """只读查看某日训练详情（不自动生成计划组）。默认今天。"""
+    return _ok(get_repo().get_day_detail(target_date))
+
+
+# ---------------------------------------------------------------------------
+# Exercise library (read-only)
+# ---------------------------------------------------------------------------
 
 
 @tool
@@ -176,6 +464,11 @@ def list_exercises(query: str = "", muscle: str = "", equipment: str = "") -> st
         for e in items
     ]
     return _ok({"returned": len(slim), "exercises": slim})
+
+
+# ---------------------------------------------------------------------------
+# Nutrition / meals
+# ---------------------------------------------------------------------------
 
 
 @tool
@@ -219,23 +512,197 @@ def log_meal(
 
 
 @tool
+def update_meal(
+    meal_id: int,
+    name: Optional[str] = None,
+    meal_type: Optional[str] = None,
+    calories: Optional[float] = None,
+    protein_g: Optional[float] = None,
+    carb_g: Optional[float] = None,
+    fat_g: Optional[float] = None,
+    notes: Optional[str] = None,
+    target_date: Optional[str] = None,
+) -> str:
+    """按 meal_id 修改一条饮食记录。"""
+    try:
+        fields: dict[str, Any] = {}
+        if name is not None:
+            fields["name"] = name
+        if meal_type is not None:
+            fields["meal_type"] = meal_type
+        if calories is not None:
+            fields["calories"] = calories
+        if protein_g is not None:
+            fields["protein_g"] = protein_g
+        if carb_g is not None:
+            fields["carb_g"] = carb_g
+        if fat_g is not None:
+            fields["fat_g"] = fat_g
+        if notes is not None:
+            fields["notes"] = notes
+        if target_date is not None:
+            fields["date"] = target_date
+        row = get_repo().update_meal(int(meal_id), **fields)
+        return _ok({"ok": True, "meal": row})
+    except ValueError as exc:
+        return _ok({"ok": False, "error": str(exc)})
+
+
+@tool
 def delete_meal(meal_id: int) -> str:
     """删除一条饮食记录。"""
     ok = get_repo().delete_meal(int(meal_id))
     return _ok({"ok": ok, "meal_id": meal_id})
 
 
+# ---------------------------------------------------------------------------
+# Body metrics
+# ---------------------------------------------------------------------------
+
+
+@tool
+def list_body_metrics(days: int = 90) -> str:
+    """读取近 N 天体重/体脂记录。"""
+    return _ok({"days": days, "metrics": get_repo().list_body_metrics(days=days)})
+
+
+@tool
+def log_body_metrics(
+    weight_kg: Optional[float] = None,
+    body_fat_pct: Optional[float] = None,
+    notes: str = "",
+    target_date: Optional[str] = None,
+    also_update_profile: bool = True,
+) -> str:
+    """记录或更新某日体重/体脂。默认同时写回画像中的当前体重/体脂。"""
+    row = get_repo().log_body_metrics(
+        weight_kg=weight_kg,
+        body_fat_pct=body_fat_pct,
+        notes=notes,
+        target_date=target_date,
+    )
+    if also_update_profile:
+        from datetime import date as _date
+
+        ds = target_date or _date.today().isoformat()
+        if ds == _date.today().isoformat():
+            fields: dict[str, Any] = {}
+            if weight_kg is not None:
+                fields["weight_kg"] = weight_kg
+            if body_fat_pct is not None:
+                fields["body_fat_pct"] = body_fat_pct
+            if fields:
+                # update_profile 会再次 upsert 当日 body_metrics，幂等
+                get_repo().update_profile(**fields)
+    return _ok({"ok": True, "metrics": row})
+
+
+@tool
+def delete_body_metrics(target_date: str) -> str:
+    """删除某日体重/体脂记录（YYYY-MM-DD）。"""
+    ok = get_repo().delete_body_metrics(target_date)
+    return _ok({"ok": ok, "date": target_date})
+
+
+# ---------------------------------------------------------------------------
+# Daily reports
+# ---------------------------------------------------------------------------
+
+
+@tool
+def get_daily_report(target_date: Optional[str] = None) -> str:
+    """读取某日已保存的每日报告。默认今天。"""
+    report = get_repo().get_daily_report(target_date)
+    if not report:
+        return _ok({"exists": False, "date": target_date, "message": "该日尚无报告"})
+    return _ok({"exists": True, "report": report})
+
+
+@tool
+def list_daily_reports(limit: int = 30) -> str:
+    """列出最近的每日报告摘要。"""
+    return _ok({"reports": get_repo().list_daily_reports(limit=limit)})
+
+
+@tool
+def save_daily_report(
+    content: str,
+    title: str = "每日报告",
+    user_note: str = "",
+    target_date: Optional[str] = None,
+) -> str:
+    """保存或覆盖某日每日报告正文。"""
+    from datetime import date as _date
+
+    ds = target_date or _date.today().isoformat()
+    snapshot = get_repo().get_day_snapshot(ds)
+    row = get_repo().save_daily_report(
+        target_date=ds,
+        title=title,
+        content=content,
+        stats={
+            "workout": snapshot.get("workout"),
+            "nutrition": {
+                "totals": (snapshot.get("nutrition") or {}).get("totals"),
+                "targets": (snapshot.get("nutrition") or {}).get("targets"),
+            },
+        },
+        user_note=user_note,
+    )
+    return _ok({"ok": True, "report": row})
+
+
+@tool
+def delete_daily_report(target_date: str) -> str:
+    """删除某日每日报告。"""
+    get_repo().delete_daily_report(target_date)
+    return _ok({"ok": True, "date": target_date})
+
+
+# ---------------------------------------------------------------------------
+# Registry
+# ---------------------------------------------------------------------------
+
 ALL_TOOLS = [
+    # profile
     get_profile,
     update_profile,
+    # plan
     get_current_plan,
     save_plan,
+    update_plan_day,
+    mutate_plan_exercise,
+    # today / sets
     get_today_workout,
     log_set,
+    update_set,
+    delete_set,
+    add_today_exercise,
+    delete_today_exercise,
+    replace_today_exercise,
+    skip_remaining_sets,
+    apply_to_remaining_sets,
+    update_workout,
+    resync_today_from_plan,
+    # history
     get_recent_history,
+    get_exercise_progress,
+    get_day_detail,
+    # library
     list_exercises,
+    # nutrition
     get_nutrition_day,
     get_recent_nutrition,
     log_meal,
+    update_meal,
     delete_meal,
+    # body
+    list_body_metrics,
+    log_body_metrics,
+    delete_body_metrics,
+    # reports
+    get_daily_report,
+    list_daily_reports,
+    save_daily_report,
+    delete_daily_report,
 ]

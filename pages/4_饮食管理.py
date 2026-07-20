@@ -20,6 +20,13 @@ render_sidebar()
 st.title("饮食管理")
 st.caption("这里看进度和明细；记账请到「教练对话」用文字或拍照。")
 
+if st.session_state.pop("nutrition_saved_flash", False):
+    st.success("饮食目标已保存")
+    st.toast("饮食目标已保存")
+if st.session_state.pop("meal_logged_flash", False):
+    st.success("已记录")
+    st.toast("已记录")
+
 with st.expander("去记账", expanded=False):
     go1, go2 = st.columns(2)
     with go1:
@@ -137,13 +144,14 @@ with st.expander("饮食目标", expanded=False):
             step=5.0,
         )
         if st.form_submit_button("保存饮食目标"):
+            # 填 0 = 清空目标；须把 None 写进库，不能跳过更新
             repo.update_profile(
-                calorie_target=cal or None,
-                protein_target_g=pro or None,
-                carb_target_g=carb_t or None,
-                fat_target_g=fat_t or None,
+                calorie_target=cal if cal else None,
+                protein_target_g=pro if pro else None,
+                carb_target_g=carb_t if carb_t else None,
+                fat_target_g=fat_t if fat_t else None,
             )
-            st.success("已保存")
+            st.session_state["nutrition_saved_flash"] = True
             st.rerun()
 
 with st.expander("近 7 天饮食汇总", expanded=False):
@@ -177,12 +185,12 @@ with st.expander("手动精确填写（可选）", expanded=False):
                 repo.log_meal(
                     name=meal_name.strip(),
                     meal_type=meal_type,
-                    calories=calories or None,
-                    protein_g=protein or None,
-                    carb_g=carb or None,
-                    fat_g=fat or None,
+                    calories=calories if calories else None,
+                    protein_g=protein if protein else None,
+                    carb_g=carb if carb else None,
+                    fat_g=fat if fat else None,
                     notes=meal_notes,
                     target_date=target.isoformat(),
                 )
-                st.success("已记录")
+                st.session_state["meal_logged_flash"] = True
                 st.rerun()

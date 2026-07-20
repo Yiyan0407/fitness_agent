@@ -129,8 +129,8 @@ with st.expander("体重 / 体脂趋势", expanded=False):
         )
         if st.form_submit_button("记入今日并更新画像"):
             repo.update_profile(
-                weight_kg=w_in or None,
-                body_fat_pct=f_in or None,
+                weight_kg=w_in if w_in else None,
+                body_fat_pct=f_in if f_in else None,
             )
             st.toast("已记录")
             st.rerun()

@@ -236,7 +236,7 @@ else:
             "name": st.column_config.TextColumn("动作名称", required=True, width="medium"),
             "sets": st.column_config.NumberColumn("组数", min_value=1, max_value=10, step=1),
             "reps": st.column_config.TextColumn("次数", help="如 8 或 6-8"),
-            "weight_kg": st.column_config.NumberColumn("重量kg", min_value=0.0, step=2.5),
+            "weight_kg": st.column_config.NumberColumn("重量kg", min_value=0.0, step=1.0),
             "notes": st.column_config.TextColumn("备注"),
         },
         key=f"editor_{day_key}",

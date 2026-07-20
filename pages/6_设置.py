@@ -26,6 +26,10 @@ render_sidebar()
 
 st.title("设置")
 
+if st.session_state.pop("profile_saved_flash", False):
+    st.success("画像已保存")
+    st.toast("画像已保存")
+
 need_mimo = not get_api_key() or get_api_key().startswith("sk-xxxxx")
 need_doubao = not get_doubao_api_key() or get_doubao_api_key().startswith("sk-xxxxx")
 
@@ -249,11 +253,15 @@ with st.form("profile_form"):
     notes = st.text_area("其他备注", value=profile.get("notes") or "")
     submitted = st.form_submit_button("保存画像", type="primary")
     if submitted:
+        # 数字项填 0 = 清空（写入 NULL）；不能用 `x or None` 后直接丢弃，否则旧值不会被清掉
+        def _num_or_clear(v: float | int) -> float | int | None:
+            return v if v else None
+
         repo.update_profile(
             goal=goal,
             goal_detail=goal_detail if goal_detail is not None else "",
             gender=gender if gender is not None else "",
-            age=int(age) if age else None,
+            age=_num_or_clear(int(age)),
             experience=experience,
             days_per_week=days,
             session_minutes=int(session_minutes),
@@ -262,19 +270,20 @@ with st.form("profile_form"):
             equipment=equipment,
             injuries=injuries if injuries is not None else "",
             diet_prefs=diet_prefs if diet_prefs is not None else "",
-            sleep_hours=sleep_hours or None,
-            weight_kg=weight or None,
-            target_weight_kg=target_weight or None,
-            body_fat_pct=body_fat or None,
-            target_body_fat_pct=target_bf or None,
-            height_cm=height or None,
-            calorie_target=calorie_target or None,
-            protein_target_g=protein_target or None,
-            carb_target_g=carb_target or None,
-            fat_target_g=fat_target or None,
+            sleep_hours=_num_or_clear(sleep_hours),
+            weight_kg=_num_or_clear(weight),
+            target_weight_kg=_num_or_clear(target_weight),
+            body_fat_pct=_num_or_clear(body_fat),
+            target_body_fat_pct=_num_or_clear(target_bf),
+            height_cm=_num_or_clear(height),
+            calorie_target=_num_or_clear(calorie_target),
+            protein_target_g=_num_or_clear(protein_target),
+            carb_target_g=_num_or_clear(carb_target),
+            fat_target_g=_num_or_clear(fat_target),
             notes=notes if notes is not None else "",
         )
-        st.success("画像已保存")
+        st.session_state["profile_saved_flash"] = True
+        st.rerun()
 
 st.divider()
 with st.expander("数据库 / 维护", expanded=False):

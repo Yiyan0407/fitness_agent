@@ -1,4 +1,4 @@
-"""今日训练打卡页 — 一键完成 + 当场改计划。"""
+"""今日训练打卡页 — 直接改重量/次数，界面尽量干净。"""
 
 from __future__ import annotations
 
@@ -21,7 +21,6 @@ render_sidebar()
 
 st.title("今日训练")
 
-# 从历史日历跳转时，强制写入 date_input 的 widget state
 jump = st.session_state.pop("workout_jump_date", None)
 if jump:
     try:
@@ -53,268 +52,337 @@ if plan and plan.get("rest"):
 
 done = sum(1 for s in sets if s.get("completed"))
 total = len(sets)
-pending = total - done
 name = (plan or {}).get("name") or "训练"
-st.subheader(f"{name}")
-st.caption(f"状态：{workout.get('status')} · {target.isoformat()}")
+st.subheader(name)
+st.caption(f"{target.isoformat()} · {workout.get('status')} · 改动只影响今天")
 if total:
-    st.progress(done / total, text=f"{done}/{total} 组已完成")
+    st.progress(done / total, text=f"{done}/{total} 组")
 
-# 运动消耗（折叠，减少手机滚动）
-burn = workout.get("calories_burned")
-burn_note = workout.get("calories_burned_note") or ""
-burn_label = (
-    f"运动消耗 · {float(burn):.0f} kcal" if burn is not None else "运动消耗 · 未估算"
-)
-with st.expander(burn_label, expanded=False):
-    b1, b2 = st.columns(2)
-    with b1:
-        can_ai = get_api_key() and not get_api_key().startswith("sk-xxxxx")
+
+def _safe_key(text: str) -> str:
+    return "".join(ch if ch.isalnum() else "_" for ch in text)[:48]
+
+
+# 对用户展示自然语言；入库仍存 RPE 数值便于统计
+FEEL_OPTIONS = [
+    (6.0, "很轻松", "还能再做很多下"),
+    (7.0, "比较轻松", "大概还能再做 3 下"),
+    (8.0, "有点吃力", "大概还能再做 1～2 下"),
+    (9.0, "非常吃力", "最多再挤 1 下"),
+    (10.0, "完全力竭", "一根都做不动了"),
+]
+
+
+def _feel_label(rpe: float | None) -> str:
+    if rpe is None:
+        return "未填感觉"
+    best = min(FEEL_OPTIONS, key=lambda item: abs(item[0] - float(rpe)))
+    return best[1]
+
+
+def _save_feel(set_id: int, rpe: float, label: str) -> None:
+    repo.update_set(int(set_id), rpe=float(rpe))
+    st.session_state.pop("rpe_prompt", None)
+    st.toast(f"已记：{label}")
+    st.rerun()
+
+
+def _render_feel_choices(prompt: dict, *, key_prefix: str) -> None:
+    sid = int(prompt["set_id"])
+    st.caption(
+        f"{prompt.get('exercise_name')} · 第 {prompt.get('set_index')} 组 · "
+        f"{prompt.get('weight_kg') or '-'} kg × {prompt.get('reps') or '-'}"
+    )
+    for val, title, desc in FEEL_OPTIONS:
         if st.button(
-            "AI 估算消耗",
+            f"{title}（{desc}）",
+            key=f"{key_prefix}_{sid}_{int(val * 10)}",
             width="stretch",
-            disabled=not can_ai or done == 0,
-            help="根据画像与已完成组估算额外消耗（非设备实测）并入库",
         ):
-            with st.spinner("正在按画像估算运动消耗…"):
-                try:
-                    result = estimate_workout_calories(target.isoformat(), save=True)
-                except MissingAPIKeyError as exc:
-                    st.error(str(exc))
-                except Exception as exc:  # noqa: BLE001
-                    st.error(f"估算失败：{exc}")
-                else:
-                    st.toast(f"已记录约 {result['calories_burned']} kcal")
-                    st.rerun()
-    with b2:
-        manual = st.number_input(
-            "手动修正 kcal",
-            min_value=0.0,
-            value=float(burn) if burn is not None else 0.0,
-            step=10.0,
-            key="manual_burn",
-        )
-        if st.button("保存消耗", width="stretch"):
-            repo.update_workout(
-                workout["id"],
-                calories_burned=manual or None,
-                calories_burned_note=(burn_note or "手动录入") if manual else "",
-                clear_calories_burned=not manual,
-            )
-            st.toast("已保存运动消耗")
-            st.rerun()
-    if burn_note:
-        st.caption(burn_note)
-    if done == 0:
-        st.caption("完成至少一组后再估算运动消耗。")
-
-# 今日整体临时调整
-with st.expander("今天临时改安排（推不动 / 没力气）", expanded=False):
-    st.caption("只改今天的打卡列表，不会自动改一周模板。要改模板请去「训练计划」。")
-    g1, g2, g3 = st.columns(3)
-    with g1:
-        if st.button("结束剩余组（没力气了）", width="stretch"):
-            n = repo.skip_remaining_sets(workout["id"])
-            repo.update_workout(workout["id"], status="done")
-            st.toast(f"已去掉 {n} 组未完成")
-            st.rerun()
-    with g2:
-        if st.button("全部剩余重量 -2.5kg", width="stretch"):
-            names = {s["exercise_name"] for s in sets if not s.get("completed")}
-            for ex in names:
-                repo.apply_to_remaining_sets(
-                    workout["id"], ex, weight_delta=-2.5
-                )
-            st.toast("已给剩余组减重 2.5kg")
-            st.rerun()
-    with g3:
-        st.page_link("pages/3_训练计划.py", label="编辑一周模板", icon="📋")
-
-with st.expander("高级：从周计划重置今日组数", expanded=False):
-    if st.button("重新生成今日组数（清空本日记录）"):
-        for s in repo.get_sets(workout["id"]):
-            repo.conn.execute("DELETE FROM sets WHERE id = ?", (s["id"],))
-        repo.conn.commit()
-        repo.ensure_today_sets_from_plan(target, force=True)
+            _save_feel(sid, val, title)
+    if st.button("这组先不填", key=f"{key_prefix}_skip_{sid}", width="stretch"):
+        st.session_state.pop("rpe_prompt", None)
+        st.toast("已跳过")
         st.rerun()
 
+
+_HAS_DIALOG = hasattr(st, "dialog")
+if _HAS_DIALOG:
+
+    @st.dialog("这组练完感觉怎么样？")
+    def _feel_dialog() -> None:
+        prompt = st.session_state.get("rpe_prompt")
+        if not prompt:
+            st.caption("没有待记录的组。")
+            return
+        _render_feel_choices(prompt, key_prefix="feel_dlg")
+
+else:
+    _feel_dialog = None  # type: ignore[assignment]
+
+
+# 校验待填感觉的组是否还有效
+rpe_prompt = st.session_state.get("rpe_prompt")
+if rpe_prompt:
+    still = next(
+        (s for s in sets if s["id"] == rpe_prompt.get("set_id") and s.get("completed")),
+        None,
+    )
+    if not still or still.get("rpe") is not None:
+        st.session_state.pop("rpe_prompt", None)
+        rpe_prompt = None
+
+# 完成组后弹窗询问感觉
+if rpe_prompt and _feel_dialog is not None:
+    _feel_dialog()
+
+if st.session_state.get("rest_until"):
+    remaining = int(st.session_state["rest_until"] - time.time())
+    if remaining > 0:
+        r1, r2 = st.columns([4, 1])
+        r1.info(f"休息 **{remaining}** 秒")
+        if r2.button("跳过", key="skip_rest"):
+            st.session_state.pop("rest_until", None)
+            st.rerun()
+    else:
+        st.session_state.pop("rest_until", None)
+        st.toast("休息结束")
+
+
+# --- 动作列表 ---
 if not sets:
-    st.info("今日暂无动作。可让教练调整计划，或下方手动追加。")
+    st.info("今日暂无动作，可在下方添加，或让教练改计划。")
 else:
     by_ex: dict[str, list] = {}
     for s in sets:
         by_ex.setdefault(s["exercise_name"], []).append(s)
 
-    if st.session_state.get("rest_until"):
-        remaining = int(st.session_state["rest_until"] - time.time())
-        if remaining > 0:
-            st.info(f"组间休息：还剩 **{remaining}** 秒（可照常改重量，或点跳过）")
-            if st.button("跳过休息"):
-                st.session_state.pop("rest_until", None)
-                st.rerun()
-        else:
-            st.session_state.pop("rest_until", None)
-            st.toast("休息结束，下一组！")
+    waiting_rpe = rpe_prompt is not None
 
     for ex_name, ex_sets in by_ex.items():
+        ex_key = _safe_key(ex_name)
         finished = sum(1 for s in ex_sets if s.get("completed"))
-        left = [s for s in ex_sets if not s.get("completed")]
-        st.markdown(f"### {ex_name}　`{finished}/{len(ex_sets)}`")
-        demo = repo.get_exercise_by_name(ex_name)
-        if demo:
-            with st.popover("看演示"):
-                if demo.get("image_url"):
-                    try:
-                        st.image(demo["image_url"], width=260)
-                    except Exception:
-                        st.caption("配图加载失败（需联网）")
-                else:
-                    st.caption("库中暂无配图")
-                if demo.get("name_en"):
-                    st.caption(demo["name_en"])
-                st.write(
-                    f"{demo.get('muscle') or '-'} · {demo.get('equipment') or '-'}"
-                )
-                if demo.get("tips"):
-                    st.caption(demo["tips"])
-        last = repo.get_last_completed_set(ex_name, before_date=target.isoformat())
-        if last:
-            st.caption(
-                f"上次（{last['workout_date']}）："
-                f"{last.get('weight_kg') or '-'} kg × {last.get('reps') or '-'} 次"
-                + (f" · RPE {last['rpe']}" if last.get("rpe") else "")
-            )
+        pending_sets = [s for s in ex_sets if not s.get("completed")]
+        done_sets = [s for s in ex_sets if s.get("completed")]
 
-        if left:
-            with st.expander("本动作临时调整", expanded=False):
-                a1, a2, a3 = st.columns(3)
-                a4, a5 = st.columns(2)
-                cur_w = float(left[0].get("weight_kg") or 0)
-                if a1.button("剩余-2.5kg", key=f"ex_wm_{ex_name}", width="stretch"):
+        head, demo_col = st.columns([5, 1])
+        with head:
+            st.markdown(f"### {ex_name}　`{finished}/{len(ex_sets)}`")
+            last = repo.get_last_completed_set(ex_name, before_date=target.isoformat())
+            if last:
+                st.caption(
+                    f"上次 {last['workout_date']}："
+                    f"{last.get('weight_kg') or '-'} kg × {last.get('reps') or '-'}"
+                    + (f" · RPE {last['rpe']}" if last.get("rpe") else "")
+                )
+        with demo_col:
+            demo = repo.get_exercise_by_name(ex_name)
+            if demo:
+                with st.popover("演示"):
+                    if demo.get("image_url"):
+                        try:
+                            st.image(demo["image_url"], width=260)
+                        except Exception:
+                            st.caption("配图加载失败")
+                    if demo.get("tips"):
+                        st.caption(demo["tips"])
+
+        # 无弹窗时：把感觉选择画在刚完成的那组所属动作下面
+        if (
+            rpe_prompt
+            and not _HAS_DIALOG
+            and rpe_prompt.get("exercise_name") == ex_name
+        ):
+            st.info("这组练完感觉怎么样？")
+            _render_feel_choices(rpe_prompt, key_prefix="feel_inline")
+
+        # 当前待做组（有未填感觉时先不让打下一组）
+        if pending_sets and not waiting_rpe:
+            focus = pending_sets[0]
+            sid = focus["id"]
+            weight = float(focus["weight_kg"] or 0)
+            reps = int(focus["reps"] or 0)
+            later_n = len(pending_sets) - 1
+
+            st.caption(
+                f"第 {focus['set_index']} 组"
+                + (f" · 后面还有 {later_n} 组" if later_n else "")
+            )
+            with st.form(f"set_form_{sid}", clear_on_submit=False):
+                f1, f2 = st.columns(2)
+                w_in = f1.number_input(
+                    "重量 kg", min_value=0.0, value=weight, step=1.0, format="%.1f"
+                )
+                r_in = f2.number_input("次数", min_value=0, value=reps, step=1)
+                sync_rest = st.checkbox("同步到本动作剩余组", value=True)
+                c1, c2 = st.columns([3, 1])
+                do_complete = c1.form_submit_button(
+                    "完成此组", type="primary", width="stretch"
+                )
+                do_skip = c2.form_submit_button("跳过", width="stretch")
+
+            if do_complete:
+                w_val, r_val = float(w_in), int(r_in)
+                repo.update_set(sid, weight_kg=w_val, reps=r_val)
+                if sync_rest:
                     repo.apply_to_remaining_sets(
-                        workout["id"], ex_name, weight_delta=-2.5
+                        workout["id"], ex_name, weight_kg=w_val, reps=r_val
                     )
-                    st.rerun()
-                if a2.button("剩余+2.5kg", key=f"ex_wp_{ex_name}", width="stretch"):
-                    repo.apply_to_remaining_sets(
-                        workout["id"], ex_name, weight_delta=2.5
-                    )
-                    st.rerun()
-                if a3.button("再加一组", key=f"ex_add_{ex_name}", width="stretch"):
-                    repo.add_planned_set(workout["id"], ex_name)
-                    st.rerun()
-                if a4.button("去掉最后一组", key=f"ex_drop_{ex_name}", width="stretch"):
-                    if repo.drop_last_incomplete_set(workout["id"], ex_name):
-                        st.toast(f"已去掉 {ex_name} 最后一组")
-                    st.rerun()
-                if a5.button("跳过剩余组", key=f"ex_skip_{ex_name}", width="stretch"):
+                repo.complete_set(sid, weight_kg=w_val, reps=r_val)
+                st.session_state["rpe_prompt"] = {
+                    "set_id": sid,
+                    "set_index": focus["set_index"],
+                    "exercise_name": ex_name,
+                    "weight_kg": w_val,
+                    "reps": r_val,
+                }
+                st.session_state["rest_until"] = time.time() + 90
+                st.rerun()
+            if do_skip:
+                repo.delete_set(sid)
+                st.toast("已跳过")
+                st.rerun()
+        elif pending_sets and waiting_rpe:
+            st.caption("先选一下刚刚那组的感觉，再继续。")
+
+        a1, a2, a3, a4 = st.columns(4)
+        if a1.button("加一组", key=f"ex_add_{ex_key}", width="stretch"):
+            repo.add_planned_set(workout["id"], ex_name)
+            st.rerun()
+        if a2.button(
+            "减一组",
+            key=f"ex_drop_{ex_key}",
+            width="stretch",
+            disabled=not pending_sets or waiting_rpe,
+        ):
+            repo.drop_last_incomplete_set(workout["id"], ex_name)
+            st.rerun()
+        with a3:
+            with st.popover("换动作"):
+                new_name = st.text_input("新动作", key=f"swap_name_{ex_key}")
+                sync_plan = st.checkbox("同步周计划", value=False, key=f"swap_plan_{ex_key}")
+                if st.button("确认", key=f"swap_ok_{ex_key}", type="primary"):
+                    if new_name.strip():
+                        out = repo.replace_today_exercise(
+                            ex_name,
+                            new_name.strip(),
+                            also_update_plan=sync_plan,
+                            target_date=target.isoformat(),
+                        )
+                        if out.get("ok"):
+                            st.toast(f"已换成 {out.get('new_name')}")
+                            st.rerun()
+                        else:
+                            st.error(out.get("error") or "失败")
+        with a4:
+            with st.popover("更多"):
+                if st.button("跳过剩余", key=f"ex_skip_{ex_key}", width="stretch"):
                     n = repo.skip_remaining_sets(workout["id"], ex_name)
                     st.toast(f"已跳过 {n} 组")
                     st.rerun()
-                set_w = st.number_input(
-                    "把剩余组重量统一设为 (kg)",
-                    min_value=0.0,
-                    value=cur_w,
-                    step=2.5,
-                    key=f"ex_setw_{ex_name}",
-                )
-                if st.button("应用到剩余组", key=f"ex_applyw_{ex_name}"):
-                    repo.apply_to_remaining_sets(
-                        workout["id"], ex_name, weight_kg=set_w
+                if st.button("删除本动作", key=f"ex_del_{ex_key}", width="stretch"):
+                    out = repo.delete_today_exercise(
+                        ex_name,
+                        include_completed=True,
+                        target_date=target.isoformat(),
                     )
-                    st.toast(f"{ex_name} 剩余组已改为 {set_w:g} kg")
+                    st.toast(f"已删 {out.get('deleted_sets', 0)} 组")
                     st.rerun()
 
-        done_sets = [s for s in ex_sets if s.get("completed")]
-        pending_sets = [s for s in ex_sets if not s.get("completed")]
         if done_sets:
-            with st.expander(f"已完成 {len(done_sets)} 组", expanded=False):
+            missing_rpe = [s for s in done_sets if s.get("rpe") is None]
+            label = f"已完成 {len(done_sets)} 组"
+            if missing_rpe:
+                label += f" · {len(missing_rpe)} 组未填感觉"
+            with st.expander(label, expanded=bool(missing_rpe and not waiting_rpe)):
                 for s in done_sets:
                     sid = s["id"]
-                    st.success(
+                    feel = _feel_label(s.get("rpe"))
+                    line = (
                         f"第 {s['set_index']} 组 · "
-                        f"{s.get('weight_kg') or '-'} kg × {s.get('reps') or '-'} 次"
-                        + (f" · RPE {s['rpe']}" if s.get("rpe") else "")
+                        f"{s.get('weight_kg') or '-'} kg × {s.get('reps') or '-'} · {feel}"
                     )
-                    if st.button("撤销完成", key=f"undo_{sid}"):
+                    d1, d2 = st.columns([4, 1])
+                    d1.write(line)
+                    if d2.button("撤销", key=f"undo_{sid}"):
                         repo.update_set(sid, completed=False)
+                        prompt = st.session_state.get("rpe_prompt") or {}
+                        if prompt.get("set_id") == sid:
+                            st.session_state.pop("rpe_prompt", None)
                         st.rerun()
+                    if s.get("rpe") is None:
+                        st.caption("补选这组感觉：")
+                        for val, title, desc in FEEL_OPTIONS:
+                            if st.button(
+                                f"{title}（{desc}）",
+                                key=f"feel_fill_{sid}_{int(val * 10)}",
+                                width="stretch",
+                            ):
+                                _save_feel(sid, val, title)
 
-        for s in pending_sets:
-            sid = s["id"]
-            weight = float(s["weight_kg"] or 0)
-            reps = int(s["reps"] or 0)
-            rpe = float(s["rpe"] or 0)
+        st.divider()
 
-            st.markdown(f"**第 {s['set_index']} 组**　`{weight:g} kg × {reps} 次`")
-            c_ok, c_more = st.columns([2, 1])
-            if c_ok.button(
-                "完成此组", key=f"ok_{sid}", type="primary", width="stretch"
-            ):
-                repo.complete_set(
-                    sid,
-                    weight_kg=weight or None,
-                    reps=reps or None,
-                    rpe=rpe or None,
-                )
-                st.session_state["rest_until"] = time.time() + 90
-                st.toast(f"已完成第 {s['set_index']} 组")
-                st.rerun()
-            with c_more:
-                with st.popover("调整"):
-                    if st.button("重量 -2.5", key=f"wm_{sid}", width="stretch"):
-                        repo.bump_set_field(sid, "weight_kg", -2.5)
-                        st.rerun()
-                    if st.button("重量 +2.5", key=f"wp_{sid}", width="stretch"):
-                        repo.bump_set_field(sid, "weight_kg", 2.5)
-                        st.rerun()
-                    if st.button("次数 -1", key=f"rm_{sid}", width="stretch"):
-                        repo.bump_set_field(sid, "reps", -1)
-                        st.rerun()
-                    if st.button("次数 +1", key=f"rp_{sid}", width="stretch"):
-                        repo.bump_set_field(sid, "reps", 1)
-                        st.rerun()
-                    new_rpe = st.slider(
-                        "RPE", 0.0, 10.0, rpe or 7.0, 0.5, key=f"rpe_{sid}"
-                    )
-                    if st.button("保存 RPE", key=f"save_rpe_{sid}"):
-                        repo.update_set(sid, rpe=new_rpe)
-                        st.rerun()
-                    if st.button("跳过这一组", key=f"skip_one_{sid}"):
-                        repo.delete_set(sid)
-                        st.toast("已跳过本组")
-                        st.rerun()
-            st.divider()
 
-st.divider()
-with st.expander("快速追加一组 / 动作", expanded=False):
-    with st.form("add_set"):
+with st.expander("加动作", expanded=not sets):
+    with st.form("add_exercise_planned"):
         name_in = st.text_input("动作名称")
-        w = st.number_input("重量 kg", min_value=0.0, value=0.0, step=2.5)
-        r = st.number_input("次数", min_value=0, value=8, step=1)
-        p = st.number_input("RPE", min_value=0.0, max_value=10.0, value=7.0, step=0.5)
-        submitted = st.form_submit_button("记录并完成")
-        if submitted:
+        c1, c2, c3 = st.columns(3)
+        sets_n = c1.number_input("组数", min_value=1, value=3, step=1)
+        w = c2.number_input("重量 kg", min_value=0.0, value=0.0, step=1.0)
+        r = c3.text_input("次数", value="8-12")
+        if st.form_submit_button("加入今日", type="primary"):
             if not name_in.strip():
                 st.error("请填写动作名称")
             else:
-                repo.log_set(
-                    exercise_name=name_in.strip(),
+                out = repo.add_today_exercise(
+                    name_in.strip(),
+                    sets=int(sets_n),
+                    reps=r.strip() or "8-12",
                     weight_kg=w or None,
-                    reps=int(r) or None,
-                    rpe=p or None,
                     target_date=target.isoformat(),
                 )
-                st.success("已记录")
-                st.rerun()
+                if out.get("ok"):
+                    st.rerun()
+                else:
+                    st.error(out.get("error") or "添加失败")
 
-with st.expander("备注与收工", expanded=False):
+with st.expander("消耗 / 备注 / 其他", expanded=False):
+    burn = workout.get("calories_burned")
+    can_ai = get_api_key() and not get_api_key().startswith("sk-xxxxx")
+    b1, b2 = st.columns(2)
+    with b1:
+        if st.button("AI 估算消耗", disabled=not can_ai or done == 0, width="stretch"):
+            with st.spinner("估算中…"):
+                try:
+                    result = estimate_workout_calories(target.isoformat(), save=True)
+                    st.toast(f"约 {result['calories_burned']} kcal")
+                    st.rerun()
+                except MissingAPIKeyError as exc:
+                    st.error(str(exc))
+                except Exception as exc:  # noqa: BLE001
+                    st.error(str(exc))
+        if burn is not None:
+            st.caption(f"当前消耗 {float(burn):.0f} kcal")
+    with b2:
+        if st.button("结束剩余组并收工", width="stretch"):
+            n = repo.skip_remaining_sets(workout["id"])
+            repo.update_workout(workout["id"], status="done")
+            st.toast(f"已去掉 {n} 组")
+            st.rerun()
+
     notes = st.text_area("训练备注", value=workout.get("notes") or "")
-    c1, c2 = st.columns(2)
-    if c1.button("保存备注", width="stretch"):
+    n1, n2 = st.columns(2)
+    if n1.button("保存备注", width="stretch"):
         repo.update_workout(workout["id"], notes=notes)
-        st.success("备注已保存")
-    if c2.button("标记今日完成", width="stretch", type="primary"):
+        st.toast("已保存")
+    if n2.button("标记今日完成", type="primary", width="stretch"):
         repo.update_workout(workout["id"], status="done", notes=notes)
-        st.success("今日训练已完成")
+        st.rerun()
+
+    st.page_link("pages/3_训练计划.py", label="改一周模板", icon="📋")
+    if st.button("按周计划重置今日（清空本日）"):
+        for s in repo.get_sets(workout["id"]):
+            repo.conn.execute("DELETE FROM sets WHERE id = ?", (s["id"],))
+        repo.conn.commit()
+        repo.ensure_today_sets_from_plan(target, force=True)
         st.rerun()

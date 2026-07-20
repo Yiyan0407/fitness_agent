@@ -6,7 +6,7 @@ from datetime import date
 
 import streamlit as st
 
-from agent.daily_report import generate_daily_report
+from agent.daily_report import build_report_context, generate_daily_report
 from agent.llm import MissingAPIKeyError
 from bootstrap import get_api_key, get_repo, load_env
 from db.schema import init_db
@@ -60,6 +60,21 @@ if plan.get("rest"):
 elif (w.get("total_sets") or 0) == 0 and not (n.get("meals") or []):
     st.warning("这一天还没有训练打卡或饮食记录，报告会较空，也可以先记再生成。")
 
+# 预览明天安排，避免「明天建议」瞎写休息
+report_ctx = build_report_context(ds)
+tomorrow = report_ctx.get("tomorrow") or {}
+if tomorrow.get("rest"):
+    st.caption(f"明天（{tomorrow.get('weekday')}）周计划：休息")
+else:
+    ex_names = "、".join(
+        ex.get("name") or "" for ex in (tomorrow.get("exercises") or [])[:6]
+    )
+    st.caption(
+        f"明天（{tomorrow.get('weekday')}）周计划：{tomorrow.get('name') or '训练'}"
+        + (f" · {ex_names}" if ex_names else "")
+        + " —— 生成报告时会据此写「明天建议」"
+    )
+
 existing = repo.get_daily_report(ds)
 user_note = st.text_area(
     "今晚想补充一句（可选）",
@@ -99,7 +114,7 @@ with st.expander("消耗估算选项", expanded=False):
     st.page_link("pages/4_饮食管理.py", label="饮食明细", icon="🥗")
 
 if do_gen:
-    with st.spinner("正在根据今日训练与饮食写报告…"):
+    with st.spinner("正在根据今日训练、饮食、明天计划与近期完成度写报告…"):
         try:
             result = generate_daily_report(
                 ds,

@@ -1,4 +1,4 @@
-"""教练对话页 — 训练 + 饮食记账（文字 / 拍照）。"""
+"""教练对话页 — 训练 + 饮食记账（文字 / 传图）。"""
 
 from __future__ import annotations
 
@@ -19,84 +19,56 @@ repo = get_repo()
 render_sidebar()
 
 st.title("教练对话")
-st.caption("训练计划、改练、饮食记账：直接说，或上传餐食照片")
+st.caption("训练计划、改练、饮食记账：直接说；手机上传图片时可直接拍照")
 
 if not get_api_key() or get_api_key().startswith("sk-xxxxx"):
     st.error("请先在「设置」配置 MIMO_API_KEY。")
     st.page_link("pages/6_设置.py", label="去设置", icon="⚙️")
     st.stop()
 
-with st.expander("今日饮食摘要", expanded=False):
-    nutri = repo.get_nutrition_day()
-    tot, tgt = nutri["totals"], nutri["targets"]
-    n1, n2, n3 = st.columns(3)
-    cal_label = f"{tot['calories']:.0f}"
-    if tgt.get("calorie_target"):
-        cal_label += f" / {tgt['calorie_target']:.0f}"
-    pro_label = f"{tot['protein_g']:.0f}"
-    if tgt.get("protein_target_g"):
-        pro_label += f" / {tgt['protein_target_g']:.0f}"
-    n1.metric("今日热量", cal_label)
-    n2.metric("今日蛋白", pro_label)
-    n3.metric("已记餐次", len(nutri["meals"]))
-    st.page_link("pages/4_饮食管理.py", label="查看饮食明细", icon="🥗")
-
-QUICK_PROMPTS = [
-    "根据我的画像生成一周训练计划，并保存",
-    "今天只有40分钟，帮我精简今日训练",
-    "根据我的画像设定每日热量和蛋白目标，并写入",
-    "喝了一瓶可乐，帮我记到饮食里",
-    "中午吃了鸡胸肉饭，帮我记账",
-    "看看我今天饮食还差多少蛋白，推荐加餐",
-]
-
 messages = repo.get_chat_messages(limit=80)
-if not messages:
-    st.info(
-        "还没有对话。可以说训练需求，或「喝了一瓶可乐」让我记账；也可展开下方上传餐食照片。"
+
+# 顶部：饮食摘要 + 传图记账（避免被长对话顶到很下面）
+sum_l, sum_r = st.columns([3, 1])
+with sum_l:
+    with st.expander("今日饮食摘要", expanded=False):
+        nutri = repo.get_nutrition_day()
+        tot, tgt = nutri["totals"], nutri["targets"]
+        n1, n2, n3 = st.columns(3)
+        cal_label = f"{tot['calories']:.0f}"
+        if tgt.get("calorie_target"):
+            cal_label += f" / {tgt['calorie_target']:.0f}"
+        pro_label = f"{tot['protein_g']:.0f}"
+        if tgt.get("protein_target_g"):
+            pro_label += f" / {tgt['protein_target_g']:.0f}"
+        n1.metric("今日热量", cal_label)
+        n2.metric("今日蛋白", pro_label)
+        n3.metric("已记餐次", len(nutri["meals"]))
+        st.page_link("pages/4_饮食管理.py", label="查看饮食明细", icon="🥗")
+with sum_r:
+    if st.button("清空对话", width="stretch"):
+        repo.clear_chat()
+        st.session_state.pop("pending_chat", None)
+        st.rerun()
+
+with st.expander("上传餐食照片记账", expanded=False):
+    st.caption("选图即可；手机上点上传后可选「拍照」或「相册」，无需单独摄像头入口。")
+    uploaded = st.file_uploader(
+        "餐食照片",
+        type=["jpg", "jpeg", "png", "webp"],
+        accept_multiple_files=False,
+        key="coach_meal_image",
+        label_visibility="collapsed",
     )
-
-with st.expander("快捷提示", expanded=not messages):
-    cols = st.columns(2)
-    for i, text in enumerate(QUICK_PROMPTS):
-        with cols[i % 2]:
-            if st.button(text, key=f"quick_{i}", width="stretch"):
-                st.session_state["pending_chat"] = text
-                st.rerun()
-
-with st.expander("拍照记账（豆包看图）", expanded=False):
-    st.caption("默认从相册选图；需要时再点按钮打开摄像头。")
-    if "coach_use_camera" not in st.session_state:
-        st.session_state["coach_use_camera"] = False
-
-    camera_img = None
-    uploaded = None
-    if st.session_state["coach_use_camera"]:
-        camera_img = st.camera_input("对准餐食拍照", key="coach_meal_camera")
-        if st.button("返回相册选择", key="coach_meal_back_album"):
-            st.session_state["coach_use_camera"] = False
-            st.rerun()
-    else:
-        uploaded = st.file_uploader(
-            "从相册选择餐食照片",
-            type=["jpg", "jpeg", "png", "webp"],
-            accept_multiple_files=False,
-            key="coach_meal_image",
-        )
-        if st.button("打开摄像头拍照", key="coach_meal_open_camera"):
-            st.session_state["coach_use_camera"] = True
-            st.rerun()
-
-    meal_image = camera_img or uploaded
     hint = st.text_input(
         "补充说明（可选）",
         placeholder="半份 / 晚餐 / 加了米饭",
         key="coach_meal_hint",
     )
-    if meal_image is not None:
-        st.image(meal_image, width=280)
-    if st.button("识别并记入对话", type="primary", key="coach_meal_submit"):
-        if meal_image is None:
+    if uploaded is not None:
+        st.image(uploaded, width=280)
+    if st.button("识别并记入对话", type="primary", key="coach_meal_submit", width="stretch"):
+        if uploaded is None:
             st.error("请先选择或拍摄图片")
         else:
             from agent.doubao import MissingDoubaoKeyError
@@ -105,8 +77,8 @@ with st.expander("拍照记账（豆包看图）", expanded=False):
             with st.spinner("豆包看图识别中…"):
                 try:
                     result = log_meal_from_image(
-                        meal_image.getvalue(),
-                        filename=getattr(meal_image, "name", None) or "camera.jpg",
+                        uploaded.getvalue(),
+                        filename=getattr(uploaded, "name", None) or "meal.jpg",
                         hint=hint,
                         target_date=date.today().isoformat(),
                     )
@@ -140,16 +112,31 @@ with st.expander("拍照记账（豆包看图）", expanded=False):
                         reply += "\n\n今日：" + "，".join(extras)
                     repo.add_chat_message("user", user_line)
                     repo.add_chat_message("assistant", reply)
-                    st.session_state["coach_use_camera"] = False
                     st.toast(f"已记：{p['name']}")
                     st.rerun()
 
-_, top_r = st.columns([3, 1])
-with top_r:
-    if st.button("清空对话", width="stretch"):
-        repo.clear_chat()
-        st.session_state.pop("pending_chat", None)
-        st.rerun()
+QUICK_PROMPTS = [
+    "根据我的画像生成一周训练计划，并保存",
+    "今天只有40分钟，帮我精简今日训练",
+    "根据我的画像设定每日热量和蛋白目标，并写入",
+    "喝了一瓶可乐，帮我记到饮食里",
+    "中午吃了鸡胸肉饭，帮我记账",
+    "看看我今天饮食还差多少蛋白，推荐加餐",
+]
+
+if not messages:
+    st.info(
+        "还没有对话。可以说训练需求，或「喝了一瓶可乐」让我记账；"
+        "也可展开上方「上传餐食照片记账」。"
+    )
+
+with st.expander("快捷提示", expanded=not messages):
+    cols = st.columns(2)
+    for i, text in enumerate(QUICK_PROMPTS):
+        with cols[i % 2]:
+            if st.button(text, key=f"quick_{i}", width="stretch"):
+                st.session_state["pending_chat"] = text
+                st.rerun()
 
 for msg in messages:
     role = "user" if msg["role"] == "user" else "assistant"
@@ -171,7 +158,6 @@ if prompt:
     prior = history[:-1] if history else []
 
     with st.chat_message("assistant"):
-        # write_stream 内更新 empty 往往不刷新；用 status + 手动拼字
         progress = st.status("教练处理中…", expanded=True)
         bubble = st.empty()
         assembled: list[str] = []

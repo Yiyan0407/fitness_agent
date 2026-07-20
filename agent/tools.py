@@ -16,7 +16,7 @@ def _ok(data: Any) -> str:
 
 @tool
 def get_profile() -> str:
-    """读取用户的个人健身画像（目标方向、具体目标、目标体重、经验、每周天数、器械、伤病等）。"""
+    """读取用户的个人健身画像（目标、体重、体脂、经验、器械、伤病、饮食目标等）。"""
     return _ok(get_repo().get_profile())
 
 
@@ -31,6 +31,7 @@ def update_profile(
     injuries: Optional[str] = None,
     weight_kg: Optional[float] = None,
     target_weight_kg: Optional[float] = None,
+    body_fat_pct: Optional[float] = None,
     height_cm: Optional[float] = None,
     calorie_target: Optional[float] = None,
     protein_target_g: Optional[float] = None,
@@ -38,7 +39,7 @@ def update_profile(
     fat_target_g: Optional[float] = None,
     notes: Optional[str] = None,
 ) -> str:
-    """更新用户画像。gender 为男/女/其他；也可设置饮食目标（calorie_target / protein_target_g 等）。"""
+    """更新用户画像。body_fat_pct 为体脂率（%）；也可设置饮食目标等。"""
     fields = {
         "goal": goal,
         "goal_detail": goal_detail,
@@ -49,6 +50,7 @@ def update_profile(
         "injuries": injuries,
         "weight_kg": weight_kg,
         "target_weight_kg": target_weight_kg,
+        "body_fat_pct": body_fat_pct,
         "height_cm": height_cm,
         "calorie_target": calorie_target,
         "protein_target_g": protein_target_g,

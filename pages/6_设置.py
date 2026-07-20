@@ -126,11 +126,20 @@ with st.form("profile_form"):
         in ["健身房", "家庭哑铃", "仅自重", "综合"]
         else 0,
     )
-    weight = st.number_input(
+    w1, w2 = st.columns(2)
+    weight = w1.number_input(
         "当前体重 kg",
         min_value=0.0,
         value=float(profile["weight_kg"]) if profile.get("weight_kg") else 0.0,
         step=0.1,
+    )
+    body_fat = w2.number_input(
+        "当前体脂 %",
+        min_value=0.0,
+        max_value=60.0,
+        value=float(profile["body_fat_pct"]) if profile.get("body_fat_pct") else 0.0,
+        step=0.1,
+        help="没有可填 0；有变化时在这里更新",
     )
     height = st.number_input(
         "身高 cm",
@@ -179,6 +188,7 @@ with st.form("profile_form"):
             injuries=injuries,
             weight_kg=weight or None,
             target_weight_kg=target_weight or None,
+            body_fat_pct=body_fat or None,
             height_cm=height or None,
             calorie_target=calorie_target or None,
             protein_target_g=protein_target or None,

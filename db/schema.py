@@ -20,6 +20,7 @@ DEFAULT_PROFILE = {
     "injuries": "",
     "weight_kg": None,
     "target_weight_kg": None,
+    "body_fat_pct": None,
     "height_cm": None,
     "calorie_target": None,
     "protein_target_g": None,
@@ -40,6 +41,7 @@ CREATE TABLE IF NOT EXISTS profile (
     injuries TEXT NOT NULL DEFAULT '',
     weight_kg REAL,
     target_weight_kg REAL,
+    body_fat_pct REAL,
     height_cm REAL,
     calorie_target REAL,
     protein_target_g REAL,
@@ -63,6 +65,8 @@ CREATE TABLE IF NOT EXISTS workouts (
     date TEXT NOT NULL UNIQUE,
     status TEXT NOT NULL DEFAULT 'planned',
     notes TEXT NOT NULL DEFAULT '',
+    calories_burned REAL,
+    calories_burned_note TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
@@ -100,10 +104,22 @@ CREATE TABLE IF NOT EXISTS meals (
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS daily_reports (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL UNIQUE,
+    title TEXT NOT NULL DEFAULT '',
+    content TEXT NOT NULL,
+    stats_json TEXT NOT NULL DEFAULT '{}',
+    user_note TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_sets_workout ON sets(workout_id);
 CREATE INDEX IF NOT EXISTS idx_workouts_date ON workouts(date);
 CREATE INDEX IF NOT EXISTS idx_chat_created ON chat_messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_meals_date ON meals(date);
+CREATE INDEX IF NOT EXISTS idx_daily_reports_date ON daily_reports(date);
 """
 
 
@@ -122,10 +138,24 @@ def _migrate_profile_columns(conn: sqlite3.Connection) -> None:
         "goal_detail": "ALTER TABLE profile ADD COLUMN goal_detail TEXT NOT NULL DEFAULT ''",
         "gender": "ALTER TABLE profile ADD COLUMN gender TEXT NOT NULL DEFAULT ''",
         "target_weight_kg": "ALTER TABLE profile ADD COLUMN target_weight_kg REAL",
+        "body_fat_pct": "ALTER TABLE profile ADD COLUMN body_fat_pct REAL",
         "calorie_target": "ALTER TABLE profile ADD COLUMN calorie_target REAL",
         "protein_target_g": "ALTER TABLE profile ADD COLUMN protein_target_g REAL",
         "carb_target_g": "ALTER TABLE profile ADD COLUMN carb_target_g REAL",
         "fat_target_g": "ALTER TABLE profile ADD COLUMN fat_target_g REAL",
+    }
+    for col, sql in migrations.items():
+        if col not in cols:
+            conn.execute(sql)
+
+
+def _migrate_workout_columns(conn: sqlite3.Connection) -> None:
+    cols = {row[1] for row in conn.execute("PRAGMA table_info(workouts)").fetchall()}
+    migrations = {
+        "calories_burned": "ALTER TABLE workouts ADD COLUMN calories_burned REAL",
+        "calories_burned_note": (
+            "ALTER TABLE workouts ADD COLUMN calories_burned_note TEXT NOT NULL DEFAULT ''"
+        ),
     }
     for col, sql in migrations.items():
         if col not in cols:
@@ -138,6 +168,7 @@ def init_db(db_path: Path | None = None) -> None:
     try:
         conn.executescript(SCHEMA_SQL)
         _migrate_profile_columns(conn)
+        _migrate_workout_columns(conn)
         row = conn.execute("SELECT id FROM profile WHERE id = 1").fetchone()
         if row is None:
             conn.execute(

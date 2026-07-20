@@ -73,7 +73,11 @@ elif plan and plan.get("rest"):
         st.page_link("pages/3_训练计划.py", label="改训练计划", icon="📋")
 elif total and done >= total:
     st.success(f"今日「{(plan or {}).get('name') or '训练'}」已全部打卡完成。")
-    st.page_link("pages/5_历史进度.py", label="在日历里回顾", icon="📅")
+    r1, r2 = st.columns(2)
+    with r1:
+        st.page_link("pages/7_每日报告.py", label="生成今日报告", icon="📝")
+    with r2:
+        st.page_link("pages/5_历史进度.py", label="在日历里回顾", icon="📅")
 else:
     name = (plan or {}).get("name") or "训练"
     st.write(f"**今天：{name}** · {today['date']}")

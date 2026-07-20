@@ -57,6 +57,7 @@ class Repository:
             "injuries",
             "weight_kg",
             "target_weight_kg",
+            "body_fat_pct",
             "height_cm",
             "calorie_target",
             "protein_target_g",
@@ -150,6 +151,9 @@ class Repository:
         workout_id: int,
         status: str | None = None,
         notes: str | None = None,
+        calories_burned: float | None = None,
+        calories_burned_note: str | None = None,
+        clear_calories_burned: bool = False,
     ) -> dict[str, Any]:
         if status is not None:
             self.conn.execute(
@@ -159,6 +163,26 @@ class Repository:
             self.conn.execute(
                 "UPDATE workouts SET notes = ? WHERE id = ?", (notes, workout_id)
             )
+        if clear_calories_burned:
+            self.conn.execute(
+                """
+                UPDATE workouts
+                SET calories_burned = NULL, calories_burned_note = ''
+                WHERE id = ?
+                """,
+                (workout_id,),
+            )
+        else:
+            if calories_burned is not None:
+                self.conn.execute(
+                    "UPDATE workouts SET calories_burned = ? WHERE id = ?",
+                    (float(calories_burned), workout_id),
+                )
+            if calories_burned_note is not None:
+                self.conn.execute(
+                    "UPDATE workouts SET calories_burned_note = ? WHERE id = ?",
+                    (calories_burned_note, workout_id),
+                )
         self.conn.commit()
         row = self.conn.execute(
             "SELECT * FROM workouts WHERE id = ?", (workout_id,)
@@ -783,6 +807,7 @@ class Repository:
             "goal": profile.get("goal"),
             "weight_kg": profile.get("weight_kg"),
             "target_weight_kg": profile.get("target_weight_kg"),
+            "body_fat_pct": profile.get("body_fat_pct"),
         }
 
     def log_meal(
@@ -881,3 +906,137 @@ class Repository:
             "targets": self.get_nutrition_targets(),
             "daily": [dict(r) for r in rows],
         }
+
+    # --- daily reports ---
+
+    def get_day_snapshot(self, target_date: str | None = None) -> dict[str, Any]:
+        """Assemble workout + nutrition + profile facts for a day (for report gen)."""
+        ds = target_date or date.today().isoformat()
+        workout_pack = self.get_today_workout(ds)
+        nutri = self.get_nutrition_day(ds)
+        profile = self.get_profile()
+        sets = workout_pack.get("sets") or []
+        done_sets = [s for s in sets if s.get("completed")]
+        by_ex: dict[str, list] = {}
+        for s in done_sets:
+            by_ex.setdefault(s["exercise_name"], []).append(
+                {
+                    "set_index": s.get("set_index"),
+                    "weight_kg": s.get("weight_kg"),
+                    "reps": s.get("reps"),
+                    "rpe": s.get("rpe"),
+                }
+            )
+        return {
+            "date": ds,
+            "profile": {
+                "goal": profile.get("goal"),
+                "goal_detail": profile.get("goal_detail"),
+                "weight_kg": profile.get("weight_kg"),
+                "target_weight_kg": profile.get("target_weight_kg"),
+                "body_fat_pct": profile.get("body_fat_pct"),
+                "height_cm": profile.get("height_cm"),
+                "gender": profile.get("gender"),
+                "experience": profile.get("experience"),
+            },
+            "plan": workout_pack.get("plan") or {},
+            "workout": {
+                "status": (workout_pack.get("workout") or {}).get("status"),
+                "notes": (workout_pack.get("workout") or {}).get("notes"),
+                "calories_burned": (workout_pack.get("workout") or {}).get(
+                    "calories_burned"
+                ),
+                "calories_burned_note": (workout_pack.get("workout") or {}).get(
+                    "calories_burned_note"
+                ),
+                "total_sets": len(sets),
+                "completed_sets": len(done_sets),
+                "exercises": by_ex,
+            },
+            "nutrition": {
+                "totals": nutri["totals"],
+                "targets": {
+                    "calorie_target": nutri["targets"].get("calorie_target"),
+                    "protein_target_g": nutri["targets"].get("protein_target_g"),
+                    "carb_target_g": nutri["targets"].get("carb_target_g"),
+                    "fat_target_g": nutri["targets"].get("fat_target_g"),
+                },
+                "remaining": nutri.get("remaining"),
+                "meals": [
+                    {
+                        "meal_type": m.get("meal_type"),
+                        "name": m.get("name"),
+                        "calories": m.get("calories"),
+                        "protein_g": m.get("protein_g"),
+                        "carb_g": m.get("carb_g"),
+                        "fat_g": m.get("fat_g"),
+                    }
+                    for m in nutri.get("meals") or []
+                ],
+            },
+        }
+
+    def get_daily_report(self, target_date: str | None = None) -> dict[str, Any] | None:
+        ds = target_date or date.today().isoformat()
+        row = self.conn.execute(
+            "SELECT * FROM daily_reports WHERE date = ?", (ds,)
+        ).fetchone()
+        if not row:
+            return None
+        data = dict(row)
+        try:
+            data["stats"] = json.loads(data.get("stats_json") or "{}")
+        except json.JSONDecodeError:
+            data["stats"] = {}
+        return data
+
+    def list_daily_reports(self, limit: int = 30) -> list[dict[str, Any]]:
+        rows = self.conn.execute(
+            """
+            SELECT id, date, title, user_note, created_at, updated_at,
+                   substr(content, 1, 120) AS preview
+            FROM daily_reports
+            ORDER BY date DESC
+            LIMIT ?
+            """,
+            (max(1, min(int(limit), 100)),),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def save_daily_report(
+        self,
+        *,
+        target_date: str,
+        title: str,
+        content: str,
+        stats: dict[str, Any] | None = None,
+        user_note: str = "",
+    ) -> dict[str, Any]:
+        stats_json = json.dumps(stats or {}, ensure_ascii=False, default=str)
+        existing = self.conn.execute(
+            "SELECT id FROM daily_reports WHERE date = ?", (target_date,)
+        ).fetchone()
+        if existing:
+            self.conn.execute(
+                """
+                UPDATE daily_reports
+                SET title = ?, content = ?, stats_json = ?, user_note = ?,
+                    updated_at = datetime('now', 'localtime')
+                WHERE date = ?
+                """,
+                (title, content, stats_json, user_note or "", target_date),
+            )
+        else:
+            self.conn.execute(
+                """
+                INSERT INTO daily_reports (date, title, content, stats_json, user_note)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (target_date, title, content, stats_json, user_note or ""),
+            )
+        self.conn.commit()
+        return self.get_daily_report(target_date) or {}
+
+    def delete_daily_report(self, target_date: str) -> None:
+        self.conn.execute("DELETE FROM daily_reports WHERE date = ?", (target_date,))
+        self.conn.commit()

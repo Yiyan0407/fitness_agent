@@ -77,8 +77,11 @@ def parse_selected_date(state) -> str | None:
 
 
 profile = repo.get_profile()
+m1, m2 = st.columns(2)
 if profile.get("weight_kg"):
-    st.metric("当前体重 (kg)", profile["weight_kg"])
+    m1.metric("当前体重 (kg)", profile["weight_kg"])
+if profile.get("body_fat_pct"):
+    m2.metric("当前体脂 (%)", profile["body_fat_pct"])
 
 c1, c2, c3, c4 = st.columns(4)
 c1.markdown(
@@ -173,13 +176,22 @@ else:
 if workout and workout.get("notes"):
     st.caption(f"备注：{workout['notes']}")
 
-go1, go2 = st.columns(2)
+go1, go2, go3 = st.columns(3)
 with go1:
     if st.button("在「今日训练」打开这一天", width="stretch"):
         st.session_state["workout_jump_date"] = selected
         st.switch_page("pages/2_今日训练.py")
 with go2:
     st.page_link("pages/2_今日训练.py", label="去今日训练", icon="🏋️")
+with go3:
+    if st.button("查看 / 生成日报", width="stretch"):
+        st.session_state["daily_report_date"] = selected
+        st.switch_page("pages/7_每日报告.py")
+
+day_report = repo.get_daily_report(selected.isoformat())
+if day_report:
+    with st.expander(f"已存日报：{day_report.get('title') or selected}", expanded=False):
+        st.markdown(day_report.get("content") or "")
 
 with st.expander("动作重量趋势", expanded=False):
     progress = repo.get_exercise_progress(days=90)

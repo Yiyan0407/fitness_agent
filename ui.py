@@ -65,6 +65,7 @@ def render_sidebar() -> None:
         st.page_link("pages/3_训练计划.py", label="训练计划", icon="📋")
         st.page_link("pages/4_饮食管理.py", label="饮食管理", icon="🥗")
         st.page_link("pages/5_历史进度.py", label="历史进度", icon="📅")
+        st.page_link("pages/7_每日报告.py", label="每日报告", icon="📝")
         st.page_link("pages/6_设置.py", label="设置", icon="⚙️")
 
         key = get_api_key()

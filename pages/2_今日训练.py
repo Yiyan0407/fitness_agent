@@ -7,7 +7,9 @@ import time
 
 import streamlit as st
 
-from bootstrap import get_repo, load_env
+from agent.calorie_burn import estimate_workout_calories
+from agent.llm import MissingAPIKeyError
+from bootstrap import get_api_key, get_repo, load_env
 from db.schema import init_db
 from ui import render_sidebar
 
@@ -57,6 +59,55 @@ st.subheader(f"{name}")
 st.caption(f"状态：{workout.get('status')} · {target.isoformat()}")
 if total:
     st.progress(done / total, text=f"{done}/{total} 组已完成")
+
+# 运动消耗
+burn = workout.get("calories_burned")
+burn_note = workout.get("calories_burned_note") or ""
+b1, b2, b3 = st.columns([2, 2, 2])
+with b1:
+    if burn is not None:
+        st.metric("运动消耗", f"{float(burn):.0f} kcal")
+    else:
+        st.metric("运动消耗", "未估算")
+with b2:
+    can_ai = get_api_key() and not get_api_key().startswith("sk-xxxxx")
+    if st.button(
+        "AI 估算消耗",
+        width="stretch",
+        disabled=not can_ai or done == 0,
+        help="根据画像与已完成组估算额外消耗并入库",
+    ):
+        with st.spinner("正在按画像估算运动消耗…"):
+            try:
+                result = estimate_workout_calories(target.isoformat(), save=True)
+            except MissingAPIKeyError as exc:
+                st.error(str(exc))
+            except Exception as exc:  # noqa: BLE001
+                st.error(f"估算失败：{exc}")
+            else:
+                st.toast(f"已记录约 {result['calories_burned']} kcal")
+                st.rerun()
+with b3:
+    manual = st.number_input(
+        "手动修正 kcal",
+        min_value=0.0,
+        value=float(burn) if burn is not None else 0.0,
+        step=10.0,
+        key="manual_burn",
+    )
+    if st.button("保存消耗", width="stretch"):
+        repo.update_workout(
+            workout["id"],
+            calories_burned=manual or None,
+            calories_burned_note=(burn_note or "手动录入") if manual else "",
+            clear_calories_burned=not manual,
+        )
+        st.toast("已保存运动消耗")
+        st.rerun()
+if burn_note:
+    st.caption(burn_note)
+if done == 0:
+    st.caption("完成至少一组后再估算运动消耗。")
 
 # 今日整体临时调整
 with st.expander("今天临时改安排（推不动 / 没力气）", expanded=pending > 0 and done > 0):

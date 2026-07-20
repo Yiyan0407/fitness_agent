@@ -185,10 +185,10 @@ with go2:
     st.page_link("pages/2_今日训练.py", label="去今日训练", icon="🏋️")
 with go3:
     if st.button("查看 / 生成日报", width="stretch"):
-        st.session_state["daily_report_date"] = selected
+        st.session_state["daily_report_date"] = date.fromisoformat(selected)
         st.switch_page("pages/7_每日报告.py")
 
-day_report = repo.get_daily_report(selected.isoformat())
+day_report = repo.get_daily_report(selected)
 if day_report:
     with st.expander(f"已存日报：{day_report.get('title') or selected}", expanded=False):
         st.markdown(day_report.get("content") or "")

@@ -139,10 +139,27 @@ def get_recent_history(days: int = 14) -> str:
 
 
 @tool
-def list_exercises(query: str = "", muscle: str = "") -> str:
-    """从本地动作库检索动作。可按名称关键词或肌群过滤。制定计划时优先使用这些动作。"""
-    items = get_repo().list_exercises(query=query, muscle=muscle)
-    return _ok({"count": len(items), "exercises": items})
+def list_exercises(query: str = "", muscle: str = "", equipment: str = "") -> str:
+    """从本地动作库检索动作。
+
+    equipment 可填动作标签（杠铃/哑铃/自重/绳索/器械…），也可填画像场景
+    （健身房/家庭哑铃杠铃/仅自重/弹力带为主/综合）；含示范图 URL。
+    """
+    items = get_repo().list_exercises(
+        query=query, muscle=muscle, equipment=equipment, limit=80
+    )
+    slim = [
+        {
+            "name": e.get("name"),
+            "name_en": e.get("name_en"),
+            "muscle": e.get("muscle"),
+            "equipment": e.get("equipment"),
+            "tips": (e.get("tips") or "")[:80],
+            "image_url": e.get("image_url") or "",
+        }
+        for e in items
+    ]
+    return _ok({"returned": len(slim), "exercises": slim})
 
 
 @tool

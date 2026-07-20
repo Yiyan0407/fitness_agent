@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 from db.schema import EXERCISES_PATH, get_connection, init_db
+from db.equipment import resolve_equipment_filter
 
 
 WEEKDAY_KEYS = [
@@ -75,7 +76,14 @@ class Repository:
             values,
         )
         self.conn.commit()
-        return self.get_profile()
+        profile = self.get_profile()
+        if "weight_kg" in updates or "body_fat_pct" in updates:
+            self.log_body_metrics(
+                weight_kg=profile.get("weight_kg"),
+                body_fat_pct=profile.get("body_fat_pct"),
+                target_date=date.today().isoformat(),
+            )
+        return profile
 
     # --- plans ---
 
@@ -779,21 +787,56 @@ class Repository:
 
     # --- exercises ---
 
-    def list_exercises(self, query: str = "", muscle: str = "") -> list[dict[str, Any]]:
+    def list_exercises(
+        self,
+        query: str = "",
+        muscle: str = "",
+        equipment: str = "",
+        limit: int | None = None,
+    ) -> list[dict[str, Any]]:
         path = EXERCISES_PATH
         if not path.exists():
             return []
         data = json.loads(path.read_text(encoding="utf-8"))
         q = query.strip().lower()
         m = muscle.strip().lower()
+        allowed = resolve_equipment_filter(equipment)
         results = []
         for ex in data:
-            if q and q not in ex["name"].lower() and q not in ex.get("muscle", "").lower():
+            name = str(ex.get("name") or "")
+            name_en = str(ex.get("name_en") or "")
+            mus = str(ex.get("muscle") or "")
+            equip = str(ex.get("equipment") or "")
+            if q and q not in name.lower() and q not in name_en.lower() and q not in mus.lower():
                 continue
-            if m and m not in ex.get("muscle", "").lower():
+            if m and m not in mus.lower():
                 continue
+            if allowed is not None:
+                if not any(tag and tag in equip for tag in allowed):
+                    continue
             results.append(ex)
+            if limit is not None and len(results) >= int(limit):
+                break
         return results
+
+    def get_exercise_by_name(self, name: str) -> dict[str, Any] | None:
+        """Exact or fuzzy match an exercise by Chinese/English name."""
+        needle = (name or "").strip()
+        if not needle:
+            return None
+        items = self.list_exercises()
+        for ex in items:
+            if ex.get("name") == needle or ex.get("name_en") == needle:
+                return ex
+        low = needle.lower()
+        for ex in items:
+            if low == str(ex.get("name") or "").lower() or low == str(ex.get("name_en") or "").lower():
+                return ex
+        for ex in items:
+            n = str(ex.get("name") or "")
+            if needle in n or n in needle:
+                return ex
+        return None
 
     # --- nutrition / meals ---
 
@@ -910,12 +953,12 @@ class Repository:
     # --- daily reports ---
 
     def get_day_snapshot(self, target_date: str | None = None) -> dict[str, Any]:
-        """Assemble workout + nutrition + profile facts for a day (for report gen)."""
+        """Assemble workout + nutrition + profile facts (read-only, no seeding)."""
         ds = target_date or date.today().isoformat()
-        workout_pack = self.get_today_workout(ds)
+        detail = self.get_day_detail(ds)
         nutri = self.get_nutrition_day(ds)
         profile = self.get_profile()
-        sets = workout_pack.get("sets") or []
+        sets = detail.get("sets") or []
         done_sets = [s for s in sets if s.get("completed")]
         by_ex: dict[str, list] = {}
         for s in done_sets:
@@ -927,6 +970,7 @@ class Repository:
                     "rpe": s.get("rpe"),
                 }
             )
+        workout = detail.get("workout") or {}
         return {
             "date": ds,
             "profile": {
@@ -938,17 +982,14 @@ class Repository:
                 "height_cm": profile.get("height_cm"),
                 "gender": profile.get("gender"),
                 "experience": profile.get("experience"),
+                "equipment": profile.get("equipment"),
             },
-            "plan": workout_pack.get("plan") or {},
+            "plan": detail.get("plan") or {},
             "workout": {
-                "status": (workout_pack.get("workout") or {}).get("status"),
-                "notes": (workout_pack.get("workout") or {}).get("notes"),
-                "calories_burned": (workout_pack.get("workout") or {}).get(
-                    "calories_burned"
-                ),
-                "calories_burned_note": (workout_pack.get("workout") or {}).get(
-                    "calories_burned_note"
-                ),
+                "status": workout.get("status"),
+                "notes": workout.get("notes"),
+                "calories_burned": workout.get("calories_burned"),
+                "calories_burned_note": workout.get("calories_burned_note"),
                 "total_sets": len(sets),
                 "completed_sets": len(done_sets),
                 "exercises": by_ex,
@@ -1040,3 +1081,84 @@ class Repository:
     def delete_daily_report(self, target_date: str) -> None:
         self.conn.execute("DELETE FROM daily_reports WHERE date = ?", (target_date,))
         self.conn.commit()
+
+    # --- body metrics ---
+
+    def log_body_metrics(
+        self,
+        *,
+        weight_kg: float | None = None,
+        body_fat_pct: float | None = None,
+        notes: str = "",
+        target_date: str | None = None,
+    ) -> dict[str, Any]:
+        ds = target_date or date.today().isoformat()
+        if weight_kg is None and body_fat_pct is None:
+            row = self.conn.execute(
+                "SELECT * FROM body_metrics WHERE date = ?", (ds,)
+            ).fetchone()
+            return dict(row) if row else {"date": ds}
+        existing = self.conn.execute(
+            "SELECT * FROM body_metrics WHERE date = ?", (ds,)
+        ).fetchone()
+        if existing:
+            fields = {}
+            if weight_kg is not None:
+                fields["weight_kg"] = weight_kg
+            if body_fat_pct is not None:
+                fields["body_fat_pct"] = body_fat_pct
+            if notes:
+                fields["notes"] = notes
+            if fields:
+                sets = ", ".join(f"{k} = ?" for k in fields)
+                self.conn.execute(
+                    f"""
+                    UPDATE body_metrics
+                    SET {sets}, updated_at = datetime('now', 'localtime')
+                    WHERE date = ?
+                    """,
+                    [*fields.values(), ds],
+                )
+        else:
+            self.conn.execute(
+                """
+                INSERT INTO body_metrics (date, weight_kg, body_fat_pct, notes)
+                VALUES (?, ?, ?, ?)
+                """,
+                (ds, weight_kg, body_fat_pct, notes or ""),
+            )
+        self.conn.commit()
+        row = self.conn.execute(
+            "SELECT * FROM body_metrics WHERE date = ?", (ds,)
+        ).fetchone()
+        return dict(row) if row else {"date": ds}
+
+    def list_body_metrics(self, days: int = 90) -> list[dict[str, Any]]:
+        days = max(1, min(int(days), 365))
+        since = (date.today() - timedelta(days=days - 1)).isoformat()
+        rows = self.conn.execute(
+            """
+            SELECT * FROM body_metrics
+            WHERE date >= ?
+            ORDER BY date ASC
+            """,
+            (since,),
+        ).fetchall()
+        result = [dict(r) for r in rows]
+        if not result:
+            profile = self.get_profile()
+            if profile.get("weight_kg") or profile.get("body_fat_pct"):
+                self.log_body_metrics(
+                    weight_kg=profile.get("weight_kg"),
+                    body_fat_pct=profile.get("body_fat_pct"),
+                )
+                rows = self.conn.execute(
+                    """
+                    SELECT * FROM body_metrics
+                    WHERE date >= ?
+                    ORDER BY date ASC
+                    """,
+                    (since,),
+                ).fetchall()
+                result = [dict(r) for r in rows]
+        return result

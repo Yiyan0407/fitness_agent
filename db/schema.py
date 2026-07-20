@@ -115,11 +115,22 @@ CREATE TABLE IF NOT EXISTS daily_reports (
     updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS body_metrics (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    date TEXT NOT NULL UNIQUE,
+    weight_kg REAL,
+    body_fat_pct REAL,
+    notes TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_sets_workout ON sets(workout_id);
 CREATE INDEX IF NOT EXISTS idx_workouts_date ON workouts(date);
 CREATE INDEX IF NOT EXISTS idx_chat_created ON chat_messages(created_at);
 CREATE INDEX IF NOT EXISTS idx_meals_date ON meals(date);
 CREATE INDEX IF NOT EXISTS idx_daily_reports_date ON daily_reports(date);
+CREATE INDEX IF NOT EXISTS idx_body_metrics_date ON body_metrics(date);
 """
 
 

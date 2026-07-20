@@ -74,7 +74,7 @@ with st.expander(burn_label, expanded=False):
             "AI 估算消耗",
             width="stretch",
             disabled=not can_ai or done == 0,
-            help="根据画像与已完成组估算额外消耗并入库",
+            help="根据画像与已完成组估算额外消耗（非设备实测）并入库",
         ):
             with st.spinner("正在按画像估算运动消耗…"):
                 try:
@@ -160,6 +160,23 @@ else:
         finished = sum(1 for s in ex_sets if s.get("completed"))
         left = [s for s in ex_sets if not s.get("completed")]
         st.markdown(f"### {ex_name}　`{finished}/{len(ex_sets)}`")
+        demo = repo.get_exercise_by_name(ex_name)
+        if demo:
+            with st.popover("看演示"):
+                if demo.get("image_url"):
+                    try:
+                        st.image(demo["image_url"], width=260)
+                    except Exception:
+                        st.caption("配图加载失败（需联网）")
+                else:
+                    st.caption("库中暂无配图")
+                if demo.get("name_en"):
+                    st.caption(demo["name_en"])
+                st.write(
+                    f"{demo.get('muscle') or '-'} · {demo.get('equipment') or '-'}"
+                )
+                if demo.get("tips"):
+                    st.caption(demo["tips"])
         last = repo.get_last_completed_set(ex_name, before_date=target.isoformat())
         if last:
             st.caption(

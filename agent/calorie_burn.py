@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -41,8 +42,8 @@ def estimate_workout_calories(
     repo = get_repo()
     snapshot = repo.get_day_snapshot(target_date)
     ds = snapshot["date"]
-    workout_pack = repo.get_today_workout(ds)
-    workout = workout_pack["workout"]
+    # only create workout row when we need to save burn onto it
+    workout = repo.get_or_create_workout(date.fromisoformat(ds))
 
     llm = get_llm(temperature=0.2)
     resp = llm.invoke(

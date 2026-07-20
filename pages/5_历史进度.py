@@ -101,6 +101,40 @@ with st.expander("体态与图例", expanded=False):
         unsafe_allow_html=True,
     )
 
+with st.expander("体重 / 体脂趋势", expanded=False):
+    metrics = repo.list_body_metrics(days=180)
+    if len(metrics) < 2:
+        st.caption("在「设置」保存体重或体脂后，这里会留下历史点。至少 2 次记录可看趋势。")
+    else:
+        chart_df = pd.DataFrame(metrics)
+        plot_cols = [c for c in ["weight_kg", "body_fat_pct"] if c in chart_df.columns]
+        show = chart_df.set_index("date")[plot_cols].rename(
+            columns={"weight_kg": "体重kg", "body_fat_pct": "体脂%"}
+        )
+        st.line_chart(show)
+    with st.form("quick_body_log"):
+        b1, b2 = st.columns(2)
+        w_in = b1.number_input(
+            "今日体重 kg",
+            min_value=0.0,
+            value=float(repo.get_profile().get("weight_kg") or 0),
+            step=0.1,
+        )
+        f_in = b2.number_input(
+            "今日体脂 %",
+            min_value=0.0,
+            max_value=60.0,
+            value=float(repo.get_profile().get("body_fat_pct") or 0),
+            step=0.1,
+        )
+        if st.form_submit_button("记入今日并更新画像"):
+            repo.update_profile(
+                weight_kg=w_in or None,
+                body_fat_pct=f_in or None,
+            )
+            st.toast("已记录")
+            st.rerun()
+
 today = date.today()
 cal_start = today.replace(day=1) - timedelta(days=200)
 cal_end = today + timedelta(days=90)

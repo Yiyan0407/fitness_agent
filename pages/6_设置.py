@@ -124,15 +124,17 @@ with st.form("profile_form"):
         else 1,
     )
     days = st.slider("每周可练天数", 1, 7, int(profile.get("days_per_week") or 4))
+    EQUIP_OPTIONS = ["健身房", "家庭哑铃杠铃", "仅自重", "弹力带为主", "综合"]
+    raw_equip = profile.get("equipment") or "健身房"
+    if raw_equip == "家庭哑铃":
+        raw_equip = "家庭哑铃杠铃"
+    if raw_equip not in EQUIP_OPTIONS:
+        raw_equip = "健身房"
     equipment = st.selectbox(
         "器械条件",
-        ["健身房", "家庭哑铃", "仅自重", "综合"],
-        index=["健身房", "家庭哑铃", "仅自重", "综合"].index(
-            profile.get("equipment") or "健身房"
-        )
-        if (profile.get("equipment") or "健身房")
-        in ["健身房", "家庭哑铃", "仅自重", "综合"]
-        else 0,
+        EQUIP_OPTIONS,
+        index=EQUIP_OPTIONS.index(raw_equip),
+        help="教练排计划时会按此条件优先挑选动作库器械",
     )
     w1, w2 = st.columns(2)
     weight = w1.number_input(

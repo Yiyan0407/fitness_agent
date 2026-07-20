@@ -20,13 +20,14 @@ render_sidebar()
 st.title("饮食管理")
 st.caption("这里看进度和明细；记账请到「教练对话」用文字或拍照。")
 
-go1, go2 = st.columns(2)
-with go1:
-    st.page_link("pages/1_教练对话.py", label="去教练对话记账", icon="💬")
-with go2:
-    if st.button("快捷：喝了一瓶可乐（发给教练）", width="stretch"):
-        st.session_state["pending_chat"] = "喝了一瓶可乐，帮我记到饮食里"
-        st.switch_page("pages/1_教练对话.py")
+with st.expander("去记账", expanded=False):
+    go1, go2 = st.columns(2)
+    with go1:
+        st.page_link("pages/1_教练对话.py", label="去教练对话记账", icon="💬")
+    with go2:
+        if st.button("快捷：喝了一瓶可乐（发给教练）", width="stretch"):
+            st.session_state["pending_chat"] = "喝了一瓶可乐，帮我记到饮食里"
+            st.switch_page("pages/1_教练对话.py")
 
 target = st.date_input("日期", value=date.today())
 day = repo.get_nutrition_day(target.isoformat())
@@ -89,20 +90,21 @@ else:
         ]
     )
     st.dataframe(df.drop(columns=["id"]), width="stretch", hide_index=True)
-    del_id = st.selectbox(
-        "删除某条记录",
-        options=[0] + [int(m["id"]) for m in meals],
-        format_func=lambda x: "不删除"
-        if x == 0
-        else next(
-            f"#{m['id']} {m['meal_type']}·{m['name']}"
-            for m in meals
-            if m["id"] == x
-        ),
-    )
-    if del_id and st.button("确认删除"):
-        repo.delete_meal(int(del_id))
-        st.rerun()
+    with st.expander("删除记录", expanded=False):
+        del_id = st.selectbox(
+            "删除某条记录",
+            options=[0] + [int(m["id"]) for m in meals],
+            format_func=lambda x: "不删除"
+            if x == 0
+            else next(
+                f"#{m['id']} {m['meal_type']}·{m['name']}"
+                for m in meals
+                if m["id"] == x
+            ),
+        )
+        if del_id and st.button("确认删除"):
+            repo.delete_meal(int(del_id))
+            st.rerun()
 
 st.divider()
 with st.expander("饮食目标", expanded=False):

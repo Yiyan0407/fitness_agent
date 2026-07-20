@@ -12,7 +12,7 @@ st.set_page_config(
     page_title="健身 Agent",
     page_icon="💪",
     layout="wide",
-    initial_sidebar_state="expanded",
+    initial_sidebar_state="collapsed",
 )
 
 load_env()
@@ -29,19 +29,20 @@ if not api_key or api_key.startswith("sk-xxxxx"):
     st.page_link("pages/6_设置.py", label="去设置 API Key", icon="⚙️")
 
 profile = repo.get_profile()
-col1, col2, col3, col4, col5 = st.columns(5)
-col1.metric("目标", profile.get("goal") or "-")
-col2.metric("性别", profile.get("gender") or "-")
-col3.metric("经验", profile.get("experience") or "-")
-col4.metric("每周天数", profile.get("days_per_week") or "-")
-col5.metric("器械", profile.get("equipment") or "-")
-if profile.get("goal_detail") or profile.get("target_weight_kg"):
-    parts = []
-    if profile.get("goal_detail"):
-        parts.append(profile["goal_detail"])
-    if profile.get("target_weight_kg"):
-        parts.append(f"目标体重 {profile['target_weight_kg']:g} kg")
-    st.caption("具体目标：" + " · ".join(parts))
+with st.expander("我的画像", expanded=False):
+    col1, col2, col3, col4, col5 = st.columns(5)
+    col1.metric("目标", profile.get("goal") or "-")
+    col2.metric("性别", profile.get("gender") or "-")
+    col3.metric("经验", profile.get("experience") or "-")
+    col4.metric("每周天数", profile.get("days_per_week") or "-")
+    col5.metric("器械", profile.get("equipment") or "-")
+    if profile.get("goal_detail") or profile.get("target_weight_kg"):
+        parts = []
+        if profile.get("goal_detail"):
+            parts.append(profile["goal_detail"])
+        if profile.get("target_weight_kg"):
+            parts.append(f"目标体重 {profile['target_weight_kg']:g} kg")
+        st.caption("具体目标：" + " · ".join(parts))
 
 st.divider()
 st.subheader("下一步")
@@ -123,17 +124,16 @@ with d2:
     st.page_link("pages/4_饮食管理.py", label="查看饮食明细", icon="🥗")
 
 st.divider()
-st.subheader("近 7 天")
-
-days = repo.get_completion_last_n_days(7)
-cols = st.columns(7)
-for i, d in enumerate(days):
-    with cols[i]:
-        label = d["weekday"]
-        st.markdown(f"**{label}**")
-        if d["total_sets"] == 0:
-            st.caption("—")
-        elif d["done"]:
-            st.caption("完成")
-        else:
-            st.caption(f"{d['completed_sets']}/{d['total_sets']}")
+with st.expander("近 7 天训练", expanded=False):
+    days = repo.get_completion_last_n_days(7)
+    cols = st.columns(7)
+    for i, d in enumerate(days):
+        with cols[i]:
+            label = d["weekday"]
+            st.markdown(f"**{label}**")
+            if d["total_sets"] == 0:
+                st.caption("—")
+            elif d["done"]:
+                st.caption("完成")
+            else:
+                st.caption(f"{d['completed_sets']}/{d['total_sets']}")

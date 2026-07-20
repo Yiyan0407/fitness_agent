@@ -26,21 +26,20 @@ if not get_api_key() or get_api_key().startswith("sk-xxxxx"):
     st.page_link("pages/6_设置.py", label="去设置", icon="⚙️")
     st.stop()
 
-nutri = repo.get_nutrition_day()
-tot, tgt = nutri["totals"], nutri["targets"]
-n1, n2, n3 = st.columns(3)
-cal_label = f"{tot['calories']:.0f}"
-if tgt.get("calorie_target"):
-    cal_label += f" / {tgt['calorie_target']:.0f}"
-pro_label = f"{tot['protein_g']:.0f}"
-if tgt.get("protein_target_g"):
-    pro_label += f" / {tgt['protein_target_g']:.0f}"
-n1.metric("今日热量", cal_label)
-n2.metric("今日蛋白", pro_label)
-n3.metric("已记餐次", len(nutri["meals"]))
-st.page_link("pages/4_饮食管理.py", label="查看饮食明细", icon="🥗")
-
-st.divider()
+with st.expander("今日饮食摘要", expanded=False):
+    nutri = repo.get_nutrition_day()
+    tot, tgt = nutri["totals"], nutri["targets"]
+    n1, n2, n3 = st.columns(3)
+    cal_label = f"{tot['calories']:.0f}"
+    if tgt.get("calorie_target"):
+        cal_label += f" / {tgt['calorie_target']:.0f}"
+    pro_label = f"{tot['protein_g']:.0f}"
+    if tgt.get("protein_target_g"):
+        pro_label += f" / {tgt['protein_target_g']:.0f}"
+    n1.metric("今日热量", cal_label)
+    n2.metric("今日蛋白", pro_label)
+    n3.metric("已记餐次", len(nutri["meals"]))
+    st.page_link("pages/4_饮食管理.py", label="查看饮食明细", icon="🥗")
 
 QUICK_PROMPTS = [
     "根据我的画像生成一周训练计划，并保存",
@@ -57,12 +56,13 @@ if not messages:
         "还没有对话。可以说训练需求，或「喝了一瓶可乐」让我记账；也可展开下方上传餐食照片。"
     )
 
-cols = st.columns(2)
-for i, text in enumerate(QUICK_PROMPTS):
-    with cols[i % 2]:
-        if st.button(text, key=f"quick_{i}", width="stretch"):
-            st.session_state["pending_chat"] = text
-            st.rerun()
+with st.expander("快捷提示", expanded=not messages):
+    cols = st.columns(2)
+    for i, text in enumerate(QUICK_PROMPTS):
+        with cols[i % 2]:
+            if st.button(text, key=f"quick_{i}", width="stretch"):
+                st.session_state["pending_chat"] = text
+                st.rerun()
 
 with st.expander("拍照记账（豆包看图）", expanded=False):
     st.caption("默认从相册选图；需要时再点按钮打开摄像头。")

@@ -26,45 +26,53 @@ render_sidebar()
 
 st.title("设置")
 
-st.subheader("MiMo API")
-current = get_api_key()
-masked = (current[:6] + "…" + current[-4:]) if current and len(current) > 12 else (current or "未配置")
-st.caption(f"当前 Key：{masked}")
-new_key = st.text_input("MIMO_API_KEY", type="password", placeholder="sk-…")
-if st.button("保存 API Key 到 .env"):
-    if not new_key.strip():
-        st.error("Key 不能为空")
-    else:
-        save_api_key_to_env(new_key.strip())
-        st.success("已写入 .env，可前往「教练对话」使用。")
+need_mimo = not get_api_key() or get_api_key().startswith("sk-xxxxx")
+need_doubao = not get_doubao_api_key() or get_doubao_api_key().startswith("sk-xxxxx")
 
-st.divider()
-st.subheader("豆包看图（饮食拍照）")
-doubao_key = get_doubao_api_key()
-d_masked = (
-    (doubao_key[:6] + "…" + doubao_key[-4:])
-    if doubao_key and len(doubao_key) > 12
-    else (doubao_key or "未配置")
-)
-st.caption(f"当前 DOUBAO_API_KEY：{d_masked}")
-st.caption(
-    "在火山方舟开通视觉模型后填写 Key；DOUBAO_MODEL 可为模型名或接入点 ID（ep-xxxx）。"
-)
-new_doubao = st.text_input("DOUBAO_API_KEY", type="password", placeholder="火山方舟 API Key")
-new_model = st.text_input(
-    "DOUBAO_MODEL（可选）",
-    value=os.getenv("DOUBAO_MODEL", "doubao-seed-2-0-lite-260428"),
-)
-if st.button("保存豆包配置到 .env"):
-    if not new_doubao.strip():
-        st.error("Key 不能为空")
-    else:
-        upsert_env_var("DOUBAO_API_KEY", new_doubao.strip())
-        if new_model.strip():
-            upsert_env_var("DOUBAO_MODEL", new_model.strip())
-        st.success("豆包配置已保存，可在「饮食管理」拍照记账。")
+with st.expander("API 配置", expanded=need_mimo or need_doubao):
+    st.markdown("##### MiMo")
+    current = get_api_key()
+    masked = (
+        (current[:6] + "…" + current[-4:])
+        if current and len(current) > 12
+        else (current or "未配置")
+    )
+    st.caption(f"当前 Key：{masked}")
+    new_key = st.text_input("MIMO_API_KEY", type="password", placeholder="sk-…")
+    if st.button("保存 API Key 到 .env"):
+        if not new_key.strip():
+            st.error("Key 不能为空")
+        else:
+            save_api_key_to_env(new_key.strip())
+            st.success("已写入 .env，可前往「教练对话」使用。")
 
-st.divider()
+    st.markdown("##### 豆包看图（饮食拍照）")
+    doubao_key = get_doubao_api_key()
+    d_masked = (
+        (doubao_key[:6] + "…" + doubao_key[-4:])
+        if doubao_key and len(doubao_key) > 12
+        else (doubao_key or "未配置")
+    )
+    st.caption(f"当前 DOUBAO_API_KEY：{d_masked}")
+    st.caption(
+        "在火山方舟开通视觉模型后填写 Key；DOUBAO_MODEL 可为模型名或接入点 ID（ep-xxxx）。"
+    )
+    new_doubao = st.text_input(
+        "DOUBAO_API_KEY", type="password", placeholder="火山方舟 API Key"
+    )
+    new_model = st.text_input(
+        "DOUBAO_MODEL（可选）",
+        value=os.getenv("DOUBAO_MODEL", "doubao-seed-2-0-lite-260428"),
+    )
+    if st.button("保存豆包配置到 .env"):
+        if not new_doubao.strip():
+            st.error("Key 不能为空")
+        else:
+            upsert_env_var("DOUBAO_API_KEY", new_doubao.strip())
+            if new_model.strip():
+                upsert_env_var("DOUBAO_MODEL", new_model.strip())
+            st.success("豆包配置已保存，可在「饮食管理」拍照记账。")
+
 st.subheader("个人画像")
 profile = repo.get_profile()
 
@@ -199,9 +207,9 @@ with st.form("profile_form"):
         st.success("画像已保存")
 
 st.divider()
-st.subheader("数据库")
-st.code(str(DB_PATH), language=None)
-if st.button("重新初始化表结构（保留已有数据，仅补建缺失表）"):
-    init_db()
-    reset_repo_cache()
-    st.success("已执行 init_db()")
+with st.expander("数据库 / 维护", expanded=False):
+    st.code(str(DB_PATH), language=None)
+    if st.button("重新初始化表结构（保留已有数据，仅补建缺失表）"):
+        init_db()
+        reset_repo_cache()
+        st.success("已执行 init_db()")

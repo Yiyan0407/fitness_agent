@@ -65,21 +65,27 @@ user_note = st.text_area(
     "今晚想补充一句（可选）",
     value=(existing or {}).get("user_note") or "",
     placeholder="例如：深蹲感觉膝盖有点紧；晚饭多吃了半碗饭",
-    height=80,
+    height=68,
 )
 
-est_missing = st.checkbox(
-    "生成报告前若无消耗则先 AI 估算",
-    value=True,
-    help="根据画像与已完成组估算运动消耗并写入当日训练",
-)
-
-b1, b2, b3, b4 = st.columns([2, 1, 1, 1])
+b1, b2 = st.columns([2, 1])
 gen_label = "重新生成并保存" if existing else "生成并保存今日报告"
 with b1:
     do_gen = st.button(gen_label, type="primary", width="stretch")
 with b2:
-    if st.button("仅估算消耗", width="stretch", disabled=int(w.get("completed_sets") or 0) == 0):
+    st.page_link("pages/2_今日训练.py", label="今日训练", icon="🏋️")
+
+with st.expander("消耗估算选项", expanded=False):
+    est_missing = st.checkbox(
+        "生成报告前若无消耗则先 AI 估算",
+        value=True,
+        help="根据画像与已完成组估算运动消耗并写入当日训练",
+    )
+    if st.button(
+        "仅估算消耗",
+        width="stretch",
+        disabled=int(w.get("completed_sets") or 0) == 0,
+    ):
         from agent.calorie_burn import estimate_workout_calories
 
         with st.spinner("正在估算运动消耗…"):
@@ -90,9 +96,6 @@ with b2:
             else:
                 st.toast(f"约 {result['calories_burned']} kcal")
                 st.rerun()
-with b3:
-    st.page_link("pages/2_今日训练.py", label="今日训练", icon="🏋️")
-with b4:
     st.page_link("pages/4_饮食管理.py", label="饮食明细", icon="🥗")
 
 if do_gen:
@@ -115,32 +118,36 @@ if do_gen:
 existing = repo.get_daily_report(ds)
 if existing:
     st.divider()
-    st.subheader(existing.get("title") or f"{ds} 报告")
-    st.caption(
-        f"更新于 {existing.get('updated_at') or existing.get('created_at') or '-'}"
-    )
-    if existing.get("user_note"):
-        st.markdown(f"**你的备注：** {existing['user_note']}")
-    st.markdown(existing.get("content") or "")
-    if st.button("删除这份报告", type="secondary"):
-        repo.delete_daily_report(ds)
-        st.toast("已删除")
-        st.rerun()
+    with st.expander(
+        existing.get("title") or f"{ds} 报告",
+        expanded=True,
+    ):
+        st.caption(
+            f"更新于 {existing.get('updated_at') or existing.get('created_at') or '-'}"
+        )
+        if existing.get("user_note"):
+            st.markdown(f"**你的备注：** {existing['user_note']}")
+        st.markdown(existing.get("content") or "")
+        if st.button("删除这份报告", type="secondary"):
+            repo.delete_daily_report(ds)
+            st.toast("已删除")
+            st.rerun()
 else:
     st.info("这一天还没有报告。确认数据后点上方按钮生成。")
 
-st.divider()
-st.subheader("最近报告")
-recent = repo.list_daily_reports(limit=14)
-if not recent:
-    st.caption("暂无历史报告。")
-else:
-    for row in recent:
-        col_a, col_b = st.columns([4, 1])
-        with col_a:
-            st.markdown(f"**{row.get('title') or row['date']}**")
-            st.caption((row.get("preview") or "").replace("\n", " ")[:80])
-        with col_b:
-            if st.button("查看", key=f"open_report_{row['date']}", width="stretch"):
-                st.session_state["daily_report_date"] = date.fromisoformat(row["date"])
-                st.rerun()
+with st.expander("最近报告", expanded=False):
+    recent = repo.list_daily_reports(limit=14)
+    if not recent:
+        st.caption("暂无历史报告。")
+    else:
+        for row in recent:
+            col_a, col_b = st.columns([4, 1])
+            with col_a:
+                st.markdown(f"**{row.get('title') or row['date']}**")
+                st.caption((row.get("preview") or "").replace("\n", " ")[:80])
+            with col_b:
+                if st.button("查看", key=f"open_report_{row['date']}", width="stretch"):
+                    st.session_state["daily_report_date"] = date.fromisoformat(
+                        row["date"]
+                    )
+                    st.rerun()

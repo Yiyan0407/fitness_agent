@@ -151,12 +151,13 @@ with top3:
         )
 
 if st.session_state.get("show_exercise_lib"):
-    lib = repo.list_exercises()
-    st.dataframe(
-        pd.DataFrame(lib)[["name", "muscle", "equipment", "tips"]],
-        width="stretch",
-        hide_index=True,
-    )
+    with st.expander("动作库清单", expanded=True):
+        lib = repo.list_exercises()
+        st.dataframe(
+            pd.DataFrame(lib)[["name", "muscle", "equipment", "tips"]],
+            width="stretch",
+            hide_index=True,
+        )
 
 day_labels = [f"{WEEKDAY_CN[k]}（{k}）" for k in WEEKDAY_KEYS]
 selected_label = st.radio("选择要编辑的一天", day_labels, horizontal=True)
@@ -201,37 +202,37 @@ else:
     exercises = df_to_exercises(edited)
 
     # 快捷从动作库添加
-    lib_names = [e["name"] for e in repo.list_exercises()]
-    add_cols = st.columns([3, 1])
-    with add_cols[0]:
-        pick = st.selectbox(
-            "从动作库快速添加",
-            options=[""] + lib_names,
-            key=f"pick_{day_key}",
-        )
-    with add_cols[1]:
-        st.write("")
-        st.write("")
-        if st.button("添加选中动作", key=f"add_{day_key}", width="stretch"):
-            if pick:
-                exercises.append(
-                    {
-                        "name": pick,
-                        "sets": 3,
-                        "reps": "8-12",
-                        "weight_kg": None,
-                        "notes": "",
+    with st.expander("从动作库添加动作", expanded=False):
+        lib_names = [e["name"] for e in repo.list_exercises()]
+        add_cols = st.columns([3, 1])
+        with add_cols[0]:
+            pick = st.selectbox(
+                "选择动作",
+                options=[""] + lib_names,
+                key=f"pick_{day_key}",
+            )
+        with add_cols[1]:
+            st.write("")
+            st.write("")
+            if st.button("添加选中动作", key=f"add_{day_key}", width="stretch"):
+                if pick:
+                    exercises.append(
+                        {
+                            "name": pick,
+                            "sets": 3,
+                            "reps": "8-12",
+                            "weight_kg": None,
+                            "notes": "",
+                        }
+                    )
+                    draft[day_key] = {
+                        "name": day_name or "训练",
+                        "rest": False,
+                        "exercises": exercises,
                     }
-                )
-                draft[day_key] = {
-                    "name": day_name or "训练",
-                    "rest": False,
-                    "exercises": exercises,
-                }
-                st.session_state["plan_draft"] = draft
-                # 清掉 data_editor 缓存，否则新增行不显示
-                st.session_state.pop(f"editor_{day_key}", None)
-                st.rerun()
+                    st.session_state["plan_draft"] = draft
+                    st.session_state.pop(f"editor_{day_key}", None)
+                    st.rerun()
 
     draft[day_key] = {
         "name": day_name or "训练",
@@ -242,25 +243,25 @@ else:
 st.session_state["plan_draft"] = draft
 
 st.divider()
-st.subheader("本周一览")
-summary_rows = []
-for key in WEEKDAY_KEYS:
-    d = draft[key]
-    if d.get("rest"):
-        summary_rows.append(
-            {"星期": WEEKDAY_CN[key], "安排": d.get("name") or "休息", "动作数": 0}
-        )
-    else:
-        names = "、".join(ex["name"] for ex in d.get("exercises") or [])
-        summary_rows.append(
-            {
-                "星期": WEEKDAY_CN[key],
-                "安排": d.get("name") or "训练",
-                "动作数": len(d.get("exercises") or []),
-                "动作": names,
-            }
-        )
-st.dataframe(pd.DataFrame(summary_rows), width="stretch", hide_index=True)
+with st.expander("本周一览", expanded=False):
+    summary_rows = []
+    for key in WEEKDAY_KEYS:
+        d = draft[key]
+        if d.get("rest"):
+            summary_rows.append(
+                {"星期": WEEKDAY_CN[key], "安排": d.get("name") or "休息", "动作数": 0}
+            )
+        else:
+            names = "、".join(ex["name"] for ex in d.get("exercises") or [])
+            summary_rows.append(
+                {
+                    "星期": WEEKDAY_CN[key],
+                    "安排": d.get("name") or "训练",
+                    "动作数": len(d.get("exercises") or []),
+                    "动作": names,
+                }
+            )
+    st.dataframe(pd.DataFrame(summary_rows), width="stretch", hide_index=True)
 
 save_l, save_r = st.columns([1, 1])
 with save_l:

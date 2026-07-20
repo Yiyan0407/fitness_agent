@@ -76,30 +76,30 @@ def parse_selected_date(state) -> str | None:
     return None
 
 
-profile = repo.get_profile()
-m1, m2 = st.columns(2)
-if profile.get("weight_kg"):
-    m1.metric("当前体重 (kg)", profile["weight_kg"])
-if profile.get("body_fat_pct"):
-    m2.metric("当前体脂 (%)", profile["body_fat_pct"])
-
-c1, c2, c3, c4 = st.columns(4)
-c1.markdown(
-    f"<span style='color:{KIND_STYLE['done']['color']}'>●</span> 已完成",
-    unsafe_allow_html=True,
-)
-c2.markdown(
-    f"<span style='color:{KIND_STYLE['in_progress']['color']}'>●</span> 进行中",
-    unsafe_allow_html=True,
-)
-c3.markdown(
-    f"<span style='color:{KIND_STYLE['planned']['color']}'>●</span> 计划",
-    unsafe_allow_html=True,
-)
-c4.markdown(
-    f"<span style='color:{KIND_STYLE['rest']['color']}'>●</span> 休息",
-    unsafe_allow_html=True,
-)
+with st.expander("体态与图例", expanded=False):
+    profile = repo.get_profile()
+    m1, m2 = st.columns(2)
+    if profile.get("weight_kg"):
+        m1.metric("当前体重 (kg)", profile["weight_kg"])
+    if profile.get("body_fat_pct"):
+        m2.metric("当前体脂 (%)", profile["body_fat_pct"])
+    c1, c2, c3, c4 = st.columns(4)
+    c1.markdown(
+        f"<span style='color:{KIND_STYLE['done']['color']}'>●</span> 已完成",
+        unsafe_allow_html=True,
+    )
+    c2.markdown(
+        f"<span style='color:{KIND_STYLE['in_progress']['color']}'>●</span> 进行中",
+        unsafe_allow_html=True,
+    )
+    c3.markdown(
+        f"<span style='color:{KIND_STYLE['planned']['color']}'>●</span> 计划",
+        unsafe_allow_html=True,
+    )
+    c4.markdown(
+        f"<span style='color:{KIND_STYLE['rest']['color']}'>●</span> 休息",
+        unsafe_allow_html=True,
+    )
 
 today = date.today()
 cal_start = today.replace(day=1) - timedelta(days=200)
@@ -112,7 +112,7 @@ cal_state = calendar(
     options={
         "initialView": "dayGridMonth",
         "locale": "zh-cn",
-        "height": 620,
+        "height": 420,
         "headerToolbar": {
             "left": "today prev,next",
             "center": "title",

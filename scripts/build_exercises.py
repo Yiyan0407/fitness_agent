@@ -27,6 +27,113 @@ IMAGE_BASE = (
     "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/"
 )
 
+# 旧中文库 id → free-exercise-db id（用于补配图、合并重复）
+LEGACY_ID_TO_FREE: dict[str, str] = {
+    "incline_press": "Barbell_Incline_Bench_Press_-_Medium_Grip",
+    "decline_press": "Decline_Barbell_Bench_Press",
+    "lateral_raise": "Side_Lateral_Raise",
+    "cable_lateral_raise": "Cable_Seated_Lateral_Raise",
+    "adduction_machine": "Thigh_Adductor",
+    "abduction_machine": "Thigh_Abductor",
+    "front_raise": "Front_Dumbbell_Raise",
+    "reverse_wrist_curl": "Palms-Down_Wrist_Curl_Over_A_Bench",
+    "wrist_curl": "Palms-Up_Barbell_Wrist_Curl_Over_A_Bench",
+    "rear_delt_machine": "Reverse_Flyes",
+    "deadlift": "Barbell_Deadlift",
+    "kettlebell_swing": "One-Arm_Kettlebell_Swings",
+    "calf_raise": "Standing_Calf_Raises",
+    "donkey_calf_raise": "Donkey_Calf_Raises",
+    "foam_roll": "Hamstring-SMR",
+    "shrug": "Barbell_Shrug",
+    "bike": "Recumbent_Bike",
+    "elliptical": "Elliptical_Trainer",
+    "treadmill": "Jogging_Treadmill",
+    "jump_rope": "Rope_Jumping",
+    "row_machine": "Rowing_Stationary",
+    "stair_climber": "Stairmaster",
+    "incline_walk": "Walking_Treadmill",
+    "side_plank": "Side_Bridge",
+    "ab_wheel": "Barbell_Ab_Rollout_-_On_Knees",
+    "crunch": "Cable_Crunch",
+    "hanging_knee_raise": "Hanging_Leg_Raise",
+    "mountain_climber": "Mountain_Climbers",
+    "world_greatest_stretch": "Worlds_Greatest_Stretch",
+    "cat_cow": "Cat_Stretch",
+    "hip_flexor_stretch": "Kneeling_Hip_Flexor",
+    "box_jump": "Box_Jump_Multiple_Response",
+    "leg_extension": "Leg_Extensions",
+    "machine_shoulder_press": "Machine_Shoulder_Military_Press",
+    "ohp": "Standing_Military_Press",
+    "arnold_press": "Arnold_Dumbbell_Press",
+    "upright_row": "Upright_Barbell_Row",
+    "cuba_press": "Cuban_Press",
+    "skull_crusher": "Lying_Triceps_Press",
+    "bench_dip": "Bench_Dips",
+    "tricep_dip": "Dips_-_Triceps_Version",
+    "tricep_pushdown": "Triceps_Pushdown",
+    "rope_pushdown": "Triceps_Pushdown_-_Rope_Attachment",
+    "overhead_tricep_ext": "Cable_Rope_Overhead_Triceps_Extension",
+    "close_grip_bench": "Close-Grip_Barbell_Bench_Press",
+    "incline_curl": "Dumbbell_Prone_Incline_Curl",
+    "concentration_curl": "Concentration_Curls",
+    "dumbbell_curl": "Dumbbell_Bicep_Curl",
+    "cable_curl": "High_Cable_Curls",
+    "hammer_curl": "Hammer_Curls",
+    "t_bar_row": "T-Bar_Row_with_Handle",
+    "seated_row": "Seated_Cable_Rows",
+    "pull_up": "Pullups",
+    "barbell_row": "Bent_Over_Barbell_Row",
+    "pendlay_row": "Bent_Over_Barbell_Row",
+    "close_grip_pulldown": "Wide-Grip_Lat_Pulldown",
+    "cable_row": "Seated_Cable_Rows",
+    "chest_supported_row": "Lying_T-Bar_Row",
+    "assisted_pull_up": "Band_Assisted_Pull-Up",
+    "lat_pulldown": "Wide-Grip_Lat_Pulldown",
+    "rack_pull": "Rack_Pulls",
+    "push_up": "Pushups",
+    "machine_chest_press": "Butterfly",
+    "bench_press": "Barbell_Bench_Press_-_Medium_Grip",
+    "cable_fly": "Cable_Crossover",
+    "pec_deck": "Butterfly",
+    "chest_dip": "Dips_-_Chest_Version",
+    "diamond_push_up": "Close-Grip_Push-Up_off_of_a_Dumbbell",
+    "landmine_press": "Landmine_Linear_Jammer",
+    "stiff_leg_deadlift": "Stiff-Legged_Barbell_Deadlift",
+    "leg_curl": "Lying_Leg_Curls",
+    "step_up": "Dumbbell_Step_Ups",
+    "bulgarian_split_squat": "Split_Squat_with_Dumbbells",
+    "front_squat": "Front_Barbell_Squat",
+    "reverse_lunge": "Crossover_Reverse_Lunge",
+    "walking_lunge": "Dumbbell_Lunges",
+    "dumbbell_rdl": "Stiff-Legged_Dumbbell_Deadlift",
+    "cable_kickback": "One-Legged_Cable_Kickback",
+    "hip_thrust": "Barbell_Hip_Thrust",
+    "glute_bridge": "Barbell_Glute_Bridge",
+    "barbell_squat": "Barbell_Squat",
+    "goblet_squat": "Goblet_Squat",
+    "hack_squat": "Hack_Squat",
+    "leg_press": "Leg_Press",
+    "dumbbell_press": "Dumbbell_Bench_Press",
+    "incline_dumbbell_press": "Incline_Dumbbell_Press",
+    "seated_leg_curl": "Seated_Leg_Curl",
+    "seated_calf_raise": "Seated_Calf_Raise",
+    "good_morning": "Good_Morning",
+    "romanian_deadlift": "Romanian_Deadlift",
+    "battle_rope": "Battling_Ropes",
+    "sauna_walk": "Walking_Treadmill",
+}
+
+# free-db 没有的少数动作：外链配图（Wikimedia 用原图，勿用已失效的 /thumb/640px-）
+EXTERNAL_IMAGE_URLS: dict[str, str] = {
+    "burpee": "https://upload.wikimedia.org/wikipedia/commons/9/95/Burpee_1_Neutral_Position.jpg",
+    "bird_dog": "https://upload.wikimedia.org/wikipedia/commons/8/82/Bird_dog_exercise.jpg",
+    # 与猫牛式相近的活动度动作，复用 free-db 猫式配图
+    "thoracic_opener": (
+        "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/"
+        "exercises/Cat_Stretch/0.jpg"
+    ),
+}
+
 EQUIP_MAP = {
     "bands": "弹力带",
     "barbell": "杠铃",
@@ -496,6 +603,8 @@ def build(source: list[dict], legacy: list[dict]) -> list[dict]:
             by_name[name_en.lower()] = ex
             by_slug[slugify(name_en)] = ex
 
+    free_by_id = {str(e.get("id") or ""): e for e in source if e.get("id")}
+
     out: list[dict] = []
     seen_ids: set[str] = set()
     seen_zh: dict[str, int] = {}  # chinese name -> index in out
@@ -546,7 +655,6 @@ def build(source: list[dict], legacy: list[dict]) -> list[dict]:
             "tips": tips,
             "image_url": img,
         }
-        # prefer entry with image when Chinese name collides
         if zh_name in seen_zh:
             prev = out[seen_zh[zh_name]]
             if not prev.get("image_url") and img:
@@ -555,32 +663,69 @@ def build(source: list[dict], legacy: list[dict]) -> list[dict]:
         seen_zh[zh_name] = len(out)
         out.append(item)
 
+    out_by_id = {item["id"]: i for i, item in enumerate(out)}
+
     for ex in legacy:
         eid = str(ex.get("id") or slugify(str(ex.get("name") or "ex")))
         name = str(ex.get("name") or "").strip()
         if not name:
             continue
+
+        free_id = LEGACY_ID_TO_FREE.get(eid) or LEGACY_ID_TO_FREE.get(slugify(eid))
+        if free_id and free_id in out_by_id:
+            idx = out_by_id[free_id]
+            # 把中文习惯名/要点合并进已有配图条目，避免重复无图项
+            if re.search(r"[\u4e00-\u9fff]", name):
+                old = out[idx]["name"]
+                out[idx]["name"] = name
+                if old in seen_zh and seen_zh[old] == idx:
+                    del seen_zh[old]
+                seen_zh[name] = idx
+            lt = str(ex.get("tips") or "")
+            if lt and re.search(r"[\u4e00-\u9fff]", lt):
+                out[idx]["tips"] = lt
+            if ex.get("muscle"):
+                out[idx]["muscle"] = str(ex["muscle"])
+            continue
+
         if eid in seen_ids or slugify(eid) in {slugify(x) for x in seen_ids}:
             continue
         if name in seen_zh:
-            # merge tips into existing if missing chinese tips
             idx = seen_zh[name]
             if ex.get("tips") and not re.search(
                 r"[\u4e00-\u9fff]", str(out[idx].get("tips") or "")
             ):
                 out[idx]["tips"] = str(ex["tips"])
+            if not out[idx].get("image_url"):
+                if free_id and free_id in free_by_id:
+                    out[idx]["image_url"] = image_url(
+                        free_by_id[free_id].get("images"), free_id
+                    )
+                elif eid in EXTERNAL_IMAGE_URLS:
+                    out[idx]["image_url"] = EXTERNAL_IMAGE_URLS[eid]
             continue
+
+        img = ""
+        name_en = str(ex.get("name_en") or "")
+        if free_id and free_id in free_by_id:
+            img = image_url(free_by_id[free_id].get("images"), free_id)
+            name_en = name_en or str(free_by_id[free_id].get("name") or "")
+        elif eid in EXTERNAL_IMAGE_URLS:
+            img = EXTERNAL_IMAGE_URLS[eid]
+        elif name in EXTERNAL_IMAGE_URLS:
+            img = EXTERNAL_IMAGE_URLS[name]
+
         seen_ids.add(eid)
         seen_zh[name] = len(out)
         out.append(
             {
                 "id": eid,
                 "name": name,
-                "name_en": str(ex.get("name_en") or ""),
+                "name_en": name_en,
                 "muscle": str(ex.get("muscle") or "全身"),
                 "equipment": str(ex.get("equipment") or "其他").split("/")[0],
                 "tips": str(ex.get("tips") or ""),
-                "image_url": str(ex.get("image_url") or ""),
+                "image_url": img,
             }
         )
 

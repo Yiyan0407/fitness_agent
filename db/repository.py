@@ -87,6 +87,14 @@ class Repository:
 
     # --- plans ---
 
+    @staticmethod
+    def _loads_json(raw: Any, default: Any = None) -> Any:
+        if raw is None or raw == "":
+            return {} if default is None else default
+        if isinstance(raw, (dict, list)):
+            return raw
+        return json.loads(raw)
+
     def get_current_plan(self) -> dict[str, Any] | None:
         row = self.conn.execute(
             "SELECT * FROM plans WHERE is_active = 1 ORDER BY id DESC LIMIT 1"
@@ -94,14 +102,19 @@ class Repository:
         if not row:
             return None
         data = dict(row)
-        data["content"] = json.loads(data.pop("content_json"))
+        content = self._loads_json(data.pop("content_json"), default={})
+        if not isinstance(content, dict):
+            content = {}
+        data["content"] = content
         return data
 
     def save_plan(self, content: dict[str, Any] | str, name: str = "当前计划") -> dict[str, Any]:
         if isinstance(content, str):
-            parsed = json.loads(content)
+            parsed = self._loads_json(content, default={})
         else:
             parsed = content
+        if not isinstance(parsed, dict):
+            parsed = {}
         self.conn.execute("UPDATE plans SET is_active = 0 WHERE is_active = 1")
         cur = self.conn.execute(
             """
@@ -114,7 +127,7 @@ class Repository:
         plan_id = cur.lastrowid
         row = self.conn.execute("SELECT * FROM plans WHERE id = ?", (plan_id,)).fetchone()
         data = dict(row)
-        data["content"] = json.loads(data.pop("content_json"))
+        data["content"] = self._loads_json(data.pop("content_json"), default={})
         return data
 
     def get_plan_for_date(self, target: date | None = None) -> dict[str, Any] | None:

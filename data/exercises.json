@@ -1,12 +1,12 @@
 [
   {
-    "id": "incline_press",
+    "id": "Barbell_Incline_Bench_Press_-_Medium_Grip",
     "name": "上斜卧推",
-    "name_en": "",
+    "name_en": "Barbell Incline Bench Press - Medium Grip",
     "muscle": "上胸",
     "equipment": "杠铃",
     "tips": "凳面约30度，避免肩部过度前伸",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Incline_Bench_Press_-_Medium_Grip/0.jpg"
   },
   {
     "id": "Incline_Dumbbell_Press",
@@ -34,15 +34,6 @@
     "equipment": "泡沫轴",
     "tips": "In a seated position, place a foam roll under your lower back. Cross your arms in front of you and protract your shoulders. This will be your starting position. Raise your hips off",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lower_Back-SMR/0.jpg"
-  },
-  {
-    "id": "Crossover_Reverse_Lunge",
-    "name": "交叉反向弓步",
-    "name_en": "Crossover Reverse Lunge",
-    "muscle": "下背",
-    "equipment": "其他",
-    "tips": "Stand with your feet shoulder width apart. This will be your starting position. Perform a rear lunge by stepping back with one foot and flexing the hips and front knee. As you do s",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Crossover_Reverse_Lunge/0.jpg"
   },
   {
     "id": "Reverse_Band_Deadlift",
@@ -108,24 +99,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hug_Knees_To_Chest/0.jpg"
   },
   {
-    "id": "Rack_Pulls",
-    "name": "杠铃·Rack Pulls",
-    "name_en": "Rack Pulls",
-    "muscle": "下背",
-    "equipment": "杠铃",
-    "tips": "Set up in a power rack with the bar on the pins. The pins should be set to the desired point; just below the knees, just above, or in the mid thigh position. Position yourself agai",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Rack_Pulls/0.jpg"
-  },
-  {
-    "id": "Barbell_Deadlift",
-    "name": "杠铃硬拉",
-    "name_en": "Barbell Deadlift",
-    "muscle": "下背",
-    "equipment": "杠铃",
-    "tips": "Stand in front of a loaded barbell. While keeping the back as straight as possible, bend your knees, bend forward and grasp the bar using a medium (shoulder width) overhand grip. T",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Deadlift/0.jpg"
-  },
-  {
     "id": "Rack_Pull_with_Bands",
     "name": "架Pull弹力带",
     "name_en": "Rack Pull with Bands",
@@ -133,15 +106,6 @@
     "equipment": "杠铃",
     "tips": "Set up in a power rack with the bar on the pins. The pins should be set to the desired point; just below the knees, just above, or in the mid thigh position. Attach bands to the ba",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Rack_Pull_with_Bands/0.jpg"
-  },
-  {
-    "id": "Cat_Stretch",
-    "name": "猫式拉伸",
-    "name_en": "Cat Stretch",
-    "muscle": "下背",
-    "equipment": "其他",
-    "tips": "Position yourself on the floor on your hands and knees. Pull your belly in and round your spine, lower back, shoulders, and neck, letting your head drop. Hold for 15 seconds.",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cat_Stretch/0.jpg"
   },
   {
     "id": "Stiff_Leg_Barbell_Good_Morning",
@@ -270,13 +234,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pelvic_Tilt_Into_Bridge/0.jpg"
   },
   {
-    "id": "decline_press",
+    "id": "Decline_Barbell_Bench_Press",
     "name": "下斜卧推",
-    "name_en": "",
+    "name_en": "Decline Barbell Bench Press",
     "muscle": "下胸",
     "equipment": "杠铃",
     "tips": "下胸刺激更强，注意固定脚",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Decline_Barbell_Bench_Press/0.jpg"
   },
   {
     "id": "Leverage_High_Row",
@@ -313,15 +277,6 @@
     "equipment": "其他",
     "tips": "Sit in a chair so your back is straight and your feet planted on the floor. Interlace your fingers behind your head, elbows out and your chin down. Twist your upper body to one sid",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Spinal_Stretch/0.jpg"
-  },
-  {
-    "id": "T-Bar_Row_with_Handle",
-    "name": "T杠划船把手",
-    "name_en": "T-Bar Row with Handle",
-    "muscle": "中背",
-    "equipment": "杠铃",
-    "tips": "Position a bar into a landmine or in a corner to keep it from moving. Load an appropriate weight onto your end. Stand over the bar, and position a Double D row handle around the ba",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/T-Bar_Row_with_Handle/0.jpg"
   },
   {
     "id": "Incline_Bench_Pull",
@@ -432,15 +387,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_Cambered_Barbell_Row/0.jpg"
   },
   {
-    "id": "Lying_T-Bar_Row",
-    "name": "卧姿T杠划船",
-    "name_en": "Lying T-Bar Row",
-    "muscle": "中背",
-    "equipment": "器械",
-    "tips": "Load up the T-bar Row Machine with the desired weight and adjust the leg height so that your upper chest is at the top of the pad. Tip: In some machines all you can do is stand on ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_T-Bar_Row/0.jpg"
-  },
-  {
     "id": "Two-Arm_Kettlebell_Row",
     "name": "双臂壶铃划船",
     "name_en": "Two-Arm Kettlebell Row",
@@ -486,15 +432,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_One-arm_Cable_Pulley_Rows/0.jpg"
   },
   {
-    "id": "Seated_Cable_Rows",
-    "name": "坐姿绳索Rows",
-    "name_en": "Seated Cable Rows",
-    "muscle": "中背",
-    "equipment": "绳索",
-    "tips": "For this exercise you will need access to a low pulley row machine with a V-bar. Note: The V-bar will enable you to have a neutral grip where the palms of your hands face each othe",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/0.jpg"
-  },
-  {
     "id": "Bent_Over_One-Arm_Long_Bar_Row",
     "name": "屈单臂Long杆划船",
     "name_en": "Bent Over One-Arm Long Bar Row",
@@ -529,15 +466,6 @@
     "equipment": "杠铃",
     "tips": "Put weight on one of the ends of an Olympic barbell. Make sure that you either place the other end of the barbell in the corner of two walls; or put a heavy object on the ground so",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Two-Arm_Long_Bar_Row/0.jpg"
-  },
-  {
-    "id": "Bent_Over_Barbell_Row",
-    "name": "屈杠铃划船",
-    "name_en": "Bent Over Barbell Row",
-    "muscle": "中背",
-    "equipment": "杠铃",
-    "tips": "Holding a barbell with a pronated grip (palms facing down), bend your knees slightly and bring your torso forward, by bending at the waist, while keeping the back straight until it",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Barbell_Row/0.jpg"
   },
   {
     "id": "Suspended_Row",
@@ -576,22 +504,22 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Sled_Row/0.jpg"
   },
   {
-    "id": "lateral_raise",
+    "id": "Side_Lateral_Raise",
     "name": "侧平举",
-    "name_en": "",
+    "name_en": "Side Lateral Raise",
     "muscle": "侧肩",
     "equipment": "哑铃",
     "tips": "轻重量高控制，肘微屈，拇指略低于小指",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Lateral_Raise/0.jpg"
   },
   {
-    "id": "cable_lateral_raise",
+    "id": "Cable_Seated_Lateral_Raise",
     "name": "绳索侧平举",
-    "name_en": "",
+    "name_en": "Cable Seated Lateral Raise",
     "muscle": "侧肩",
     "equipment": "绳索",
     "tips": "张力更持续，适合雕刻中束",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Seated_Lateral_Raise/0.jpg"
   },
   {
     "id": "Farmers_Walk",
@@ -610,15 +538,6 @@
     "equipment": "其他",
     "tips": "Assume a comfortable standing position, with a short box positioned next to you. This will be your starting position. Quickly dip into a quarter squat to initiate the stretch refle",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lateral_Box_Jump/0.jpg"
-  },
-  {
-    "id": "Thigh_Adductor",
-    "name": "Thigh内收肌",
-    "name_en": "Thigh Adductor",
-    "muscle": "内收肌",
-    "equipment": "器械",
-    "tips": "To begin, sit down on the adductor machine and select a weight you are comfortable with. When your legs are positioned properly on the leg pads of the machine, grip the handles on ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Thigh_Adductor/0.jpg"
   },
   {
     "id": "Side_Lying_Groin_Stretch",
@@ -720,22 +639,22 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lateral_Bound/0.jpg"
   },
   {
-    "id": "adduction_machine",
+    "id": "Thigh_Adductor",
     "name": "髋内收机",
-    "name_en": "",
+    "name_en": "Thigh Adductor",
     "muscle": "内收肌",
     "equipment": "器械",
     "tips": "勿用过大重量猛拉",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Thigh_Adductor/0.jpg"
   },
   {
-    "id": "front_raise",
+    "id": "Front_Dumbbell_Raise",
     "name": "前平举",
-    "name_en": "",
+    "name_en": "Front Dumbbell Raise",
     "muscle": "前肩",
     "equipment": "哑铃",
     "tips": "推类已够前束时不必过量",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Front_Dumbbell_Raise/0.jpg"
   },
   {
     "id": "Bottoms-Up_Clean_From_The_Hang_Position",
@@ -747,15 +666,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bottoms-Up_Clean_From_The_Hang_Position/0.jpg"
   },
   {
-    "id": "Palms-Down_Wrist_Curl_Over_A_Bench",
-    "name": "PalmsWrist弯举凳",
-    "name_en": "Palms-Down Wrist Curl Over A Bench",
-    "muscle": "前臂",
-    "equipment": "杠铃",
-    "tips": "Start out by placing a barbell on one side of a flat bench. Kneel down on both of your knees so that your body is facing the flat bench. Use your arms to grab the barbell with a pr",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Palms-Down_Wrist_Curl_Over_A_Bench/0.jpg"
-  },
-  {
     "id": "Palms-Down_Dumbbell_Wrist_Curl_Over_A_Bench",
     "name": "Palms哑铃Wrist弯举凳",
     "name_en": "Palms-Down Dumbbell Wrist Curl Over A Bench",
@@ -763,15 +673,6 @@
     "equipment": "哑铃",
     "tips": "Start out by placing two dumbbells on one side of a flat bench. Kneel down on both of your knees so that your body is facing the flat bench. Use your arms to grab both of the dumbb",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Palms-Down_Dumbbell_Wrist_Curl_Over_A_Bench/0.jpg"
-  },
-  {
-    "id": "Palms-Up_Barbell_Wrist_Curl_Over_A_Bench",
-    "name": "Palms杠铃Wrist弯举凳",
-    "name_en": "Palms-Up Barbell Wrist Curl Over A Bench",
-    "muscle": "前臂",
-    "equipment": "杠铃",
-    "tips": "Start out by placing a barbell on one side of a flat bench. Kneel down on both of your knees so that your body is facing the flat bench. Use your arms to grab the barbell with a su",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Palms-Up_Barbell_Wrist_Curl_Over_A_Bench/0.jpg"
   },
   {
     "id": "Rickshaw_Carry",
@@ -801,13 +702,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Wrist_Roller/0.jpg"
   },
   {
-    "id": "reverse_wrist_curl",
+    "id": "Palms-Down_Wrist_Curl_Over_A_Bench",
     "name": "反向腕弯举",
-    "name_en": "",
+    "name_en": "Palms-Down Wrist Curl Over A Bench",
     "muscle": "前臂",
-    "equipment": "哑铃",
+    "equipment": "杠铃",
     "tips": "练前臂伸肌，重量更轻",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Palms-Down_Wrist_Curl_Over_A_Bench/0.jpg"
   },
   {
     "id": "Dumbbell_Lying_Pronation",
@@ -909,13 +810,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Wrist_Curl/0.jpg"
   },
   {
-    "id": "wrist_curl",
+    "id": "Palms-Up_Barbell_Wrist_Curl_Over_A_Bench",
     "name": "腕弯举",
-    "name_en": "",
+    "name_en": "Palms-Up Barbell Wrist Curl Over A Bench",
     "muscle": "前臂",
-    "equipment": "哑铃",
+    "equipment": "杠铃",
     "tips": "小重量多次，控制手腕活动",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Palms-Up_Barbell_Wrist_Curl_Over_A_Bench/0.jpg"
   },
   {
     "id": "Wrist_Circles",
@@ -945,21 +846,12 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Plate_Pinch/0.jpg"
   },
   {
-    "id": "rear_delt_machine",
-    "name": "反向蝴蝶机",
-    "name_en": "",
-    "muscle": "后肩",
-    "equipment": "器械",
-    "tips": "胸贴靠垫，夹后束而非甩臂",
-    "image_url": ""
-  },
-  {
     "id": "Reverse_Flyes",
-    "name": "反向飞鸟",
+    "name": "反向蝴蝶机",
     "name_en": "Reverse Flyes",
     "muscle": "后肩",
     "equipment": "哑铃",
-    "tips": "俯身或器械，感受肩胛后收",
+    "tips": "胸贴靠垫，夹后束而非甩臂",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Reverse_Flyes/0.jpg"
   },
   {
@@ -981,22 +873,22 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Good_Morning/0.jpg"
   },
   {
-    "id": "deadlift",
+    "id": "Barbell_Deadlift",
     "name": "硬拉",
-    "name_en": "",
+    "name_en": "Barbell Deadlift",
     "muscle": "后链",
     "equipment": "杠铃",
     "tips": "中立脊柱，杠贴近小腿，髋膝协同发力",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Deadlift/0.jpg"
   },
   {
-    "id": "kettlebell_swing",
+    "id": "One-Arm_Kettlebell_Swings",
     "name": "壶铃摆荡",
-    "name_en": "",
+    "name_en": "One-Arm Kettlebell Swings",
     "muscle": "后链/有氧",
     "equipment": "壶铃",
     "tips": "髋铰链爆发，不是深蹲式上下蹲",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Arm_Kettlebell_Swings/0.jpg"
   },
   {
     "id": "Sumo_Deadlift",
@@ -1015,15 +907,6 @@
     "equipment": "其他",
     "tips": "Begin seated on the ground with your legs bent and your feet on the floor. Using a Muscle Roller or a rolling pin, apply pressure to the muscles on the outside of your shins. Work ",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Anterior_Tibialis-SMR/0.jpg"
-  },
-  {
-    "id": "Donkey_Calf_Raises",
-    "name": "Donkey小腿Raises",
-    "name_en": "Donkey Calf Raises",
-    "muscle": "小腿",
-    "equipment": "其他",
-    "tips": "For this exercise you will need access to a donkey calf raise machine. Start by positioning your lower back and hips under the padded lever provided. The tailbone area should be th",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Donkey_Calf_Raises/0.jpg"
   },
   {
     "id": "Peroneals_Stretch",
@@ -1170,13 +1053,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Balance_Board/0.jpg"
   },
   {
-    "id": "calf_raise",
+    "id": "Standing_Calf_Raises",
     "name": "提踵",
-    "name_en": "",
+    "name_en": "Standing Calf Raises",
     "muscle": "小腿",
     "equipment": "器械",
     "tips": "顶峰挤压，完整活动范围",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Calf_Raises/0.jpg"
   },
   {
     "id": "Calf_Raise_On_A_Dumbbell",
@@ -1224,15 +1107,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Dumbbell_Calf_Raise/0.jpg"
   },
   {
-    "id": "Standing_Calf_Raises",
-    "name": "站姿小腿Raises",
-    "name_en": "Standing Calf Raises",
-    "muscle": "小腿",
-    "equipment": "器械",
-    "tips": "Adjust the padded lever of the calf raise machine to fit your height. Place your shoulders under the pads provided and position your toes facing forward (or using any of the two ot",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Calf_Raises/0.jpg"
-  },
-  {
     "id": "Standing_Barbell_Calf_Raise",
     "name": "站姿杠铃提踵",
     "name_en": "Standing Barbell Calf Raise",
@@ -1269,31 +1143,31 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Ankle_Circles/0.jpg"
   },
   {
-    "id": "donkey_calf_raise",
+    "id": "Donkey_Calf_Raises",
     "name": "驴式提踵",
-    "name_en": "",
+    "name_en": "Donkey Calf Raises",
     "muscle": "小腿",
-    "equipment": "器械",
+    "equipment": "其他",
     "tips": "髋屈曲位拉长大腿，强化腓肠肌拉伸",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Donkey_Calf_Raises/0.jpg"
   },
   {
-    "id": "sauna_walk",
+    "id": "Walking_Treadmill",
     "name": "放松散步",
-    "name_en": "",
+    "name_en": "Walking, Treadmill",
     "muscle": "恢复",
-    "equipment": "无",
+    "equipment": "器械",
     "tips": "训练后低强度散步促进恢复",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Walking_Treadmill/0.jpg"
   },
   {
-    "id": "foam_roll",
+    "id": "Hamstring-SMR",
     "name": "泡沫轴放松",
-    "name_en": "",
+    "name_en": "Hamstring-SMR",
     "muscle": "恢复",
     "equipment": "泡沫轴",
     "tips": "酸痛部位缓慢滚动，避开关节骨突",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hamstring-SMR/0.jpg"
   },
   {
     "id": "Leverage_Shrug",
@@ -1368,15 +1242,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Snatch_Shrug/0.jpg"
   },
   {
-    "id": "Barbell_Shrug",
-    "name": "杠铃耸肩",
-    "name_en": "Barbell Shrug",
-    "muscle": "斜方肌",
-    "equipment": "杠铃",
-    "tips": "Stand up straight with your feet at shoulder width as you hold a barbell with both hands in front of you using a pronated grip (palms facing the thighs). Tip: Your hands should be ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Shrug/0.jpg"
-  },
-  {
     "id": "Barbell_Shrug_Behind_The_Back",
     "name": "杠铃耸肩颈后背",
     "name_en": "Barbell Shrug Behind The Back",
@@ -1413,13 +1278,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Shrugs/0.jpg"
   },
   {
-    "id": "shrug",
+    "id": "Barbell_Shrug",
     "name": "耸肩",
-    "name_en": "",
+    "name_en": "Barbell Shrug",
     "muscle": "斜方肌",
     "equipment": "杠铃",
     "tips": "直上直下，勿大幅转肩",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Shrug/0.jpg"
   },
   {
     "id": "Scapular_Pull-Up",
@@ -1440,49 +1305,49 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Clean_Shrug/0.jpg"
   },
   {
-    "id": "bike",
+    "id": "Recumbent_Bike",
     "name": "功率车/单车",
-    "name_en": "",
+    "name_en": "Recumbent Bike",
     "muscle": "有氧",
     "equipment": "器械",
     "tips": "用作热身或有氧收尾",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Recumbent_Bike/0.jpg"
   },
   {
-    "id": "elliptical",
+    "id": "Elliptical_Trainer",
     "name": "椭圆机",
-    "name_en": "",
+    "name_en": "Elliptical Trainer",
     "muscle": "有氧",
     "equipment": "器械",
     "tips": "低冲击有氧，适合恢复日",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Elliptical_Trainer/0.jpg"
   },
   {
-    "id": "treadmill",
+    "id": "Jogging_Treadmill",
     "name": "跑步机快走/慢跑",
-    "name_en": "",
+    "name_en": "Jogging, Treadmill",
     "muscle": "有氧",
     "equipment": "器械",
     "tips": "根据恢复情况调节配速与时长",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Jogging_Treadmill/0.jpg"
   },
   {
-    "id": "jump_rope",
+    "id": "Rope_Jumping",
     "name": "跳绳",
-    "name_en": "",
+    "name_en": "Rope Jumping",
     "muscle": "有氧",
-    "equipment": "绳",
+    "equipment": "其他",
     "tips": "前脚掌轻落地，可作为热身",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Rope_Jumping/0.jpg"
   },
   {
-    "id": "row_machine",
+    "id": "Rowing_Stationary",
     "name": "划船机",
-    "name_en": "",
+    "name_en": "Rowing, Stationary",
     "muscle": "有氧/全身",
     "equipment": "器械",
     "tips": "腿-髋-臂顺序发力，注意腰背中立",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Rowing_Stationary/0.jpg"
   },
   {
     "id": "burpee",
@@ -1491,34 +1356,25 @@
     "muscle": "有氧/全身",
     "equipment": "自重",
     "tips": "高强度间歇用，注意落地缓冲",
-    "image_url": ""
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/9/95/Burpee_1_Neutral_Position.jpg"
   },
   {
-    "id": "battle_rope",
+    "id": "Battling_Ropes",
     "name": "战绳",
-    "name_en": "",
+    "name_en": "Battling Ropes",
     "muscle": "有氧/肩臂",
-    "equipment": "战绳",
+    "equipment": "其他",
     "tips": "微屈髋，用全身发力甩绳",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Battling_Ropes/0.jpg"
   },
   {
-    "id": "stair_climber",
+    "id": "Stairmaster",
     "name": "爬楼机",
-    "name_en": "",
+    "name_en": "Stairmaster",
     "muscle": "有氧/腿",
     "equipment": "器械",
     "tips": "躯干直立，勿过度扶把手借力",
-    "image_url": ""
-  },
-  {
-    "id": "incline_walk",
-    "name": "跑步机爬坡走",
-    "name_en": "",
-    "muscle": "有氧/腿",
-    "equipment": "器械",
-    "tips": "坡度步行，对关节通常更友好",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Stairmaster/0.jpg"
   },
   {
     "id": "Ab_Roller",
@@ -1764,21 +1620,12 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Sit-Up/0.jpg"
   },
   {
-    "id": "side_plank",
-    "name": "侧平板",
-    "name_en": "",
-    "muscle": "核心",
-    "equipment": "自重",
-    "tips": "身体一条直线，练侧核心稳定",
-    "image_url": ""
-  },
-  {
     "id": "Side_Bridge",
-    "name": "侧桥",
+    "name": "侧平板",
     "name_en": "Side Bridge",
     "muscle": "核心",
     "equipment": "自重",
-    "tips": "",
+    "tips": "身体一条直线，练侧核心稳定",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Bridge/0.jpg"
   },
   {
@@ -1791,13 +1638,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Russian_Twist/0.jpg"
   },
   {
-    "id": "ab_wheel",
+    "id": "Barbell_Ab_Rollout_-_On_Knees",
     "name": "健腹轮",
-    "name_en": "",
+    "name_en": "Barbell Ab Rollout - On Knees",
     "muscle": "核心",
-    "equipment": "器械",
+    "equipment": "杠铃",
     "tips": "从膝撑开始，腰不塌陷",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Ab_Rollout_-_On_Knees/0.jpg"
   },
   {
     "id": "Exercise_Ball_Pull-In",
@@ -1827,13 +1674,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Arm_High-Pulley_Cable_Side_Bends/0.jpg"
   },
   {
-    "id": "crunch",
+    "id": "Cable_Crunch",
     "name": "卷腹",
-    "name_en": "",
+    "name_en": "Cable Crunch",
     "muscle": "核心",
-    "equipment": "自重",
+    "equipment": "绳索",
     "tips": "肩胛离地即可，强调腹部收缩",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Crunch/0.jpg"
   },
   {
     "id": "Crunch_-_Hands_Overhead",
@@ -2017,21 +1864,12 @@
   },
   {
     "id": "Hanging_Leg_Raise",
-    "name": "悬垂举腿",
+    "name": "悬垂抬膝",
     "name_en": "Hanging Leg Raise",
     "muscle": "核心",
     "equipment": "自重",
-    "tips": "直腿版更难，先掌握抬膝",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hanging_Leg_Raise/0.jpg"
-  },
-  {
-    "id": "hanging_knee_raise",
-    "name": "悬垂抬膝",
-    "name_en": "",
-    "muscle": "核心",
-    "equipment": "自重",
     "tips": "避免甩腿，用腹肌卷起骨盆",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hanging_Leg_Raise/0.jpg"
   },
   {
     "id": "Suspended_Fallout",
@@ -2086,15 +1924,6 @@
     "equipment": "杠铃",
     "tips": "For this exercise you will need to get into a pushup position, but instead of having your hands of the floor, you will be grabbing on to an Olympic barbell (loaded with 5-10 lbs on",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Ab_Rollout/0.jpg"
-  },
-  {
-    "id": "Barbell_Ab_Rollout_-_On_Knees",
-    "name": "杠铃腹Rollout膝",
-    "name_en": "Barbell Ab Rollout - On Knees",
-    "muscle": "核心",
-    "equipment": "杠铃",
-    "tips": "Hold an Olympic barbell loaded with 5-10lbs on each side and kneel on the floor. Now place the barbell on the floor in front of you so that you are on all your hands and knees (as ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Ab_Rollout_-_On_Knees/0.jpg"
   },
   {
     "id": "Dead_Bug",
@@ -2176,15 +2005,6 @@
     "equipment": "绳索",
     "tips": "Connect a standard handle attachment, and position the cable to a middle pulley position. Lie on a stability ball perpendicular to the cable and grab the handle with one hand. You ",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Russian_Twists/0.jpg"
-  },
-  {
-    "id": "Cable_Crunch",
-    "name": "绳索卷腹",
-    "name_en": "Cable Crunch",
-    "muscle": "核心",
-    "equipment": "绳索",
-    "tips": "骨盆卷动，不是单纯屈髋",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Crunch/0.jpg"
   },
   {
     "id": "Cable_Reverse_Crunch",
@@ -2400,34 +2220,34 @@
     "muscle": "核心",
     "equipment": "自重",
     "tips": "对侧手脚伸直，骨盆不晃",
-    "image_url": ""
+    "image_url": "https://upload.wikimedia.org/wikipedia/commons/8/82/Bird_dog_exercise.jpg"
   },
   {
-    "id": "mountain_climber",
+    "id": "Mountain_Climbers",
     "name": "登山跑",
-    "name_en": "",
+    "name_en": "Mountain Climbers",
     "muscle": "核心/有氧",
-    "equipment": "自重",
+    "equipment": "其他",
     "tips": "髋稳定，膝盖朝胸口方向",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Mountain_Climbers/0.jpg"
   },
   {
-    "id": "world_greatest_stretch",
+    "id": "Worlds_Greatest_Stretch",
     "name": "世界最好拉伸",
-    "name_en": "",
+    "name_en": "World's Greatest Stretch",
     "muscle": "活动度",
-    "equipment": "自重",
+    "equipment": "其他",
     "tips": "弓步+旋转+腘绳拉伸，综合热身",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Worlds_Greatest_Stretch/0.jpg"
   },
   {
-    "id": "cat_cow",
+    "id": "Cat_Stretch",
     "name": "猫牛式",
-    "name_en": "",
+    "name_en": "Cat Stretch",
     "muscle": "活动度",
-    "equipment": "自重",
+    "equipment": "其他",
     "tips": "热身脊柱屈伸，缓慢呼吸配合",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cat_Stretch/0.jpg"
   },
   {
     "id": "thoracic_opener",
@@ -2436,25 +2256,25 @@
     "muscle": "活动度",
     "equipment": "自重",
     "tips": "改善含胸圆肩，推拉日前很有用",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cat_Stretch/0.jpg"
   },
   {
-    "id": "hip_flexor_stretch",
+    "id": "Kneeling_Hip_Flexor",
     "name": "髋屈肌拉伸",
-    "name_en": "",
+    "name_en": "Kneeling Hip Flexor",
     "muscle": "活动度",
-    "equipment": "自重",
+    "equipment": "其他",
     "tips": "后腿跪姿，骨盆轻微后倾",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Kneeling_Hip_Flexor/0.jpg"
   },
   {
-    "id": "box_jump",
+    "id": "Box_Jump_Multiple_Response",
     "name": "跳箱",
-    "name_en": "",
+    "name_en": "Box Jump (Multiple Response)",
     "muscle": "爆发/腿",
-    "equipment": "箱子",
+    "equipment": "其他",
     "tips": "轻落地，高度量力而行",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Box_Jump_Multiple_Response/0.jpg"
   },
   {
     "id": "All_Fours_Quad_Stretch",
@@ -2637,15 +2457,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Looking_At_Ceiling/0.jpg"
   },
   {
-    "id": "Mountain_Climbers",
-    "name": "Mountain Climbers",
-    "name_en": "Mountain Climbers",
-    "muscle": "股四头",
-    "equipment": "其他",
-    "tips": "Begin in a pushup position, with your weight supported by your hands and toes. Flexing the knee and hip, bring one leg until the knee is approximately under the hip. This will be y",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Mountain_Climbers/0.jpg"
-  },
-  {
     "id": "Quadriceps-SMR",
     "name": "Quadriceps筋膜放松",
     "name_en": "Quadriceps-SMR",
@@ -2826,15 +2637,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Split_Jerk/0.jpg"
   },
   {
-    "id": "Split_Squat_with_Dumbbells",
-    "name": "分腿深蹲哑铃",
-    "name_en": "Split Squat with Dumbbells",
-    "muscle": "股四头",
-    "equipment": "哑铃",
-    "tips": "Position yourself into a staggered stance with the rear foot elevated and front foot forward. Hold a dumbbell in each hand, letting them hang at the sides. This will be your starti",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Split_Squat_with_Dumbbells/0.jpg"
-  },
-  {
     "id": "Split_Jump",
     "name": "分腿跳",
     "name_en": "Split Jump",
@@ -2860,15 +2662,6 @@
     "equipment": "壶铃",
     "tips": "Clean two kettlebells to your shoulders. Clean the kettlebells to your shoulders by extending through the legs and hips as you pull the kettlebells towards your shoulders. Rotate y",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Front_Squats_With_Two_Kettlebells/0.jpg"
-  },
-  {
-    "id": "Front_Barbell_Squat",
-    "name": "前杠铃深蹲",
-    "name_en": "Front Barbell Squat",
-    "muscle": "股四头",
-    "equipment": "杠铃",
-    "tips": "This exercise is best performed inside a squat rack for safety purposes. To begin, first set the bar on a rack that best matches your height. Once the correct height is chosen and ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Front_Barbell_Squat/0.jpg"
   },
   {
     "id": "Front_Barbell_Squat_To_A_Bench",
@@ -3078,24 +2871,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Rear_Leg_Raises/0.jpg"
   },
   {
-    "id": "Dumbbell_Lunges",
-    "name": "哑铃Lunges",
-    "name_en": "Dumbbell Lunges",
-    "muscle": "股四头",
-    "equipment": "哑铃",
-    "tips": "Stand with your torso upright holding two dumbbells in your hands by your sides. This will be your starting position. Step forward with your right leg around 2 feet or so from the ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Lunges/0.jpg"
-  },
-  {
-    "id": "Dumbbell_Step_Ups",
-    "name": "哑铃StepUps",
-    "name_en": "Dumbbell Step Ups",
-    "muscle": "股四头",
-    "equipment": "哑铃",
-    "tips": "Stand up straight while holding a dumbbell on each hand (palms facing the side of your legs). Place the right foot on the elevated platform. Step on the platform by extending the h",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Step_Ups/0.jpg"
-  },
-  {
     "id": "Dumbbell_Rear_Lunge",
     "name": "哑铃后弓步",
     "name_en": "Dumbbell Rear Lunge",
@@ -3141,51 +2916,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bicycling_Stationary/0.jpg"
   },
   {
-    "id": "Elliptical_Trainer",
-    "name": "器械·Elliptical Trainer",
-    "name_en": "Elliptical Trainer",
-    "muscle": "股四头",
-    "equipment": "器械",
-    "tips": "To begin, step onto the elliptical and select the desired option from the menu. Most ellipticals have a manual setting, or you can select a program to run. Typically, you can enter",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Elliptical_Trainer/0.jpg"
-  },
-  {
-    "id": "Jogging_Treadmill",
-    "name": "器械·Jogging, Treadmill",
-    "name_en": "Jogging, Treadmill",
-    "muscle": "股四头",
-    "equipment": "器械",
-    "tips": "To begin, step onto the treadmill and select the desired option from the menu. Most treadmills have a manual setting, or you can select a program to run. Typically, you can enter y",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Jogging_Treadmill/0.jpg"
-  },
-  {
-    "id": "Leg_Extensions",
-    "name": "器械·Leg Extensions",
-    "name_en": "Leg Extensions",
-    "muscle": "股四头",
-    "equipment": "器械",
-    "tips": "For this exercise you will need to use a leg extension machine. First choose your weight and sit on the machine with your legs under the pad (feet pointed forward) and the hands ho",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg_Extensions/0.jpg"
-  },
-  {
-    "id": "Recumbent_Bike",
-    "name": "器械·Recumbent Bike",
-    "name_en": "Recumbent Bike",
-    "muscle": "股四头",
-    "equipment": "器械",
-    "tips": "To begin, seat yourself on the bike and adjust the seat to your height. Select the desired option from the menu. You may have to start pedaling to turn it on. You can use the manua",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Recumbent_Bike/0.jpg"
-  },
-  {
-    "id": "Rowing_Stationary",
-    "name": "器械·Rowing, Stationary",
-    "name_en": "Rowing, Stationary",
-    "muscle": "股四头",
-    "equipment": "器械",
-    "tips": "To begin, seat yourself on the rower. Make sure that your heels are resting comfortably against the base of the foot pedals and that the straps are secured. Select the program that",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Rowing_Stationary/0.jpg"
-  },
-  {
     "id": "Running_Treadmill",
     "name": "器械·Running, Treadmill",
     "name_en": "Running, Treadmill",
@@ -3193,15 +2923,6 @@
     "equipment": "器械",
     "tips": "To begin, step onto the treadmill and select the desired option from the menu. Most treadmills have a manual setting, or you can select a program to run. Typically, you can enter y",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Running_Treadmill/0.jpg"
-  },
-  {
-    "id": "Stairmaster",
-    "name": "器械·Stairmaster",
-    "name_en": "Stairmaster",
-    "muscle": "股四头",
-    "equipment": "器械",
-    "tips": "To begin, step onto the stairmaster and select the desired option from the menu. You can choose a manual setting, or you can select a program to run. Typically, you can enter your ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Stairmaster/0.jpg"
   },
   {
     "id": "Step_Mill",
@@ -3555,15 +3276,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Hip_Adduction/0.jpg"
   },
   {
-    "id": "Rope_Jumping",
-    "name": "绳跳跃",
-    "name_en": "Rope Jumping",
-    "muscle": "股四头",
-    "equipment": "其他",
-    "tips": "Hold an end of the rope in each hand. Position the rope behind you on the ground. Raise your arms up and turn the rope over your head bringing it down in front of you. When it reac",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Rope_Jumping/0.jpg"
-  },
-  {
     "id": "Quad_Stretch",
     "name": "股四拉伸",
     "name_en": "Quad Stretch",
@@ -3573,13 +3285,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Quad_Stretch/0.jpg"
   },
   {
-    "id": "leg_extension",
+    "id": "Leg_Extensions",
     "name": "腿伸展",
-    "name_en": "",
+    "name_en": "Leg Extensions",
     "muscle": "股四头",
     "equipment": "器械",
     "tips": "避免弹振，膝盖不适则减小幅度",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg_Extensions/0.jpg"
   },
   {
     "id": "Fast_Skipping",
@@ -3636,15 +3348,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bodyweight_Walking_Lunge/0.jpg"
   },
   {
-    "id": "Walking_Treadmill",
-    "name": "行走Treadmill",
-    "name_en": "Walking, Treadmill",
-    "muscle": "股四头",
-    "equipment": "器械",
-    "tips": "To begin, step onto the treadmill and select the desired option from the menu. Most treadmills have a manual setting, or you can select a program to run. Typically, you can enter y",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Walking_Treadmill/0.jpg"
-  },
-  {
     "id": "Weighted_Sissy_Squat",
     "name": "负重Sissy深蹲",
     "name_en": "Weighted Sissy Squat",
@@ -3670,15 +3373,6 @@
     "equipment": "杠铃",
     "tips": "Position a lightly loaded barbell across the back of your shoulders. You could also use a weighted vest, sandbag, or other type of resistance for this exercise. The weight should b",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Weighted_Jump_Squat/0.jpg"
-  },
-  {
-    "id": "Kneeling_Hip_Flexor",
-    "name": "跪姿HipFlexor",
-    "name_en": "Kneeling Hip Flexor",
-    "muscle": "股四头",
-    "equipment": "其他",
-    "tips": "Kneel on a mat and bring your right knee up so the bottom of your foot is on the floor and extend your left leg out behind you so the top of your foot is on the floor. Shift your w",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Kneeling_Hip_Flexor/0.jpg"
   },
   {
     "id": "Tire_Flip",
@@ -3771,15 +3465,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Arm_Circles/0.jpg"
   },
   {
-    "id": "Battling_Ropes",
-    "name": "Battling Ropes",
-    "name_en": "Battling Ropes",
-    "muscle": "肩",
-    "equipment": "其他",
-    "tips": "For this exercise you will need a heavy rope anchored at its center 15-20 feet away. Standing in front of the rope, take an end in each hand with your arms extended at your side. T",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Battling_Ropes/0.jpg"
-  },
-  {
     "id": "Circus_Bell",
     "name": "Circus Bell",
     "name_en": "Circus Bell",
@@ -3796,15 +3481,6 @@
     "equipment": "其他",
     "tips": "In the crucifix, you statically hold weights out to the side for time. While the event can be practiced using dumbbells, it is best to practice with one of the various implements u",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Crucifix/0.jpg"
-  },
-  {
-    "id": "Cuban_Press",
-    "name": "Cuban推举",
-    "name_en": "Cuban Press",
-    "muscle": "肩",
-    "equipment": "哑铃",
-    "tips": "Take a dumbbell in each hand with a pronated grip in a standing position. Raise your upper arms so that they are parallel to the floor, allowing your lower arms to hang in the \"sca",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cuban_Press/0.jpg"
   },
   {
     "id": "Double_Kettlebell_Push_Press",
@@ -3951,15 +3627,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Single_Dumbbell_Raise/0.jpg"
   },
   {
-    "id": "Upright_Barbell_Row",
-    "name": "Upright杠铃划船",
-    "name_en": "Upright Barbell Row",
-    "muscle": "肩",
-    "equipment": "杠铃",
-    "tips": "Grasp a barbell with an overhand grip that is slightly less than shoulder width. The bar should be resting on the top of your thighs with your arms extended and a slight bend in yo",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Upright_Barbell_Row/0.jpg"
-  },
-  {
     "id": "Upward_Stretch",
     "name": "Upward拉伸",
     "name_en": "Upward Stretch",
@@ -4014,15 +3681,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Laterals_to_Front_Raise/0.jpg"
   },
   {
-    "id": "Side_Lateral_Raise",
-    "name": "侧侧平举",
-    "name_en": "Side Lateral Raise",
-    "muscle": "肩",
-    "equipment": "哑铃",
-    "tips": "Pick a couple of dumbbells and stand with a straight torso and the dumbbells by your side at arms length with the palms of the hand facing you. This will be your starting position.",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Side_Lateral_Raise/0.jpg"
-  },
-  {
     "id": "Lateral_Raise_-_With_Bands",
     "name": "侧平举弹力带",
     "name_en": "Lateral Raise - With Bands",
@@ -4057,15 +3715,6 @@
     "equipment": "哑铃",
     "tips": "Pick a couple of dumbbells and stand with a straight torso and the dumbbells on front of your thighs at arms length with the palms of the hand facing your thighs. This will be your",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Front_Two-Dumbbell_Raise/0.jpg"
-  },
-  {
-    "id": "Front_Dumbbell_Raise",
-    "name": "前哑铃举起",
-    "name_en": "Front Dumbbell Raise",
-    "muscle": "肩",
-    "equipment": "哑铃",
-    "tips": "Pick a couple of dumbbells and stand with a straight torso and the dumbbells on front of your thighs at arms length with the palms of the hand facing your thighs. This will be your",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Front_Dumbbell_Raise/0.jpg"
   },
   {
     "id": "Front_Cable_Raise",
@@ -4347,31 +3996,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Shoulder_Press/0.jpg"
   },
   {
-    "id": "machine_shoulder_press",
-    "name": "器械推肩",
-    "name_en": "",
-    "muscle": "肩",
-    "equipment": "器械",
-    "tips": "轨迹稳，适合力竭",
-    "image_url": ""
-  },
-  {
     "id": "Machine_Shoulder_Military_Press",
-    "name": "器械肩军事推举",
+    "name": "器械推肩",
     "name_en": "Machine Shoulder (Military) Press",
     "muscle": "肩",
     "equipment": "器械",
-    "tips": "Sit down on the Shoulder Press Machine and select the weight. Grab the handles to your sides as you keep the elbows bent and in line with your torso. This will be your starting pos",
+    "tips": "轨迹稳，适合力竭",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Machine_Shoulder_Military_Press/0.jpg"
-  },
-  {
-    "id": "Landmine_Linear_Jammer",
-    "name": "地雷架LinearJammer",
-    "name_en": "Landmine Linear Jammer",
-    "muscle": "肩",
-    "equipment": "杠铃",
-    "tips": "Position a bar into landmine or, lacking one, securely anchor it in a corner. Load the bar to an appropriate weight and position the handle attachment on the bar. Raise the bar fro",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Landmine_Linear_Jammer/0.jpg"
   },
   {
     "id": "Seated_Side_Lateral_Raise",
@@ -4599,13 +4230,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Rear_Delt_Row/0.jpg"
   },
   {
-    "id": "ohp",
+    "id": "Standing_Military_Press",
     "name": "杠铃推举",
-    "name_en": "",
+    "name_en": "Standing Military Press",
     "muscle": "肩",
     "equipment": "杠铃",
     "tips": "核心收紧，头稍后让，推至头顶锁定",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Military_Press/0.jpg"
   },
   {
     "id": "Barbell_Shoulder_Press",
@@ -4689,15 +4320,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Low-Pulley_Deltoid_Raise/0.jpg"
   },
   {
-    "id": "Standing_Military_Press",
-    "name": "站姿军事推举",
-    "name_en": "Standing Military Press",
-    "muscle": "肩",
-    "equipment": "杠铃",
-    "tips": "Start by placing a barbell that is about chest high on a squat rack. Once you have selected the weights, grab the barbell using a pronated (palms facing forward) grip. Make sure to",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Military_Press/0.jpg"
-  },
-  {
     "id": "Standing_Front_Barbell_Raise_Over_Head",
     "name": "站姿前杠铃举起Head",
     "name_en": "Standing Front Barbell Raise Over Head",
@@ -4759,15 +4381,6 @@
     "equipment": "绳索",
     "tips": "Adjust the pulleys to the appropriate height and adjust the weight. The pulleys should be above your head. Grab the left pulley with your right hand and the right pulley with your ",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Rear_Delt_Fly/0.jpg"
-  },
-  {
-    "id": "Cable_Seated_Lateral_Raise",
-    "name": "绳索坐姿侧平举",
-    "name_en": "Cable Seated Lateral Raise",
-    "muscle": "肩",
-    "equipment": "绳索",
-    "tips": "Stand in the middle of two low pulleys that are opposite to each other and place a flat bench right behind you (in perpendicular fashion to you; the narrow edge of the bench should",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Seated_Lateral_Raise/0.jpg"
   },
   {
     "id": "Cable_Shoulder_Press",
@@ -4843,21 +4456,12 @@
   },
   {
     "id": "Arnold_Dumbbell_Press",
-    "name": "阿诺德哑铃推举",
+    "name": "阿诺德推举",
     "name_en": "Arnold Dumbbell Press",
     "muscle": "肩",
     "equipment": "哑铃",
-    "tips": "Sit on an exercise bench with back support and hold two dumbbells in front of you at about upper chest level with your palms facing your body and your elbows bent. Tip: Your arms s",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Arnold_Dumbbell_Press/0.jpg"
-  },
-  {
-    "id": "arnold_press",
-    "name": "阿诺德推举",
-    "name_en": "",
-    "muscle": "肩",
-    "equipment": "哑铃",
     "tips": "旋转上推，活动度要求较高",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Arnold_Dumbbell_Press/0.jpg"
   },
   {
     "id": "Sled_Reverse_Flye",
@@ -4896,13 +4500,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Clean_and_Press/0.jpg"
   },
   {
-    "id": "upright_row",
+    "id": "Upright_Barbell_Row",
     "name": "直立划船",
-    "name_en": "",
+    "name_en": "Upright Barbell Row",
     "muscle": "肩/斜方",
     "equipment": "杠铃",
     "tips": "肘勿过高，肩不适者慎做或改绳索宽握",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Upright_Barbell_Row/0.jpg"
   },
   {
     "id": "Band_Pull_Apart",
@@ -4923,13 +4527,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Face_Pull/0.jpg"
   },
   {
-    "id": "cuba_press",
+    "id": "Cuban_Press",
     "name": "古巴推举",
-    "name_en": "",
+    "name_en": "Cuban Press",
     "muscle": "肩袖/肩",
     "equipment": "哑铃",
     "tips": "外旋+推举组合，重量要轻",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cuban_Press/0.jpg"
   },
   {
     "id": "Board_Press",
@@ -4986,15 +4590,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Tate_Press/0.jpg"
   },
   {
-    "id": "Triceps_Pushdown",
-    "name": "三头Pushdown",
-    "name_en": "Triceps Pushdown",
-    "muscle": "肱三头",
-    "equipment": "绳索",
-    "tips": "Attach a straight or angled bar to a high pulley and grab with an overhand grip (palms facing down) at shoulder width. Standing upright with the torso straight and a very small inc",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Triceps_Pushdown/0.jpg"
-  },
-  {
     "id": "Triceps_Pushdown_-_V-Bar_Attachment",
     "name": "三头PushdownV字杆Attachment",
     "name_en": "Triceps Pushdown - V-Bar Attachment",
@@ -5002,15 +4597,6 @@
     "equipment": "绳索",
     "tips": "Attach a V-Bar to a high pulley and grab with an overhand grip (palms facing down) at shoulder width. Standing upright with the torso straight and a very small inclination forward,",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Triceps_Pushdown_-_V-Bar_Attachment/0.jpg"
-  },
-  {
-    "id": "Triceps_Pushdown_-_Rope_Attachment",
-    "name": "三头Pushdown绳Attachment",
-    "name_en": "Triceps Pushdown - Rope Attachment",
-    "muscle": "肱三头",
-    "equipment": "绳索",
-    "tips": "Attach a rope attachment to a high pulley and grab with a neutral grip (palms facing each other). Standing upright with the torso straight and a very small inclination forward, bri",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Triceps_Pushdown_-_Rope_Attachment/0.jpg"
   },
   {
     "id": "Tricep_Side_Stretch",
@@ -5103,13 +4689,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Supine_Chest_Throw/0.jpg"
   },
   {
-    "id": "skull_crusher",
+    "id": "Lying_Triceps_Press",
     "name": "仰卧臂屈伸",
-    "name_en": "",
+    "name_en": "Lying Triceps Press",
     "muscle": "肱三头",
-    "equipment": "杠铃",
+    "equipment": "曲杆",
     "tips": "肘稳定，下放至额侧或头后",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_Triceps_Press/0.jpg"
   },
   {
     "id": "Low_Cable_Triceps_Extension",
@@ -5130,21 +4716,12 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Push-Ups_-_Close_Triceps_Position/0.jpg"
   },
   {
-    "id": "bench_dip",
-    "name": "凳上臂屈伸",
-    "name_en": "",
-    "muscle": "肱三头",
-    "equipment": "自重",
-    "tips": "肩不适者减少下降深度",
-    "image_url": ""
-  },
-  {
     "id": "Bench_Dips",
-    "name": "凳双杠臂屈伸",
+    "name": "凳上臂屈伸",
     "name_en": "Bench Dips",
     "muscle": "肱三头",
     "equipment": "自重",
-    "tips": "For this exercise you will need to place a bench behind your back. With the bench perpendicular to your body, and while looking away from it, hold on to the bench on its edge with ",
+    "tips": "肩不适者减少下降深度",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bench_Dips/0.jpg"
   },
   {
@@ -5173,15 +4750,6 @@
     "equipment": "杠铃",
     "tips": "Lie down on a flat surface with your back pressing against the floor or an exercise mat. Make sure your knees are bent. Have a partner hand you the bar on one hand. When starting, ",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One_Arm_Floor_Press/0.jpg"
-  },
-  {
-    "id": "Lying_Triceps_Press",
-    "name": "卧姿三头推举",
-    "name_en": "Lying Triceps Press",
-    "muscle": "肱三头",
-    "equipment": "曲杆",
-    "tips": "Lie on a flat bench with either an e-z bar (my preference) or a straight bar placed on the floor behind your head and your feet on the floor. Grab the bar behind you, using a mediu",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_Triceps_Press/0.jpg"
   },
   {
     "id": "Lying_Dumbbell_Tricep_Extension",
@@ -5229,15 +4797,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bench_Press_with_Chains/0.jpg"
   },
   {
-    "id": "Dips_-_Triceps_Version",
-    "name": "双杠臂屈伸三头Version",
-    "name_en": "Dips - Triceps Version",
-    "muscle": "肱三头",
-    "equipment": "自重",
-    "tips": "To get into the starting position, hold your body at arm's length with your arms nearly locked above the bars. Now, inhale and slowly lower yourself downward. Your torso should rem",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dips_-_Triceps_Version/0.jpg"
-  },
-  {
     "id": "Dip_Machine",
     "name": "双杠臂屈伸器械",
     "name_en": "Dip Machine",
@@ -5247,13 +4806,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dip_Machine/0.jpg"
   },
   {
-    "id": "tricep_dip",
+    "id": "Dips_-_Triceps_Version",
     "name": "双杠臂屈伸（三头）",
-    "name_en": "",
+    "name_en": "Dips - Triceps Version",
     "muscle": "肱三头",
     "equipment": "自重",
     "tips": "躯干更直立，肘贴近身体",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dips_-_Triceps_Version/0.jpg"
   },
   {
     "id": "Reverse_Triceps_Bench_Press",
@@ -5400,15 +4959,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pin_Presses/0.jpg"
   },
   {
-    "id": "Close-Grip_Push-Up_off_of_a_Dumbbell",
-    "name": "窄距俯卧撑off哑铃",
-    "name_en": "Close-Grip Push-Up off of a Dumbbell",
-    "muscle": "肱三头",
-    "equipment": "自重",
-    "tips": "Lie on the floor and place your hands on an upright dumbbell. Supporting your weight on your toes and hands, keep your torso rigid and your elbows in with your arms straight. This ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Close-Grip_Push-Up_off_of_a_Dumbbell/0.jpg"
-  },
-  {
     "id": "Close-Grip_Dumbbell_Press",
     "name": "窄距哑铃推举",
     "name_en": "Close-Grip Dumbbell Press",
@@ -5425,15 +4975,6 @@
     "equipment": "曲杆",
     "tips": "Lie on a flat bench with an EZ bar loaded to an appropriate weight. Using a narrow grip lift the bar and hold it straight over your torso with your elbows in. The arms should be pe",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Close-Grip_EZ-Bar_Press/0.jpg"
-  },
-  {
-    "id": "Close-Grip_Barbell_Bench_Press",
-    "name": "窄距杠铃卧推",
-    "name_en": "Close-Grip Barbell Bench Press",
-    "muscle": "肱三头",
-    "equipment": "杠铃",
-    "tips": "Lie back on a flat bench. Using a close grip (around shoulder width), lift the bar from the rack and hold it straight over you with your arms locked. This will be your starting pos",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Close-Grip_Barbell_Bench_Press/0.jpg"
   },
   {
     "id": "Standing_Towel_Triceps_Extension",
@@ -5508,22 +5049,22 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Incline_Triceps_Extension/0.jpg"
   },
   {
-    "id": "tricep_pushdown",
+    "id": "Triceps_Pushdown",
     "name": "绳索下压",
-    "name_en": "",
+    "name_en": "Triceps Pushdown",
     "muscle": "肱三头",
     "equipment": "绳索",
     "tips": "肘贴身侧，顶峰伸直但不锁死弹振",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Triceps_Pushdown/0.jpg"
   },
   {
-    "id": "rope_pushdown",
+    "id": "Triceps_Pushdown_-_Rope_Attachment",
     "name": "绳索下压（绳把）",
-    "name_en": "",
+    "name_en": "Triceps Pushdown - Rope Attachment",
     "muscle": "肱三头",
     "equipment": "绳索",
     "tips": "末端外展分开，强化外侧头感知",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Triceps_Pushdown_-_Rope_Attachment/0.jpg"
   },
   {
     "id": "Cable_One_Arm_Tricep_Extension",
@@ -5542,15 +5083,6 @@
     "equipment": "绳索",
     "tips": "Lie on a flat bench and grasp the straight bar attachment of a low pulley with a narrow overhand grip. Tip: The easiest way to do this is to have someone hand you the bar as you la",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Lying_Triceps_Extension/0.jpg"
-  },
-  {
-    "id": "Cable_Rope_Overhead_Triceps_Extension",
-    "name": "绳索绳过头三头伸展",
-    "name_en": "Cable Rope Overhead Triceps Extension",
-    "muscle": "肱三头",
-    "equipment": "绳索",
-    "tips": "Attach a rope to the bottom pulley of the pulley machine. Grasping the rope with both hands, extend your arms with your hands directly above your head using a neutral grip (palms f",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Rope_Overhead_Triceps_Extension/0.jpg"
   },
   {
     "id": "Body-Up",
@@ -5589,13 +5121,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Overhead_Triceps/0.jpg"
   },
   {
-    "id": "overhead_tricep_ext",
+    "id": "Cable_Rope_Overhead_Triceps_Extension",
     "name": "过头臂屈伸",
-    "name_en": "",
+    "name_en": "Cable Rope Overhead Triceps Extension",
     "muscle": "肱三头",
-    "equipment": "哑铃",
+    "equipment": "绳索",
     "tips": "强调长头拉伸，肘朝前上方",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Rope_Overhead_Triceps_Extension/0.jpg"
   },
   {
     "id": "Speed_Band_Overhead_Triceps",
@@ -5625,13 +5157,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Sled_Overhead_Triceps_Extension/0.jpg"
   },
   {
-    "id": "close_grip_bench",
+    "id": "Close-Grip_Barbell_Bench_Press",
     "name": "窄握卧推",
-    "name_en": "",
+    "name_en": "Close-Grip Barbell Bench Press",
     "muscle": "肱三头/胸",
     "equipment": "杠铃",
     "tips": "握距略窄于肩，肘贴近身体",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Close-Grip_Barbell_Bench_Press/0.jpg"
   },
   {
     "id": "Brachialis-SMR",
@@ -5706,13 +5238,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Incline_Dumbbell_Curl/0.jpg"
   },
   {
-    "id": "incline_curl",
+    "id": "Dumbbell_Prone_Incline_Curl",
     "name": "上斜弯举",
-    "name_en": "",
+    "name_en": "Dumbbell Prone Incline Curl",
     "muscle": "肱二头",
     "equipment": "哑铃",
     "tips": "长头拉伸更充分，重量宜轻",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Prone_Incline_Curl/0.jpg"
   },
   {
     "id": "Incline_Hammer_Curls",
@@ -5724,13 +5256,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Incline_Hammer_Curls/0.jpg"
   },
   {
-    "id": "concentration_curl",
+    "id": "Concentration_Curls",
     "name": "专注弯举",
-    "name_en": "",
+    "name_en": "Concentration Curls",
     "muscle": "肱二头",
     "equipment": "哑铃",
     "tips": "肘抵大腿内侧，单侧孤立",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Concentration_Curls/0.jpg"
   },
   {
     "id": "Cross_Body_Hammer_Curl",
@@ -5850,15 +5382,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Reverse_Plate_Curls/0.jpg"
   },
   {
-    "id": "Dumbbell_Bicep_Curl",
-    "name": "哑铃二头弯举",
-    "name_en": "Dumbbell Bicep Curl",
-    "muscle": "肱二头",
-    "equipment": "哑铃",
-    "tips": "Stand up straight with a dumbbell in each hand at arm's length. Keep your elbows close to your torso and rotate the palms of your hands until they are facing forward. This will be ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Bicep_Curl/0.jpg"
-  },
-  {
     "id": "Dumbbell_Alternate_Bicep_Curl",
     "name": "哑铃交替二头弯举",
     "name_en": "Dumbbell Alternate Bicep Curl",
@@ -5868,22 +5391,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Alternate_Bicep_Curl/0.jpg"
   },
   {
-    "id": "Dumbbell_Prone_Incline_Curl",
-    "name": "哑铃俯卧上斜弯举",
-    "name_en": "Dumbbell Prone Incline Curl",
-    "muscle": "肱二头",
-    "equipment": "哑铃",
-    "tips": "Grab a dumbbell on each hand and lie face down on an incline bench with your shoulders near top of the incline. Your knees can rest on the seat or your legs can be straddled to the",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Prone_Incline_Curl/0.jpg"
-  },
-  {
-    "id": "dumbbell_curl",
+    "id": "Dumbbell_Bicep_Curl",
     "name": "哑铃弯举",
-    "name_en": "",
+    "name_en": "Dumbbell Bicep Curl",
     "muscle": "肱二头",
     "equipment": "哑铃",
     "tips": "可坐姿或站姿，顶峰外旋",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Bicep_Curl/0.jpg"
   },
   {
     "id": "Machine_Bicep_Curl",
@@ -6084,13 +5598,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Concentration_Curl/0.jpg"
   },
   {
-    "id": "cable_curl",
+    "id": "High_Cable_Curls",
     "name": "绳索弯举",
-    "name_en": "",
+    "name_en": "High Cable Curls",
     "muscle": "肱二头",
     "equipment": "绳索",
     "tips": "张力持续，适合泵感收尾",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/High_Cable_Curls/0.jpg"
   },
   {
     "id": "Cable_Preacher_Curl",
@@ -6121,48 +5635,21 @@
   },
   {
     "id": "Hammer_Curls",
-    "name": "锤式Curls",
-    "name_en": "Hammer Curls",
-    "muscle": "肱二头",
-    "equipment": "哑铃",
-    "tips": "Stand up with your torso upright and a dumbbell on each hand being held at arms length. The elbows should be close to the torso. The palms of the hands should be facing your torso.",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hammer_Curls/0.jpg"
-  },
-  {
-    "id": "Concentration_Curls",
-    "name": "集中Curls",
-    "name_en": "Concentration Curls",
-    "muscle": "肱二头",
-    "equipment": "哑铃",
-    "tips": "Sit down on a flat bench with one dumbbell in front of you between your legs. Your legs should be spread with your knees bent and feet on the floor. Use your right arm to pick the ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Concentration_Curls/0.jpg"
-  },
-  {
-    "id": "High_Cable_Curls",
-    "name": "高绳索Curls",
-    "name_en": "High Cable Curls",
-    "muscle": "肱二头",
-    "equipment": "绳索",
-    "tips": "Stand between a couple of high pulleys and grab a handle in each arm. Position your upper arms in a way that they are parallel to the floor with the palms of your hands facing you.",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/High_Cable_Curls/0.jpg"
-  },
-  {
-    "id": "hammer_curl",
     "name": "锤式弯举",
-    "name_en": "",
+    "name_en": "Hammer Curls",
     "muscle": "肱二头/前臂",
     "equipment": "哑铃",
     "tips": "中立握，适合肘部友好训练",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hammer_Curls/0.jpg"
   },
   {
-    "id": "t_bar_row",
+    "id": "T-Bar_Row_with_Handle",
     "name": "T杠划船",
-    "name_en": "",
+    "name_en": "T-Bar Row with Handle",
     "muscle": "背",
-    "equipment": "器械",
+    "equipment": "杠铃",
     "tips": "胸托版更稳，注意肩胛后收",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/T-Bar_Row_with_Handle/0.jpg"
   },
   {
     "id": "One-Arm_Dumbbell_Row",
@@ -6174,85 +5661,58 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Arm_Dumbbell_Row/0.jpg"
   },
   {
-    "id": "seated_row",
-    "name": "坐姿划船",
-    "name_en": "",
-    "muscle": "背",
-    "equipment": "器械",
-    "tips": "躯干稳定，肩胛后收，避免过度后仰",
-    "image_url": ""
-  },
-  {
-    "id": "pull_up",
+    "id": "Pullups",
     "name": "引体向上",
-    "name_en": "",
+    "name_en": "Pullups",
     "muscle": "背",
     "equipment": "自重",
     "tips": "全程控制，可借助弹力带或器械辅助",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pullups/0.jpg"
   },
   {
-    "id": "barbell_row",
-    "name": "杠铃划船",
-    "name_en": "",
-    "muscle": "背",
-    "equipment": "杠铃",
-    "tips": "髋铰链俯身，拉向下腹，避免甩腰",
-    "image_url": ""
-  },
-  {
-    "id": "pendlay_row",
+    "id": "Bent_Over_Barbell_Row",
     "name": "潘德雷划船",
-    "name_en": "",
+    "name_en": "Bent Over Barbell Row",
     "muscle": "背",
     "equipment": "杠铃",
     "tips": "每组从地面启动，爆发上拉、控制下放",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent_Over_Barbell_Row/0.jpg"
   },
   {
-    "id": "close_grip_pulldown",
+    "id": "Wide-Grip_Lat_Pulldown",
     "name": "窄握高位下拉",
-    "name_en": "",
+    "name_en": "Wide-Grip Lat Pulldown",
     "muscle": "背",
-    "equipment": "器械",
+    "equipment": "绳索",
     "tips": "更偏下背阔肌厚度",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Wide-Grip_Lat_Pulldown/0.jpg"
   },
   {
-    "id": "cable_row",
+    "id": "Seated_Cable_Rows",
     "name": "绳索划船",
-    "name_en": "",
+    "name_en": "Seated Cable Rows",
     "muscle": "背",
     "equipment": "绳索",
     "tips": "可换握把改变刺激角度",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Cable_Rows/0.jpg"
   },
   {
-    "id": "chest_supported_row",
+    "id": "Lying_T-Bar_Row",
     "name": "胸托划船",
-    "name_en": "",
+    "name_en": "Lying T-Bar Row",
     "muscle": "背",
     "equipment": "器械",
     "tips": "减少借力，专注上背收缩",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_T-Bar_Row/0.jpg"
   },
   {
-    "id": "assisted_pull_up",
+    "id": "Band_Assisted_Pull-Up",
     "name": "辅助引体",
-    "name_en": "",
+    "name_en": "Band Assisted Pull-Up",
     "muscle": "背",
-    "equipment": "器械",
+    "equipment": "其他",
     "tips": "用配重减轻体重，练完整动作",
-    "image_url": ""
-  },
-  {
-    "id": "lat_pulldown",
-    "name": "高位下拉",
-    "name_en": "",
-    "muscle": "背",
-    "equipment": "器械",
-    "tips": "先沉肩再下拉，拉至锁骨附近",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Band_Assisted_Pull-Up/0.jpg"
   },
   {
     "id": "Chin-Up",
@@ -6264,13 +5724,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Chin-Up/0.jpg"
   },
   {
-    "id": "rack_pull",
+    "id": "Rack_Pulls",
     "name": "架上硬拉",
-    "name_en": "",
+    "name_en": "Rack Pulls",
     "muscle": "背/后链",
     "equipment": "杠铃",
     "tips": "从膝上启动，强化锁定期",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Rack_Pulls/0.jpg"
   },
   {
     "id": "Catch_and_Overhead_Throw",
@@ -6480,15 +5940,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Wide-Grip_Rear_Pull-Up/0.jpg"
   },
   {
-    "id": "Wide-Grip_Lat_Pulldown",
-    "name": "宽距高位下拉",
-    "name_en": "Wide-Grip Lat Pulldown",
-    "muscle": "背阔肌",
-    "equipment": "绳索",
-    "tips": "Sit down on a pull-down machine with a wide bar attached to the top pulley. Make sure that you adjust the knee pad of the machine to fit your height. These pads will prevent your b",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Wide-Grip_Lat_Pulldown/0.jpg"
-  },
-  {
     "id": "Bent-Arm_Barbell_Pullover",
     "name": "屈臂杠铃Pullover",
     "name_en": "Bent-Arm Barbell Pullover",
@@ -6496,15 +5947,6 @@
     "equipment": "杠铃",
     "tips": "Lie on a flat bench with a barbell using a shoulder grip width. Hold the bar straight over your chest with a bend in your arms. This will be your starting position. While keeping y",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bent-Arm_Barbell_Pullover/0.jpg"
-  },
-  {
-    "id": "Band_Assisted_Pull-Up",
-    "name": "弹力带辅助引体向上",
-    "name_en": "Band Assisted Pull-Up",
-    "muscle": "背阔肌",
-    "equipment": "其他",
-    "tips": "Choke the band around the center of the pullup bar. You can use different bands to provide varying levels of assistance. Pull the end of the band down, and place one bent knee into",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Band_Assisted_Pull-Up/0.jpg"
   },
   {
     "id": "Chair_Lower_Back_Stretch",
@@ -6550,15 +5992,6 @@
     "equipment": "绳索",
     "tips": "Lie on incline an bench facing away from a high pulley machine that has a straight bar attachment on it. Grasp the straight bar attachment overhead with a pronated (overhand; palms",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Incline_Pushdown/0.jpg"
-  },
-  {
-    "id": "Pullups",
-    "name": "自重·Pullups",
-    "name_en": "Pullups",
-    "muscle": "背阔肌",
-    "equipment": "自重",
-    "tips": "Grab the pull-up bar with the palms facing forward using the prescribed grip. Note on grips: For a wide grip, your hands need to be spaced out at a distance wider than your shoulde",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pullups/0.jpg"
   },
   {
     "id": "Weighted_Pull_Ups",
@@ -6840,15 +6273,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Decline_Dumbbell_Flyes/0.jpg"
   },
   {
-    "id": "Decline_Barbell_Bench_Press",
-    "name": "下斜杠铃卧推",
-    "name_en": "Decline Barbell Bench Press",
-    "muscle": "胸",
-    "equipment": "杠铃",
-    "tips": "Secure your legs at the end of the decline bench and slowly lay down on the bench. Using a medium width grip (a grip that creates a 90-degree angle in the middle of the movement be",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Decline_Barbell_Bench_Press/0.jpg"
-  },
-  {
     "id": "Cross_Over_-_With_Bands",
     "name": "交叉弹力带",
     "name_en": "Cross Over - With Bands",
@@ -6876,13 +6300,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Low_Cable_Crossover/0.jpg"
   },
   {
-    "id": "push_up",
+    "id": "Pushups",
     "name": "俯卧撑",
-    "name_en": "",
+    "name_en": "Pushups",
     "muscle": "胸",
     "equipment": "自重",
     "tips": "身体一条直线，可垫高或跪姿降低难度",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pushups/0.jpg"
   },
   {
     "id": "Push-Ups_With_Feet_Elevated",
@@ -6993,15 +6417,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Bench_Press_-_With_Bands/0.jpg"
   },
   {
-    "id": "Dips_-_Chest_Version",
-    "name": "双杠臂屈伸胸Version",
-    "name_en": "Dips - Chest Version",
-    "muscle": "胸",
-    "equipment": "其他",
-    "tips": "For this exercise you will need access to parallel bars. To get yourself into the starting position, hold your body at arms length (arms locked) above the bars. While breathing in,",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dips_-_Chest_Version/0.jpg"
-  },
-  {
     "id": "Smith_Machine_Incline_Bench_Press",
     "name": "史密斯机上斜卧推",
     "name_en": "Smith Machine Incline Bench Press",
@@ -7065,15 +6480,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Flyes/0.jpg"
   },
   {
-    "id": "Butterfly",
-    "name": "器械·Butterfly",
-    "name_en": "Butterfly",
-    "muscle": "胸",
-    "equipment": "器械",
-    "tips": "Sit on the machine with your back flat on the pad. Take hold of the handles. Tip: Your upper arms should be positioned parallel to the floor; adjust the machine accordingly. This w",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butterfly/0.jpg"
-  },
-  {
     "id": "Machine_Bench_Press",
     "name": "器械卧推",
     "name_en": "Machine Bench Press",
@@ -7081,15 +6487,6 @@
     "equipment": "器械",
     "tips": "Sit down on the Chest Press Machine and select the weight. Step on the lever provided by the machine since it will help you to bring the handles forward so that you can grab the ha",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Machine_Bench_Press/0.jpg"
-  },
-  {
-    "id": "machine_chest_press",
-    "name": "器械推胸",
-    "name_en": "",
-    "muscle": "胸",
-    "equipment": "器械",
-    "tips": "轨迹固定，适合力竭或新手",
-    "image_url": ""
   },
   {
     "id": "Plyo_Push-up",
@@ -7164,30 +6561,12 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Guillotine_Bench_Press/0.jpg"
   },
   {
-    "id": "Barbell_Incline_Bench_Press_-_Medium_Grip",
-    "name": "杠铃上斜卧推Medium握法",
-    "name_en": "Barbell Incline Bench Press - Medium Grip",
-    "muscle": "胸",
-    "equipment": "杠铃",
-    "tips": "Lie back on an incline bench. Using a medium-width grip (a grip that creates a 90-degree angle in the middle of the movement between the forearms and the upper arms), lift the bar ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Incline_Bench_Press_-_Medium_Grip/0.jpg"
-  },
-  {
-    "id": "bench_press",
-    "name": "杠铃卧推",
-    "name_en": "",
-    "muscle": "胸",
-    "equipment": "杠铃",
-    "tips": "肩胛后收下沉，杠落胸中下部，手腕竖直",
-    "image_url": ""
-  },
-  {
     "id": "Barbell_Bench_Press_-_Medium_Grip",
-    "name": "杠铃卧推Medium握法",
+    "name": "杠铃卧推",
     "name_en": "Barbell Bench Press - Medium Grip",
     "muscle": "胸",
     "equipment": "杠铃",
-    "tips": "Lie back on a flat bench. Using a medium width grip (a grip that creates a 90-degree angle in the middle of the movement between the forearms and the upper arms), lift the bar from",
+    "tips": "肩胛后收下沉，杠落胸中下部，手腕竖直",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Bench_Press_-_Medium_Grip/0.jpg"
   },
   {
@@ -7237,21 +6616,12 @@
   },
   {
     "id": "Cable_Crossover",
-    "name": "绳索交叉",
+    "name": "绳索夹胸",
     "name_en": "Cable Crossover",
     "muscle": "胸",
     "equipment": "绳索",
-    "tips": "To get yourself into the starting position, place the pulleys on a high position (above your head), select the resistance to be used and hold the pulleys in each hand. Step forward",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Crossover/0.jpg"
-  },
-  {
-    "id": "cable_fly",
-    "name": "绳索夹胸",
-    "name_en": "",
-    "muscle": "胸",
-    "equipment": "绳索",
     "tips": "肘微屈，挤压胸肌，控制回程",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Cable_Crossover/0.jpg"
   },
   {
     "id": "Cable_Chest_Press",
@@ -7308,15 +6678,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg-Over_Floor_Press/0.jpg"
   },
   {
-    "id": "Pushups",
-    "name": "自重·Pushups",
-    "name_en": "Pushups",
-    "muscle": "胸",
-    "equipment": "自重",
-    "tips": "Lie on the floor face down and place your hands about 36 inches apart while holding your torso up at arms length. Next, lower yourself downward until your chest almost touches the ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pushups/0.jpg"
-  },
-  {
     "id": "Bodyweight_Flyes",
     "name": "自重飞鸟",
     "name_en": "Bodyweight Flyes",
@@ -7344,13 +6705,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Chest_Push_single_response/0.jpg"
   },
   {
-    "id": "pec_deck",
+    "id": "Butterfly",
     "name": "蝴蝶机夹胸",
-    "name_en": "",
+    "name_en": "Butterfly",
     "muscle": "胸",
     "equipment": "器械",
     "tips": "肩胛稳定，不要耸肩前探",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Butterfly/0.jpg"
   },
   {
     "id": "Chain_Press",
@@ -7389,31 +6750,31 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Neck_Press/0.jpg"
   },
   {
-    "id": "chest_dip",
+    "id": "Dips_-_Chest_Version",
     "name": "双杠臂屈伸（胸）",
-    "name_en": "",
+    "name_en": "Dips - Chest Version",
     "muscle": "胸/三头",
-    "equipment": "自重",
+    "equipment": "其他",
     "tips": "躯干前倾、肘外展，更偏胸；肩不适则停",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dips_-_Chest_Version/0.jpg"
   },
   {
-    "id": "diamond_push_up",
+    "id": "Close-Grip_Push-Up_off_of_a_Dumbbell",
     "name": "钻石俯卧撑",
-    "name_en": "",
+    "name_en": "Close-Grip Push-Up off of a Dumbbell",
     "muscle": "胸/三头",
     "equipment": "自重",
     "tips": "手成菱形，更侧重三头与内侧胸",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Close-Grip_Push-Up_off_of_a_Dumbbell/0.jpg"
   },
   {
-    "id": "landmine_press",
+    "id": "Landmine_Linear_Jammer",
     "name": "地雷管推举",
-    "name_en": "",
+    "name_en": "Landmine Linear Jammer",
     "muscle": "胸/肩",
     "equipment": "杠铃",
     "tips": "单侧推，对肩友好的推类变式",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Landmine_Linear_Jammer/0.jpg"
   },
   {
     "id": "90_90_Hamstring",
@@ -7578,15 +6939,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Upper_Back-Leg_Grab/0.jpg"
   },
   {
-    "id": "Worlds_Greatest_Stretch",
-    "name": "世界最强拉伸",
-    "name_en": "World's Greatest Stretch",
-    "muscle": "腘绳肌",
-    "equipment": "其他",
-    "tips": "This is a three-part stretch. Begin by lunging forward, with your front foot flat on the ground and on the toes of your back foot. With your knees bent, squat down until your knee ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Worlds_Greatest_Stretch/0.jpg"
-  },
-  {
     "id": "Alternating_Hang_Clean",
     "name": "交替Hang高翻",
     "name_en": "Alternating Hang Clean",
@@ -7650,15 +7002,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Arm_Open_Palm_Kettlebell_Clean/0.jpg"
   },
   {
-    "id": "One-Arm_Kettlebell_Swings",
-    "name": "单臂壶铃Swings",
-    "name_en": "One-Arm Kettlebell Swings",
-    "muscle": "腘绳肌",
-    "equipment": "壶铃",
-    "tips": "",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Arm_Kettlebell_Swings/0.jpg"
-  },
-  {
     "id": "One-Arm_Kettlebell_Clean",
     "name": "单臂壶铃高翻",
     "name_en": "One-Arm Kettlebell Clean",
@@ -7675,15 +7018,6 @@
     "equipment": "其他",
     "tips": "Lie on your back with your legs extended. Your partner should be kneeling beside you. Raise one leg up towards the ceiling and have your partner hold the ankle. Your partner can us",
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_Hamstring/0.jpg"
-  },
-  {
-    "id": "Lying_Leg_Curls",
-    "name": "卧姿腿Curls",
-    "name_en": "Lying Leg Curls",
-    "muscle": "腘绳肌",
-    "equipment": "器械",
-    "tips": "Adjust the machine lever to fit your height and lie face down on the leg curl machine with the pad of the lever on the back of your legs (just a few inches under the calves). Tip: ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_Leg_Curls/0.jpg"
   },
   {
     "id": "Reverse_Hyperextension",
@@ -7938,31 +7272,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Ball_Leg_Curl/0.jpg"
   },
   {
-    "id": "Stiff-Legged_Dumbbell_Deadlift",
-    "name": "直腿Legged哑铃硬拉",
-    "name_en": "Stiff-Legged Dumbbell Deadlift",
-    "muscle": "腘绳肌",
-    "equipment": "哑铃",
-    "tips": "Grasp a couple of dumbbells holding them by your side at arm's length. Stand with your torso straight and your legs spaced using a shoulder width or narrower stance. The knees shou",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Stiff-Legged_Dumbbell_Deadlift/0.jpg"
-  },
-  {
     "id": "Stiff-Legged_Barbell_Deadlift",
-    "name": "直腿Legged杠铃硬拉",
+    "name": "直腿硬拉",
     "name_en": "Stiff-Legged Barbell Deadlift",
     "muscle": "腘绳肌",
     "equipment": "杠铃",
-    "tips": "Grasp a bar using an overhand grip (palms facing down). You may need some wrist wraps if using a significant amount of weight. Stand with your torso straight and your legs spaced u",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Stiff-Legged_Barbell_Deadlift/0.jpg"
-  },
-  {
-    "id": "stiff_leg_deadlift",
-    "name": "直腿硬拉",
-    "name_en": "",
-    "muscle": "腘绳肌",
-    "equipment": "杠铃",
     "tips": "膝微屈固定，强调腘绳拉伸，勿弓背",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Stiff-Legged_Barbell_Deadlift/0.jpg"
   },
   {
     "id": "Sumo_Deadlift_with_Bands",
@@ -8019,15 +7335,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Box_Skip/0.jpg"
   },
   {
-    "id": "Box_Jump_Multiple_Response",
-    "name": "箱式跳MultipleResponse",
-    "name_en": "Box Jump (Multiple Response)",
-    "muscle": "腘绳肌",
-    "equipment": "其他",
-    "tips": "Assume a relaxed stance facing the box or platform approximately an arm's length away. Arms should be down at the sides and legs slightly bent. Using the arms to aid in the initial",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Box_Jump_Multiple_Response/0.jpg"
-  },
-  {
     "id": "Romanian_Deadlift_from_Deficit",
     "name": "罗马尼亚硬拉垫高",
     "name_en": "Romanian Deadlift from Deficit",
@@ -8046,22 +7353,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hamstring_Stretch/0.jpg"
   },
   {
-    "id": "Hamstring-SMR",
-    "name": "腘绳筋膜放松",
-    "name_en": "Hamstring-SMR",
-    "muscle": "腘绳肌",
-    "equipment": "泡沫轴",
-    "tips": "In a seated position, extend your legs over a foam roll so that it is position on the back of the upper legs. Place your hands to the side or behind you to help support your weight",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Hamstring-SMR/0.jpg"
-  },
-  {
-    "id": "leg_curl",
+    "id": "Lying_Leg_Curls",
     "name": "腿弯举",
-    "name_en": "",
+    "name_en": "Lying Leg Curls",
     "muscle": "腘绳肌",
     "equipment": "器械",
     "tips": "控制离心，顶峰稍停",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_Leg_Curls/0.jpg"
   },
   {
     "id": "Leg-Up_Hamstring_Stretch",
@@ -8118,40 +7416,40 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Clean_Deadlift/0.jpg"
   },
   {
-    "id": "step_up",
+    "id": "Dumbbell_Step_Ups",
     "name": "上台阶",
-    "name_en": "",
+    "name_en": "Dumbbell Step Ups",
     "muscle": "腿",
     "equipment": "哑铃",
     "tips": "用前腿发力上台，避免后腿借力蹬",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Step_Ups/0.jpg"
   },
   {
-    "id": "bulgarian_split_squat",
+    "id": "Split_Squat_with_Dumbbells",
     "name": "保加利亚分腿蹲",
-    "name_en": "",
+    "name_en": "Split Squat with Dumbbells",
     "muscle": "腿",
     "equipment": "哑铃",
     "tips": "后脚垫高，躯干微前倾，前腿主导",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Split_Squat_with_Dumbbells/0.jpg"
   },
   {
-    "id": "front_squat",
+    "id": "Front_Barbell_Squat",
     "name": "前蹲",
-    "name_en": "",
+    "name_en": "Front Barbell Squat",
     "muscle": "腿",
     "equipment": "杠铃",
     "tips": "肘抬高，躯干更直立，对上背要求高",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Front_Barbell_Squat/0.jpg"
   },
   {
-    "id": "reverse_lunge",
+    "id": "Crossover_Reverse_Lunge",
     "name": "后撤弓步",
-    "name_en": "",
+    "name_en": "Crossover Reverse Lunge",
     "muscle": "腿",
-    "equipment": "哑铃",
+    "equipment": "其他",
     "tips": "对膝盖通常更友好，重心稳",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Crossover_Reverse_Lunge/0.jpg"
   },
   {
     "id": "Hack_Squat",
@@ -8181,13 +7479,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Leg_Press/0.jpg"
   },
   {
-    "id": "walking_lunge",
+    "id": "Dumbbell_Lunges",
     "name": "行走弓步",
-    "name_en": "",
+    "name_en": "Dumbbell Lunges",
     "muscle": "腿",
     "equipment": "哑铃",
     "tips": "躯干直立，前膝不超过脚尖过多",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Dumbbell_Lunges/0.jpg"
   },
   {
     "id": "Goblet_Squat",
@@ -8199,13 +7497,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Goblet_Squat/0.jpg"
   },
   {
-    "id": "dumbbell_rdl",
+    "id": "Stiff-Legged_Dumbbell_Deadlift",
     "name": "哑铃罗马尼亚硬拉",
-    "name_en": "",
+    "name_en": "Stiff-Legged Dumbbell Deadlift",
     "muscle": "腿/臀",
     "equipment": "哑铃",
     "tips": "家/健身房均可，髋铰链模式",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Stiff-Legged_Dumbbell_Deadlift/0.jpg"
   },
   {
     "id": "Romanian_Deadlift",
@@ -8298,15 +7596,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Physioball_Hip_Bridge/0.jpg"
   },
   {
-    "id": "One-Legged_Cable_Kickback",
-    "name": "单Legged绳索后踢",
-    "name_en": "One-Legged Cable Kickback",
-    "muscle": "臀",
-    "equipment": "绳索",
-    "tips": "Hook a leather ankle cuff to a low cable pulley and then attach the cuff to your ankle. Face the weight stack from a distance of about two feet, grasping the steel frame for suppor",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Legged_Cable_Kickback/0.jpg"
-  },
-  {
     "id": "Single_Leg_Glute_Bridge",
     "name": "单腿臀桥",
     "name_en": "Single Leg Glute Bridge",
@@ -8343,24 +7632,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Seated_Glute/0.jpg"
   },
   {
-    "id": "Barbell_Hip_Thrust",
-    "name": "杠铃臀推",
-    "name_en": "Barbell Hip Thrust",
-    "muscle": "臀",
-    "equipment": "杠铃",
-    "tips": "Begin seated on the ground with a bench directly behind you. Have a loaded barbell over your legs. Using a fat bar or having a pad on the bar can greatly reduce the discomfort caus",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Hip_Thrust/0.jpg"
-  },
-  {
-    "id": "Barbell_Glute_Bridge",
-    "name": "杠铃臀桥",
-    "name_en": "Barbell Glute Bridge",
-    "muscle": "臀",
-    "equipment": "杠铃",
-    "tips": "Begin seated on the ground with a loaded barbell over your legs. Using a fat bar or having a pad on the bar can greatly reduce the discomfort caused by this exercise. Roll the bar ",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Glute_Bridge/0.jpg"
-  },
-  {
     "id": "Pull_Through",
     "name": "绳索·Pull Through",
     "name_en": "Pull Through",
@@ -8370,13 +7641,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Pull_Through/0.jpg"
   },
   {
-    "id": "cable_kickback",
+    "id": "One-Legged_Cable_Kickback",
     "name": "绳索踢腿",
-    "name_en": "",
+    "name_en": "One-Legged Cable Kickback",
     "muscle": "臀",
     "equipment": "绳索",
     "tips": "髋伸展主导，腰不要过度反弓",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/One-Legged_Cable_Kickback/0.jpg"
   },
   {
     "id": "Leg_Lift",
@@ -8397,22 +7668,22 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Glute_Kickback/0.jpg"
   },
   {
-    "id": "hip_thrust",
+    "id": "Barbell_Hip_Thrust",
     "name": "臀推",
-    "name_en": "",
+    "name_en": "Barbell Hip Thrust",
     "muscle": "臀",
     "equipment": "杠铃",
     "tips": "下巴收，顶峰挤压臀部，避免过度伸腰",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Hip_Thrust/0.jpg"
   },
   {
-    "id": "glute_bridge",
+    "id": "Barbell_Glute_Bridge",
     "name": "臀桥",
-    "name_en": "",
+    "name_en": "Barbell Glute Bridge",
     "muscle": "臀",
-    "equipment": "自重",
+    "equipment": "杠铃",
     "tips": "肩着地，顶峰夹臀，可单腿进阶",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Barbell_Glute_Bridge/0.jpg"
   },
   {
     "id": "Flutter_Kicks",
@@ -8487,15 +7758,6 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Lying_Crossover/0.jpg"
   },
   {
-    "id": "Thigh_Abductor",
-    "name": "器械·Thigh Abductor",
-    "name_en": "Thigh Abductor",
-    "muscle": "臀中肌",
-    "equipment": "器械",
-    "tips": "To begin, sit down on the abductor machine and select a weight you are comfortable with. When your legs are positioned properly, grip the handles on each side. Your entire upper bo",
-    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Thigh_Abductor/0.jpg"
-  },
-  {
     "id": "Monster_Walk",
     "name": "弹力带·Monster Walk",
     "name_en": "Monster Walk",
@@ -8514,13 +7776,13 @@
     "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Standing_Hip_Circles/0.jpg"
   },
   {
-    "id": "abduction_machine",
+    "id": "Thigh_Abductor",
     "name": "髋外展机",
-    "name_en": "",
+    "name_en": "Thigh Abductor",
     "muscle": "臀中肌",
     "equipment": "器械",
     "tips": "控制节奏，可作热身或收尾",
-    "image_url": ""
+    "image_url": "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/Thigh_Abductor/0.jpg"
   },
   {
     "id": "Chin_To_Chest_Stretch",

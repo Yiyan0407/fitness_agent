@@ -26,7 +26,7 @@ BURN_SYSTEM = """你是运动消耗估算助手。根据用户画像与当日已
 
 规则：
 1. calories_burned 是相对安静状态的额外消耗（EPOC 可轻度计入），不要把全天 BMR 算进去。
-2. 优先参考 weight_kg、gender、body_fat_pct、height_cm、experience，以及完成组的重量×次数与 RPE。
+2. 优先参考 weight_kg、gender、age、body_fat_pct、height_cm、experience、session_minutes，以及完成组的重量×次数与 RPE。
 3. 力量训练通常按组数/动作强度估算；休息日或无完成组则接近 0。
 4. 不确定也给出合理整数，不要留空。
 5. breakdown 可只列主要动作，kcal 之和应接近 totals。

@@ -103,19 +103,38 @@ with st.form("profile_form"):
         step=0.1,
         help="没有可填 0",
     )
+    target_bf = st.number_input(
+        "目标体脂 %",
+        min_value=0.0,
+        max_value=60.0,
+        value=float(profile["target_body_fat_pct"])
+        if profile.get("target_body_fat_pct")
+        else 0.0,
+        step=0.1,
+        help="没有可填 0",
+    )
 
     st.markdown("##### 基础信息")
     GENDER_OPTIONS = ["未设置", "男", "女", "其他", "不愿透露"]
     gender_val = profile.get("gender") or "未设置"
     if gender_val not in GENDER_OPTIONS:
         gender_val = "未设置"
-    gender = st.selectbox(
+    g1, g2 = st.columns(2)
+    gender = g1.selectbox(
         "性别",
         GENDER_OPTIONS,
         index=GENDER_OPTIONS.index(gender_val),
     )
     if gender == "未设置":
         gender = ""
+    age = g2.number_input(
+        "年龄",
+        min_value=0,
+        max_value=120,
+        value=int(profile["age"]) if profile.get("age") else 0,
+        step=1,
+        help="没有可填 0；用于热量与强度建议",
+    )
     experience = st.selectbox(
         "经验水平",
         ["新手", "中级", "高级"],
@@ -124,6 +143,34 @@ with st.form("profile_form"):
         else 1,
     )
     days = st.slider("每周可练天数", 1, 7, int(profile.get("days_per_week") or 4))
+    session_minutes = st.slider(
+        "单次可练时长（分钟）",
+        20,
+        150,
+        int(profile.get("session_minutes") or 60),
+        step=5,
+        help="教练排计划时会按此控制动作数量与休息",
+    )
+    ACTIVITY_OPTIONS = ["久坐", "轻度活动", "中度活动", "重度活动"]
+    raw_act = profile.get("activity_level") or "轻度活动"
+    if raw_act not in ACTIVITY_OPTIONS:
+        raw_act = "轻度活动"
+    activity_level = st.selectbox(
+        "日常活动量（非训练日）",
+        ACTIVITY_OPTIONS,
+        index=ACTIVITY_OPTIONS.index(raw_act),
+        help="久坐≈办公室；轻度≈日常走动；中度≈站立/体力工作；重度≈重体力",
+    )
+    SPLIT_OPTIONS = ["随教练", "全身", "推拉腿", "上下肢", "五分化"]
+    raw_split = profile.get("preferred_split") or "随教练"
+    if raw_split not in SPLIT_OPTIONS:
+        raw_split = "随教练"
+    preferred_split = st.selectbox(
+        "偏好分化",
+        SPLIT_OPTIONS,
+        index=SPLIT_OPTIONS.index(raw_split),
+        help="排周计划时优先按此结构",
+    )
     EQUIP_OPTIONS = ["健身房", "家庭哑铃杠铃", "仅自重", "弹力带为主", "综合"]
     raw_equip = profile.get("equipment") or "健身房"
     if raw_equip == "家庭哑铃":
@@ -151,11 +198,20 @@ with st.form("profile_form"):
         step=0.1,
         help="没有可填 0；有变化时在这里更新",
     )
-    height = st.number_input(
+    h1, h2 = st.columns(2)
+    height = h1.number_input(
         "身高 cm",
         min_value=0.0,
         value=float(profile["height_cm"]) if profile.get("height_cm") else 0.0,
         step=0.1,
+    )
+    sleep_hours = h2.number_input(
+        "平均睡眠小时",
+        min_value=0.0,
+        max_value=16.0,
+        value=float(profile["sleep_hours"]) if profile.get("sleep_hours") else 0.0,
+        step=0.5,
+        help="没有可填 0；影响恢复与容量建议",
     )
     st.markdown("##### 饮食目标")
     d1, d2 = st.columns(2)
@@ -184,6 +240,11 @@ with st.form("profile_form"):
         value=float(profile["fat_target_g"] or 0),
         step=5.0,
     )
+    diet_prefs = st.text_area(
+        "饮食偏好 / 忌口",
+        value=profile.get("diet_prefs") or "",
+        placeholder="例如：不吃猪肉；乳糖不耐；工作日只吃两餐；偏好高蛋白简餐",
+    )
     injuries = st.text_area("伤病 / 禁忌", value=profile.get("injuries") or "")
     notes = st.text_area("其他备注", value=profile.get("notes") or "")
     submitted = st.form_submit_button("保存画像", type="primary")
@@ -192,13 +253,20 @@ with st.form("profile_form"):
             goal=goal,
             goal_detail=goal_detail if goal_detail is not None else "",
             gender=gender if gender is not None else "",
+            age=int(age) if age else None,
             experience=experience,
             days_per_week=days,
+            session_minutes=int(session_minutes),
+            activity_level=activity_level,
+            preferred_split=preferred_split,
             equipment=equipment,
-            injuries=injuries,
+            injuries=injuries if injuries is not None else "",
+            diet_prefs=diet_prefs if diet_prefs is not None else "",
+            sleep_hours=sleep_hours or None,
             weight_kg=weight or None,
             target_weight_kg=target_weight or None,
             body_fat_pct=body_fat or None,
+            target_body_fat_pct=target_bf or None,
             height_cm=height or None,
             calorie_target=calorie_target or None,
             protein_target_g=protein_target or None,

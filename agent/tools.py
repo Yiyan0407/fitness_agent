@@ -16,7 +16,7 @@ def _ok(data: Any) -> str:
 
 @tool
 def get_profile() -> str:
-    """读取用户的个人健身画像（目标、体重、体脂、经验、器械、伤病、饮食目标等）。"""
+    """读取用户的个人健身画像（目标、年龄、体重、体脂、活动量、训练时长、饮食偏好、伤病等）。"""
     return _ok(get_repo().get_profile())
 
 
@@ -25,13 +25,20 @@ def update_profile(
     goal: Optional[str] = None,
     goal_detail: Optional[str] = None,
     gender: Optional[str] = None,
+    age: Optional[int] = None,
     experience: Optional[str] = None,
     days_per_week: Optional[int] = None,
+    session_minutes: Optional[int] = None,
+    activity_level: Optional[str] = None,
+    preferred_split: Optional[str] = None,
     equipment: Optional[str] = None,
     injuries: Optional[str] = None,
+    diet_prefs: Optional[str] = None,
+    sleep_hours: Optional[float] = None,
     weight_kg: Optional[float] = None,
     target_weight_kg: Optional[float] = None,
     body_fat_pct: Optional[float] = None,
+    target_body_fat_pct: Optional[float] = None,
     height_cm: Optional[float] = None,
     calorie_target: Optional[float] = None,
     protein_target_g: Optional[float] = None,
@@ -39,18 +46,27 @@ def update_profile(
     fat_target_g: Optional[float] = None,
     notes: Optional[str] = None,
 ) -> str:
-    """更新用户画像。body_fat_pct 为体脂率（%）；也可设置饮食目标等。"""
+    """更新用户画像。age 为年龄；activity_level 如久坐/轻度活动/中度活动/重度活动；
+    session_minutes 为单次可练分钟；preferred_split 如全身/推拉腿/上下肢/五分化/随教练；
+    diet_prefs 为饮食偏好与忌口；target_body_fat_pct 为目标体脂%。"""
     fields = {
         "goal": goal,
         "goal_detail": goal_detail,
         "gender": gender,
+        "age": age,
         "experience": experience,
         "days_per_week": days_per_week,
+        "session_minutes": session_minutes,
+        "activity_level": activity_level,
+        "preferred_split": preferred_split,
         "equipment": equipment,
         "injuries": injuries,
+        "diet_prefs": diet_prefs,
+        "sleep_hours": sleep_hours,
         "weight_kg": weight_kg,
         "target_weight_kg": target_weight_kg,
         "body_fat_pct": body_fat_pct,
+        "target_body_fat_pct": target_body_fat_pct,
         "height_cm": height_cm,
         "calorie_target": calorie_target,
         "protein_target_g": protein_target_g,

@@ -6,11 +6,33 @@ from datetime import date
 
 import streamlit as st
 
-from bootstrap import get_api_key, get_repo
+from bootstrap import get_api_key, get_app_password, get_repo
+
+
+def require_login() -> None:
+    """Block the page until the correct APP_PASSWORD is entered."""
+    password = get_app_password()
+    if not password:
+        return
+    if st.session_state.get("authenticated"):
+        return
+
+    st.title("健身 Agent")
+    st.caption("请输入访问密码")
+    with st.form("login_form"):
+        entered = st.text_input("密码", type="password")
+        submitted = st.form_submit_button("进入", type="primary", use_container_width=True)
+    if submitted:
+        if entered == password:
+            st.session_state.authenticated = True
+            st.rerun()
+        st.error("密码错误")
+    st.stop()
 
 
 def render_sidebar() -> None:
     """Fixed sidebar: today progress + quick links."""
+    require_login()
     repo = get_repo()
     with st.sidebar:
         st.markdown("### 今日")
@@ -48,6 +70,12 @@ def render_sidebar() -> None:
         key = get_api_key()
         if not key or key.startswith("sk-xxxxx"):
             st.warning("未配置 API Key")
+
+        if get_app_password() and st.session_state.get("authenticated"):
+            st.divider()
+            if st.button("退出登录", use_container_width=True):
+                st.session_state.authenticated = False
+                st.rerun()
 
 
 def page_setup(title: str, icon: str = "💪") -> None:

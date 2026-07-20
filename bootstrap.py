@@ -24,6 +24,12 @@ def get_api_key() -> str:
     return (os.getenv("MIMO_API_KEY") or "").strip()
 
 
+def get_app_password() -> str:
+    """App login password from APP_PASSWORD; empty means no login gate."""
+    load_env()
+    return (os.getenv("APP_PASSWORD") or "").strip()
+
+
 def save_api_key_to_env(api_key: str) -> None:
     """Persist MIMO_API_KEY into .env (create or replace the line)."""
     upsert_env_var("MIMO_API_KEY", api_key)

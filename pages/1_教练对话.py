@@ -93,7 +93,7 @@ def _active_session_id() -> int:
 
 
 def _log_meal_photo(session_id: int, uploaded, hint: str) -> None:
-    from agent.doubao import MissingDoubaoKeyError
+    from agent.llm import MissingAPIKeyError
     from agent.meal_logger import log_meal_from_image
 
     with st.spinner("识别餐食中…"):
@@ -104,9 +104,9 @@ def _log_meal_photo(session_id: int, uploaded, hint: str) -> None:
                 hint=hint,
                 target_date=date.today().isoformat(),
             )
-        except MissingDoubaoKeyError as exc:
+        except MissingAPIKeyError as exc:
             st.error(str(exc))
-            st.page_link("pages/6_设置.py", label="去配置豆包 Key", icon="⚙️")
+            st.page_link("pages/6_设置.py", label="去配置 MiMo Key", icon="⚙️")
             return
         except Exception as exc:  # noqa: BLE001
             st.error(f"识别失败：{exc}")

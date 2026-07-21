@@ -12,7 +12,7 @@ from agent.llm import get_llm
 from agent.meal_logger import _extract_json, _message_text
 from bootstrap import get_repo
 
-BURN_SYSTEM = """你是运动消耗估算助手。根据用户画像与当日已完成训练组，估算本次训练额外消耗的热量（kcal）。
+BURN_SYSTEM = """你是运动消耗估算助手。根据画像与当日已完成训练组，估算本次训练相对安静的额外消耗（kcal）。
 
 只输出一个 JSON 对象（不要 markdown）：
 {
@@ -25,11 +25,11 @@ BURN_SYSTEM = """你是运动消耗估算助手。根据用户画像与当日已
 }
 
 规则：
-1. calories_burned 是相对安静状态的额外消耗（EPOC 可轻度计入），不要把全天 BMR 算进去。
-2. 优先参考 weight_kg、gender、age、body_fat_pct、height_cm、experience、session_minutes，以及完成组的重量×次数与 RPE。
-3. 力量训练通常按组数/动作强度估算；休息日或无完成组则接近 0。
-4. 不确定也给出合理整数，不要留空。
-5. breakdown 可只列主要动作，kcal 之和应接近 totals。
+1. 不要计入全天 BMR；EPOC 可轻度计入。
+2. 参考 weight_kg、gender、age、body_fat_pct、height_cm、experience、session_minutes，以及重量×次数与 RPE。
+3. 力量训练粗算：体重越大、组数/负荷越高、RPE 越高，消耗越高；有氧动作可略高于纯力量。
+4. 休息日或无完成组 → 接近 0；不确定也给合理整数。
+5. breakdown 只列主要动作，各项之和应接近 calories_burned。
 """
 
 
@@ -45,7 +45,7 @@ def estimate_workout_calories(
     # only create workout row when we need to save burn onto it
     workout = repo.get_or_create_workout(date.fromisoformat(ds))
 
-    llm = get_llm(temperature=0.2)
+    llm = get_llm(temperature=0.2, thinking=False)
     resp = llm.invoke(
         [
             SystemMessage(content=BURN_SYSTEM),

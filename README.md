@@ -22,12 +22,11 @@ pip install -r requirements.txt
 ```bash
 cp .env.example .env
 # 编辑 .env：
-# MIMO_API_KEY=...          # 教练对话 / 文字记账
-# DOUBAO_API_KEY=...        # 饮食拍照识别（火山方舟）
-# DOUBAO_MODEL=ep-xxxx 或 doubao-seed-2-0-lite-260428
+# MIMO_API_KEY=...   # 教练对话 / 文字记账 / 饮食拍照（同一 Key）
+# 可选：MIMO_VISION_MODEL=mimo-v2.5
 ```
 
-在 [MiMo 开放平台](https://platform.xiaomimimo.com) 创建 MiMo Key；在 [火山方舟](https://console.volcengine.com/ark) 创建豆包视觉模型 Key。
+在 [MiMo 开放平台](https://platform.xiaomimimo.com) 创建 API Key 即可（教练用 `mimo-v2.5-pro`，拍照用全模态 `mimo-v2.5`）。
 
 3. 启动：
 

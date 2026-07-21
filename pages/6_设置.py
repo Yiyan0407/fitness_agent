@@ -6,7 +6,6 @@ import os
 
 import streamlit as st
 
-from agent.doubao import get_doubao_api_key
 from bootstrap import (
     get_api_key,
     get_repo,
@@ -31,12 +30,11 @@ if st.session_state.pop("profile_saved_flash", False):
     st.toast("画像已保存")
 
 need_mimo = not get_api_key() or get_api_key().startswith("sk-xxxxx")
-need_doubao = not get_doubao_api_key() or get_doubao_api_key().startswith("sk-xxxxx")
 
 st.subheader("API 配置")
-if need_mimo or need_doubao:
-    st.caption("还有 Key 未配置")
-st.markdown("##### MiMo")
+if need_mimo:
+    st.caption("请先配置 MIMO_API_KEY（教练对话与饮食拍照共用）")
+st.markdown("##### 小米 MiMo")
 current = get_api_key()
 masked = (
     (current[:6] + "…" + current[-4:])
@@ -44,40 +42,23 @@ masked = (
     else (current or "未配置")
 )
 st.caption(f"当前 Key：{masked}")
-new_key = st.text_input("MIMO_API_KEY", type="password", placeholder="sk-…")
-if st.button("保存 API Key 到 .env"):
-    if not new_key.strip():
-        st.error("Key 不能为空")
-    else:
-        save_api_key_to_env(new_key.strip())
-        st.success("已写入 .env，可前往「教练对话」使用。")
-
-st.markdown("##### 豆包看图（饮食拍照）")
-doubao_key = get_doubao_api_key()
-d_masked = (
-    (doubao_key[:6] + "…" + doubao_key[-4:])
-    if doubao_key and len(doubao_key) > 12
-    else (doubao_key or "未配置")
-)
-st.caption(f"当前 DOUBAO_API_KEY：{d_masked}")
 st.caption(
-    "在火山方舟开通视觉模型后填写 Key；DOUBAO_MODEL 可为模型名或接入点 ID（ep-xxxx）。"
+    "教练默认 mimo-v2.5-pro；饮食拍照用全模态 mimo-v2.5。同一 Key 即可。"
 )
-new_doubao = st.text_input(
-    "DOUBAO_API_KEY", type="password", placeholder="火山方舟 API Key"
+new_key = st.text_input("MIMO_API_KEY", type="password", placeholder="sk-…")
+vision_model = st.text_input(
+    "MIMO_VISION_MODEL（可选）",
+    value=os.getenv("MIMO_VISION_MODEL", "mimo-v2.5"),
 )
-new_model = st.text_input(
-    "DOUBAO_MODEL（可选）",
-    value=os.getenv("DOUBAO_MODEL", "doubao-seed-2-0-lite-260428"),
-)
-if st.button("保存豆包配置到 .env"):
-    if not new_doubao.strip():
+if st.button("保存 API 配置到 .env"):
+    if not new_key.strip() and need_mimo:
         st.error("Key 不能为空")
     else:
-        upsert_env_var("DOUBAO_API_KEY", new_doubao.strip())
-        if new_model.strip():
-            upsert_env_var("DOUBAO_MODEL", new_model.strip())
-        st.success("豆包配置已保存，可在「饮食管理」拍照记账。")
+        if new_key.strip():
+            save_api_key_to_env(new_key.strip())
+        if vision_model.strip():
+            upsert_env_var("MIMO_VISION_MODEL", vision_model.strip())
+        st.success("已保存。教练与拍照记账都走 MiMo。")
 
 st.subheader("个人画像")
 profile = repo.get_profile()

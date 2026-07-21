@@ -11,8 +11,7 @@ from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from agent.doubao import get_doubao_vision_llm
-from agent.llm import get_llm
+from agent.llm import get_llm, get_vision_llm
 from bootstrap import get_repo
 from db.schema import DATA_DIR
 
@@ -27,21 +26,25 @@ MEAL_JSON_SPEC = """请只输出一个 JSON 对象（不要 markdown、不要解
   "notes": "估算依据一句话"
 }
 规则：
-- 按中国常见份量合理估算
-- 不确定也请给出最接近的估算，不要留空热量
-- meal_type 若无法判断时段，用「其他」或「加餐」
-- notes 用一句中文，不要换行，不要使用英文双引号
+- 按中国常见份量估算（一碗米饭约 150–200g 熟重；外卖套餐按整份）
+- 炒菜要计入可见油脂；饮料按包装或常见容量
+- 不确定也给出最接近的整数估算，热量不要留空或为 0（除非明确是白水）
+- meal_type 无法判断时段时用「其他」或「加餐」
+- notes 一句中文，不换行，不用英文双引号
 - 输出必须是完整可解析的 JSON
 """
 
 MEAL_PARSE_PROMPT = f"""你是饮食记账助手。用户会用一句话描述吃了/喝了什么。
 {MEAL_JSON_SPEC}
+- 若用户说了「半份/一小碗/喝了一口」，按比例下调
 """
 
-MEAL_IMAGE_PROMPT = f"""你是饮食营养识别助手。请根据餐食图片识别食物，并估算整份/盘的营养成分。
+MEAL_IMAGE_PROMPT = f"""你是饮食营养识别助手。根据餐食图片识别食物，并估算图中可见整份/整盘的营养成分。
 {MEAL_JSON_SPEC}
-- name 用中文概括盘中主要食物
-- 若有包装或饮料，按可见规格估算
+- name 用中文概括盘中主要食物（2～12 字）
+- 按图中实际份量估，不要按「理想健康餐」低估
+- 有包装或饮料时按可见规格/毫升估算
+- 看不清的部分在 notes 里如实写「可见部分估算」
 """
 
 MEAL_IMAGES_DIR = DATA_DIR / "meal_images"
@@ -162,8 +165,22 @@ def _message_text(resp) -> str:
                 parts.append(block["text"])
             else:
                 parts.append(str(block))
-        return "\n".join(parts)
-    return str(content)
+        text = "\n".join(parts).strip()
+    elif content is None:
+        text = ""
+    else:
+        text = str(content).strip()
+
+    if text:
+        return text
+
+    # MiMo thinking mode may put output only in reasoning_content
+    extra = getattr(resp, "additional_kwargs", None) or {}
+    for key in ("reasoning_content", "reasoning"):
+        val = extra.get(key)
+        if isinstance(val, str) and val.strip():
+            return val.strip()
+    return ""
 
 
 def _normalize_meal(data: dict[str, Any], fallback_name: str) -> dict[str, Any]:
@@ -194,14 +211,19 @@ def _normalize_meal(data: dict[str, Any], fallback_name: str) -> dict[str, Any]:
 
 def parse_meal_text(user_text: str) -> dict[str, Any]:
     """Parse natural language into meal fields via MiMo."""
-    llm = get_llm(temperature=0.2)
+    llm = get_llm(temperature=0.2, thinking=False)
     resp = llm.invoke(
         [
             SystemMessage(content=MEAL_PARSE_PROMPT),
             HumanMessage(content=user_text.strip()),
         ]
     )
-    data = _extract_json(_message_text(resp))
+    raw = _message_text(resp)
+    if not raw:
+        raise ValueError(
+            "模型返回空内容（可能仍在深度思考中耗尽 token）。请重试一次。"
+        )
+    data = _extract_json(raw)
     parsed = _normalize_meal(data, user_text.strip())
     if not parsed["notes"]:
         parsed["notes"] = f"AI文字估算：{user_text.strip()}"
@@ -226,7 +248,7 @@ def parse_meal_image(
     filename: str | None = None,
     hint: str = "",
 ) -> dict[str, Any]:
-    """Recognize meal nutrition from an image via Doubao vision."""
+    """Recognize meal nutrition from an image via MiMo vision (mimo-v2.5)."""
     if not image_bytes:
         raise ValueError("图片为空")
     mime = _guess_mime(filename, image_bytes)
@@ -235,7 +257,7 @@ def parse_meal_image(
     if hint.strip():
         user_text += f" 补充说明：{hint.strip()}"
 
-    llm = get_doubao_vision_llm(temperature=0.2)
+    llm = get_vision_llm(temperature=0.2)
     resp = llm.invoke(
         [
             SystemMessage(content=MEAL_IMAGE_PROMPT),
@@ -247,12 +269,17 @@ def parse_meal_image(
             ),
         ]
     )
-    data = _extract_json(_message_text(resp))
+    raw = _message_text(resp)
+    if not raw:
+        raise ValueError(
+            "看图模型返回空内容。请换一张更清晰的照片，或稍后重试。"
+        )
+    data = _extract_json(raw)
     parsed = _normalize_meal(data, filename or "餐食照片")
     if not parsed["notes"]:
-        parsed["notes"] = "豆包看图估算"
+        parsed["notes"] = "MiMo 看图估算"
     else:
-        parsed["notes"] = f"豆包看图：{parsed['notes']}"
+        parsed["notes"] = f"MiMo 看图：{parsed['notes']}"
     return parsed
 
 
@@ -295,7 +322,7 @@ def log_meal_from_image(
     hint: str = "",
     target_date: str | None = None,
 ) -> dict[str, Any]:
-    """Recognize meal from image with Doubao and write a meal record."""
+    """Recognize meal from image with MiMo vision and write a meal record."""
     parsed = parse_meal_image(image_bytes, filename=filename, hint=hint)
     ds = target_date or date.today().isoformat()
     row = get_repo().log_meal(

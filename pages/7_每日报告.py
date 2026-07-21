@@ -11,7 +11,7 @@ from agent.llm import MissingAPIKeyError
 from agent.report_render import (
     meals_df,
     nutrition_overview_df,
-    render_report_png,
+    render_report_download_widget,
     sets_df,
 )
 from bootstrap import get_api_key, get_repo, load_env
@@ -158,30 +158,19 @@ if do_gen:
 existing = repo.get_daily_report(ds)
 if existing:
     st.divider()
-    head_l, head_r = st.columns([3, 2])
-    with head_l:
-        st.subheader(existing.get("title") or f"{ds} 报告")
-        st.caption(
-            f"更新于 {existing.get('updated_at') or existing.get('created_at') or '-'}"
-        )
-    with head_r:
-        try:
-            png = render_report_png(
-                title=existing.get("title") or f"{ds} 报告",
-                content=existing.get("content") or "",
-                snapshot=snapshot,
-                sets=day_sets,
-                user_note=existing.get("user_note") or "",
-            )
-            st.download_button(
-                "保存日报图片",
-                data=png,
-                file_name=f"{ds}_日报.png",
-                mime="image/png",
-                width="stretch",
-            )
-        except Exception as exc:  # noqa: BLE001
-            st.caption(f"图片导出暂不可用：{exc}")
+    st.divider()
+    st.subheader(existing.get("title") or f"{ds} 报告")
+    st.caption(
+        f"更新于 {existing.get('updated_at') or existing.get('created_at') or '-'}"
+    )
+    render_report_download_widget(
+        title=existing.get("title") or f"{ds} 报告",
+        content=existing.get("content") or "",
+        snapshot=snapshot,
+        sets=day_sets,
+        user_note=existing.get("user_note") or "",
+        file_name=f"{ds}_日报.png",
+    )
 
     if existing.get("user_note"):
         st.markdown(f"**你的备注：** {existing['user_note']}")

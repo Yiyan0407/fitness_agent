@@ -1698,8 +1698,7 @@ class Repository:
     def list_daily_reports(self, limit: int = 30) -> list[dict[str, Any]]:
         rows = self.conn.execute(
             """
-            SELECT id, date, title, user_note, created_at, updated_at,
-                   substr(content, 1, 120) AS preview
+            SELECT id, date, title, user_note, created_at, updated_at
             FROM daily_reports
             ORDER BY date DESC
             LIMIT ?

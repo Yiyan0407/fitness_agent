@@ -8,6 +8,12 @@ import streamlit as st
 
 from agent.daily_report import build_report_context, generate_daily_report
 from agent.llm import MissingAPIKeyError
+from agent.report_render import (
+    meals_df,
+    nutrition_overview_df,
+    render_report_png,
+    sets_df,
+)
 from bootstrap import get_api_key, get_repo, load_env
 from db.schema import init_db
 from ui import render_sidebar
@@ -45,6 +51,8 @@ snapshot = repo.get_day_snapshot(ds)
 w = snapshot["workout"]
 n = snapshot["nutrition"]
 plan = snapshot.get("plan") or {}
+detail = repo.get_day_detail(ds)
+day_sets = detail.get("sets") or []
 
 c1, c2, c3, c4, c5 = st.columns(5)
 c1.metric("训练组数", f"{w.get('completed_sets') or 0}/{w.get('total_sets') or 0}")
@@ -150,13 +158,58 @@ if do_gen:
 existing = repo.get_daily_report(ds)
 if existing:
     st.divider()
-    st.subheader(existing.get("title") or f"{ds} 报告")
-    st.caption(
-        f"更新于 {existing.get('updated_at') or existing.get('created_at') or '-'}"
-    )
+    head_l, head_r = st.columns([3, 2])
+    with head_l:
+        st.subheader(existing.get("title") or f"{ds} 报告")
+        st.caption(
+            f"更新于 {existing.get('updated_at') or existing.get('created_at') or '-'}"
+        )
+    with head_r:
+        try:
+            png = render_report_png(
+                title=existing.get("title") or f"{ds} 报告",
+                content=existing.get("content") or "",
+                snapshot=snapshot,
+                sets=day_sets,
+                user_note=existing.get("user_note") or "",
+            )
+            st.download_button(
+                "保存日报图片",
+                data=png,
+                file_name=f"{ds}_日报.png",
+                mime="image/png",
+                width="stretch",
+            )
+        except Exception as exc:  # noqa: BLE001
+            st.caption(f"图片导出暂不可用：{exc}")
+
     if existing.get("user_note"):
         st.markdown(f"**你的备注：** {existing['user_note']}")
-    st.markdown(existing.get("content") or "")
+
+    tab_data, tab_coach = st.tabs(["数据一览", "教练复盘"])
+    with tab_data:
+        st.markdown("##### 营养对照")
+        st.dataframe(
+            nutrition_overview_df(n),
+            hide_index=True,
+            width="stretch",
+        )
+        meals = n.get("meals") or []
+        if meals:
+            st.markdown("##### 餐次明细")
+            st.dataframe(meals_df(meals), hide_index=True, width="stretch")
+        else:
+            st.caption("当日暂无饮食记录。")
+
+        st.markdown("##### 训练组次")
+        if day_sets:
+            st.dataframe(sets_df(day_sets), hide_index=True, width="stretch")
+        else:
+            st.caption("当日暂无训练组记录。")
+
+    with tab_coach:
+        st.markdown(existing.get("content") or "_暂无正文_")
+
     if st.button("删除这份报告", type="secondary"):
         repo.delete_daily_report(ds)
         st.toast("已删除")
@@ -171,10 +224,10 @@ if not recent:
     st.caption("暂无历史报告。")
 else:
     for row in recent:
-        col_a, col_b = st.columns([4, 1])
+        col_a, col_b = st.columns([5, 1])
         with col_a:
-            st.markdown(f"**{row.get('title') or row['date']}**")
-            st.caption((row.get("preview") or "").replace("\n", " ")[:80])
+            title = row.get("title") or f"{row['date']} 日报"
+            st.markdown(f"**{title}**")
         with col_b:
             if st.button("查看", key=f"open_report_{row['date']}", width="stretch"):
                 st.session_state["daily_report_date"] = date.fromisoformat(

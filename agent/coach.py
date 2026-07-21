@@ -50,7 +50,8 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
 7. 用户口述完成组数时用 log_set；改某一组用 update_set；删某一组用 delete_set；跳过剩余用 skip_remaining_sets；
    批量改剩余重量用 apply_to_remaining_sets；会话状态/消耗用 update_workout。
 8. 饮食：先 get_nutrition_day / get_profile；记账用 log_meal；改错用 update_meal；删除用 delete_meal；
-   可用 update_profile 写入 calorie_target、protein_target_g 等。
+   可用 update_profile 写入 calorie_target、protein_target_g、carb_target_g、fat_target_g；
+   汇报进度时同时看热量/蛋白/碳水/脂肪的 totals 与 remaining。
 9. 体重/体脂用 log_body_metrics / list_body_metrics / delete_body_metrics。
 10. 每日报告用 get_daily_report / save_daily_report / delete_daily_report / list_daily_reports。
 11. 不要编造用户没说过的伤病史或成绩；信息不足就先问一句关键问题。
@@ -134,17 +135,61 @@ def _chunk_text(chunk: Any) -> str:
 def _prepare_messages(
     user_input: str,
     chat_history_rows: list[dict] | None = None,
+    *,
+    summary: str = "",
 ) -> list:
     history = history_to_messages(chat_history_rows or [])
+    # Hard safety net if compression did not run / failed.
     if len(history) > 20:
         history = history[-20:]
-    return [*history, HumanMessage(content=user_input)]
+    prepared: list = []
+    summary = (summary or "").strip()
+    if summary:
+        prepared.append(
+            SystemMessage(content=f"【先前对话摘要】\n{summary}")
+        )
+    prepared.extend(history)
+    prepared.append(HumanMessage(content=user_input))
+    return prepared
 
 
-def run_coach(user_input: str, chat_history_rows: list[dict] | None = None) -> str:
+def _load_session_context(session_id: int | None) -> tuple[str, list[dict]]:
+    """Compress if needed, then return summary + raw history rows for the model."""
+    if session_id is None:
+        return "", []
+    from agent.chat_compress import build_model_history, ensure_context_budget
+    from bootstrap import get_repo
+
+    ensure_context_budget(int(session_id))
+    repo = get_repo()
+    session = repo.get_chat_session(int(session_id)) or {}
+    all_messages = repo.get_all_chat_messages(int(session_id))
+    # Exclude the latest user message if it was already persisted before streaming;
+    # callers pass prior history separately. Prefer DB truth after compress.
+    summary, recent = build_model_history(session, all_messages)
+    return summary, recent
+
+
+def run_coach(
+    user_input: str,
+    chat_history_rows: list[dict] | None = None,
+    *,
+    session_id: int | None = None,
+) -> str:
     """Run one coach turn and return the assistant text reply."""
+    summary = ""
+    history = chat_history_rows
+    if session_id is not None:
+        summary, recent = _load_session_context(session_id)
+        # Drop trailing duplicate of current user turn if already saved.
+        if recent and recent[-1].get("role") == "user" and (recent[-1].get("content") or "") == user_input:
+            history = recent[:-1]
+        else:
+            history = recent
     agent = build_agent(streaming=False)
-    result = agent.invoke({"messages": _prepare_messages(user_input, chat_history_rows)})
+    result = agent.invoke(
+        {"messages": _prepare_messages(user_input, history, summary=summary)}
+    )
     messages = result.get("messages") or []
     for msg in reversed(messages):
         if isinstance(msg, AIMessage):
@@ -161,14 +206,26 @@ def run_coach(user_input: str, chat_history_rows: list[dict] | None = None) -> s
 def stream_coach(
     user_input: str,
     chat_history_rows: list[dict] | None = None,
+    *,
+    session_id: int | None = None,
 ) -> Iterator[str]:
     """Yield assistant text tokens (and light status markers) as the agent runs.
 
     Status markers are lines starting with ``\\0status:`` so the UI can show
     tool progress without mixing them into the final reply text.
     """
+    summary = ""
+    history = chat_history_rows
+    if session_id is not None:
+        yield "\0status:整理对话上下文…"
+        summary, recent = _load_session_context(session_id)
+        if recent and recent[-1].get("role") == "user" and (recent[-1].get("content") or "") == user_input:
+            history = recent[:-1]
+        else:
+            history = recent
+
     agent = build_agent(streaming=True)
-    inputs = {"messages": _prepare_messages(user_input, chat_history_rows)}
+    inputs = {"messages": _prepare_messages(user_input, history, summary=summary)}
 
     seen_tool_names: set[str] = set()
 

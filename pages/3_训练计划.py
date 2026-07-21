@@ -151,55 +151,55 @@ with top3:
         )
 
 if st.session_state.get("show_exercise_lib"):
-    with st.expander("动作库（可搜、可预览配图）", expanded=True):
-        lib_all = repo.list_exercises()
-        muscles = sorted({e.get("muscle") or "" for e in lib_all if e.get("muscle")})
-        equips = sorted({e.get("equipment") or "" for e in lib_all if e.get("equipment")})
-        f1, f2, f3 = st.columns(3)
-        q = f1.text_input("搜索动作", placeholder="深蹲 / squat / 胸", key="lib_q")
-        muscle_f = f2.selectbox("肌群", ["全部"] + muscles, key="lib_muscle")
-        equip_f = f3.selectbox("器械", ["全部"] + equips, key="lib_equip")
-        filtered = repo.list_exercises(
-            query=q or "",
-            muscle="" if muscle_f == "全部" else muscle_f,
-            equipment="" if equip_f == "全部" else equip_f,
-        )
-        st.caption(f"共 {len(filtered)} 个动作（展示前 60 个）")
-        preview_name = st.selectbox(
-            "预览动作",
-            options=[""] + [e["name"] for e in filtered[:60]],
-            key="lib_preview_name",
-        )
-        if preview_name:
-            ex = next((e for e in filtered if e["name"] == preview_name), None)
-            if ex:
-                c_img, c_info = st.columns([1, 2])
-                with c_img:
-                    if ex.get("image_url"):
-                        try:
-                            st.image(ex["image_url"], width=220)
-                        except Exception:
-                            st.caption("配图加载失败（需联网）")
-                    else:
-                        st.caption("暂无配图")
-                with c_info:
-                    st.markdown(f"**{ex['name']}**")
-                    if ex.get("name_en"):
-                        st.caption(ex["name_en"])
-                    st.write(
-                        f"肌群：{ex.get('muscle') or '-'} · 器械：{ex.get('equipment') or '-'}"
-                    )
-                    if ex.get("tips"):
-                        st.caption(ex["tips"])
-                    if st.button("添加此动作到当前编辑日", key="lib_add_preview"):
-                        st.session_state["lib_pending_add"] = ex["name"]
-                        st.rerun()
-        cols = ["name", "muscle", "equipment", "tips"]
-        st.dataframe(
-            pd.DataFrame([{c: e.get(c) for c in cols} for e in filtered[:60]]),
-            width="stretch",
-            hide_index=True,
-        )
+    st.subheader("动作库")
+    lib_all = repo.list_exercises()
+    muscles = sorted({e.get("muscle") or "" for e in lib_all if e.get("muscle")})
+    equips = sorted({e.get("equipment") or "" for e in lib_all if e.get("equipment")})
+    f1, f2, f3 = st.columns(3)
+    q = f1.text_input("搜索动作", placeholder="深蹲 / squat / 胸", key="lib_q")
+    muscle_f = f2.selectbox("肌群", ["全部"] + muscles, key="lib_muscle")
+    equip_f = f3.selectbox("器械", ["全部"] + equips, key="lib_equip")
+    filtered = repo.list_exercises(
+        query=q or "",
+        muscle="" if muscle_f == "全部" else muscle_f,
+        equipment="" if equip_f == "全部" else equip_f,
+    )
+    st.caption(f"共 {len(filtered)} 个动作（展示前 60 个）")
+    preview_name = st.selectbox(
+        "预览动作",
+        options=[""] + [e["name"] for e in filtered[:60]],
+        key="lib_preview_name",
+    )
+    if preview_name:
+        ex = next((e for e in filtered if e["name"] == preview_name), None)
+        if ex:
+            c_img, c_info = st.columns([1, 2])
+            with c_img:
+                if ex.get("image_url"):
+                    try:
+                        st.image(ex["image_url"], width=220)
+                    except Exception:
+                        st.caption("配图加载失败（需联网）")
+                else:
+                    st.caption("暂无配图")
+            with c_info:
+                st.markdown(f"**{ex['name']}**")
+                if ex.get("name_en"):
+                    st.caption(ex["name_en"])
+                st.write(
+                    f"肌群：{ex.get('muscle') or '-'} · 器械：{ex.get('equipment') or '-'}"
+                )
+                if ex.get("tips"):
+                    st.caption(ex["tips"])
+                if st.button("添加此动作到当前编辑日", key="lib_add_preview"):
+                    st.session_state["lib_pending_add"] = ex["name"]
+                    st.rerun()
+    cols = ["name", "muscle", "equipment", "tips"]
+    st.dataframe(
+        pd.DataFrame([{c: e.get(c) for c in cols} for e in filtered[:60]]),
+        width="stretch",
+        hide_index=True,
+    )
 
 day_labels = [f"{WEEKDAY_CN[k]}（{k}）" for k in WEEKDAY_KEYS]
 selected_label = st.radio("选择要编辑的一天", day_labels, horizontal=True)
@@ -244,76 +244,76 @@ else:
     exercises = df_to_exercises(edited)
 
     # 快捷从动作库添加（先搜再选，避免 900+ 下拉）
-    with st.expander("从动作库添加动作", expanded=False):
-        pending = st.session_state.pop("lib_pending_add", None)
-        add_q = st.text_input(
-            "搜索动作",
-            placeholder="输入关键词，如：深蹲 / 卧推 / squat",
-            key=f"add_q_{day_key}",
+    st.markdown("##### 从动作库添加")
+    pending = st.session_state.pop("lib_pending_add", None)
+    add_q = st.text_input(
+        "搜索动作",
+        placeholder="输入关键词，如：深蹲 / 卧推 / squat",
+        key=f"add_q_{day_key}",
+    )
+    if pending:
+        hits = repo.list_exercises(query=pending, limit=20)
+        if not any(e["name"] == pending for e in hits):
+            ex = repo.get_exercise_by_name(pending)
+            hits = [ex] + hits if ex else hits
+        st.session_state[f"pick_{day_key}"] = pending
+    else:
+        hits = (
+            repo.list_exercises(query=add_q.strip(), limit=40)
+            if add_q.strip()
+            else []
         )
-        if pending:
-            hits = repo.list_exercises(query=pending, limit=20)
-            if not any(e["name"] == pending for e in hits):
-                ex = repo.get_exercise_by_name(pending)
-                hits = [ex] + hits if ex else hits
-            st.session_state[f"pick_{day_key}"] = pending
-        else:
-            hits = (
-                repo.list_exercises(query=add_q.strip(), limit=40)
-                if add_q.strip()
-                else []
+    options = [""] + [e["name"] for e in hits]
+    if not add_q.strip() and not pending:
+        st.caption("先输入关键词再选择。")
+    pick = st.selectbox(
+        "从搜索结果选择",
+        options=options,
+        key=f"pick_{day_key}",
+    )
+    pick_ex = next((e for e in hits if e["name"] == pick), None)
+    if pick_ex is None and pick:
+        pick_ex = repo.get_exercise_by_name(pick)
+    if pick_ex:
+        c_img, c_meta = st.columns([1, 2])
+        with c_img:
+            if pick_ex.get("image_url"):
+                try:
+                    st.image(pick_ex["image_url"], width=160)
+                except Exception:
+                    st.caption("配图需联网")
+        with c_meta:
+            if pick_ex.get("name_en"):
+                st.caption(pick_ex["name_en"])
+            st.caption(
+                f"{pick_ex.get('muscle') or '-'} · {pick_ex.get('equipment') or '-'}"
             )
-        options = [""] + [e["name"] for e in hits]
-        if not add_q.strip() and not pending:
-            st.caption("先输入关键词再选择，避免一次列出全部动作。")
-        pick = st.selectbox(
-            "从搜索结果选择",
-            options=options,
-            key=f"pick_{day_key}",
-        )
-        pick_ex = next((e for e in hits if e["name"] == pick), None)
-        if pick_ex is None and pick:
-            pick_ex = repo.get_exercise_by_name(pick)
-        if pick_ex:
-            c_img, c_meta = st.columns([1, 2])
-            with c_img:
-                if pick_ex.get("image_url"):
-                    try:
-                        st.image(pick_ex["image_url"], width=160)
-                    except Exception:
-                        st.caption("配图需联网")
-            with c_meta:
-                if pick_ex.get("name_en"):
-                    st.caption(pick_ex["name_en"])
-                st.caption(
-                    f"{pick_ex.get('muscle') or '-'} · {pick_ex.get('equipment') or '-'}"
-                )
-                if pick_ex.get("tips"):
-                    tip = pick_ex["tips"]
-                    if not any("\u4e00" <= c <= "\u9fff" for c in tip):
-                        tip = tip[:100] + "…"
-                    st.caption(tip[:140])
-        if st.button("添加选中动作", key=f"add_{day_key}", width="stretch", type="primary"):
-            if pick:
-                exercises.append(
-                    {
-                        "name": pick,
-                        "sets": 3,
-                        "reps": "8-12",
-                        "weight_kg": None,
-                        "notes": "",
-                    }
-                )
-                draft[day_key] = {
-                    "name": day_name or "训练",
-                    "rest": False,
-                    "exercises": exercises,
+            if pick_ex.get("tips"):
+                tip = pick_ex["tips"]
+                if not any("\u4e00" <= c <= "\u9fff" for c in tip):
+                    tip = tip[:100] + "…"
+                st.caption(tip[:140])
+    if st.button("添加选中动作", key=f"add_{day_key}", width="stretch", type="primary"):
+        if pick:
+            exercises.append(
+                {
+                    "name": pick,
+                    "sets": 3,
+                    "reps": "8-12",
+                    "weight_kg": None,
+                    "notes": "",
                 }
-                st.session_state["plan_draft"] = draft
-                st.session_state.pop(f"editor_{day_key}", None)
-                st.rerun()
-            else:
-                st.warning("请先搜索并选择动作")
+            )
+            draft[day_key] = {
+                "name": day_name or "训练",
+                "rest": False,
+                "exercises": exercises,
+            }
+            st.session_state["plan_draft"] = draft
+            st.session_state.pop(f"editor_{day_key}", None)
+            st.rerun()
+        else:
+            st.warning("请先搜索并选择动作")
 
     draft[day_key] = {
         "name": day_name or "训练",
@@ -324,25 +324,25 @@ else:
 st.session_state["plan_draft"] = draft
 
 st.divider()
-with st.expander("本周一览", expanded=False):
-    summary_rows = []
-    for key in WEEKDAY_KEYS:
-        d = draft[key]
-        if d.get("rest"):
-            summary_rows.append(
-                {"星期": WEEKDAY_CN[key], "安排": d.get("name") or "休息", "动作数": 0}
-            )
-        else:
-            names = "、".join(ex["name"] for ex in d.get("exercises") or [])
-            summary_rows.append(
-                {
-                    "星期": WEEKDAY_CN[key],
-                    "安排": d.get("name") or "训练",
-                    "动作数": len(d.get("exercises") or []),
-                    "动作": names,
-                }
-            )
-    st.dataframe(pd.DataFrame(summary_rows), width="stretch", hide_index=True)
+st.subheader("本周一览")
+summary_rows = []
+for key in WEEKDAY_KEYS:
+    d = draft[key]
+    if d.get("rest"):
+        summary_rows.append(
+            {"星期": WEEKDAY_CN[key], "安排": d.get("name") or "休息", "动作数": 0}
+        )
+    else:
+        names = "、".join(ex["name"] for ex in d.get("exercises") or [])
+        summary_rows.append(
+            {
+                "星期": WEEKDAY_CN[key],
+                "安排": d.get("name") or "训练",
+                "动作数": len(d.get("exercises") or []),
+                "动作": names,
+            }
+        )
+st.dataframe(pd.DataFrame(summary_rows), width="stretch", hide_index=True)
 
 save_l, save_r = st.columns([1, 1])
 with save_l:

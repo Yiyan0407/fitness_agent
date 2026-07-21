@@ -1201,32 +1201,169 @@ class Repository:
             "sets": sets,
         }
 
-    # --- chat ---
+    # --- chat sessions ---
 
-    def add_chat_message(self, role: str, content: str) -> dict[str, Any]:
+    def list_chat_sessions(self) -> list[dict[str, Any]]:
+        rows = self.conn.execute(
+            """
+            SELECT * FROM chat_sessions
+            ORDER BY datetime(updated_at) DESC, id DESC
+            """
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def get_chat_session(self, session_id: int) -> dict[str, Any] | None:
+        row = self.conn.execute(
+            "SELECT * FROM chat_sessions WHERE id = ?", (int(session_id),)
+        ).fetchone()
+        return dict(row) if row else None
+
+    def create_chat_session(self, title: str = "新对话") -> dict[str, Any]:
+        title = (title or "新对话").strip() or "新对话"
         cur = self.conn.execute(
-            "INSERT INTO chat_messages (role, content) VALUES (?, ?)",
-            (role, content),
+            "INSERT INTO chat_sessions (title) VALUES (?)",
+            (title,),
         )
         self.conn.commit()
+        return self.get_chat_session(int(cur.lastrowid)) or {
+            "id": cur.lastrowid,
+            "title": title,
+            "summary": "",
+            "summary_upto_id": None,
+        }
+
+    def ensure_chat_session(self) -> dict[str, Any]:
+        """Return the most recently updated session, or create one."""
+        sessions = self.list_chat_sessions()
+        if sessions:
+            return sessions[0]
+        return self.create_chat_session("默认对话")
+
+    def rename_chat_session(self, session_id: int, title: str) -> dict[str, Any] | None:
+        title = (title or "").strip() or "新对话"
+        self.conn.execute(
+            """
+            UPDATE chat_sessions
+            SET title = ?, updated_at = datetime('now', 'localtime')
+            WHERE id = ?
+            """,
+            (title, int(session_id)),
+        )
+        self.conn.commit()
+        return self.get_chat_session(session_id)
+
+    def delete_chat_session(self, session_id: int) -> None:
+        self.conn.execute("DELETE FROM chat_messages WHERE session_id = ?", (int(session_id),))
+        self.conn.execute("DELETE FROM chat_sessions WHERE id = ?", (int(session_id),))
+        self.conn.commit()
+
+    def touch_chat_session(self, session_id: int) -> None:
+        self.conn.execute(
+            """
+            UPDATE chat_sessions
+            SET updated_at = datetime('now', 'localtime')
+            WHERE id = ?
+            """,
+            (int(session_id),),
+        )
+        self.conn.commit()
+
+    def update_chat_session_summary(
+        self,
+        session_id: int,
+        summary: str,
+        summary_upto_id: int | None,
+    ) -> dict[str, Any] | None:
+        self.conn.execute(
+            """
+            UPDATE chat_sessions
+            SET summary = ?,
+                summary_upto_id = ?,
+                updated_at = datetime('now', 'localtime')
+            WHERE id = ?
+            """,
+            (summary or "", summary_upto_id, int(session_id)),
+        )
+        self.conn.commit()
+        return self.get_chat_session(session_id)
+
+    def maybe_autotitle_chat_session(self, session_id: int, user_text: str) -> None:
+        """If title is still the default, set it from the first user message."""
+        session = self.get_chat_session(session_id)
+        if not session:
+            return
+        title = (session.get("title") or "").strip()
+        if title not in ("新对话", "默认对话", ""):
+            return
+        snippet = " ".join((user_text or "").strip().split())
+        if not snippet:
+            return
+        if len(snippet) > 20:
+            snippet = snippet[:20] + "…"
+        self.rename_chat_session(session_id, snippet)
+
+    def add_chat_message(
+        self,
+        role: str,
+        content: str,
+        session_id: int | None = None,
+    ) -> dict[str, Any]:
+        sid = int(session_id) if session_id is not None else int(self.ensure_chat_session()["id"])
+        cur = self.conn.execute(
+            "INSERT INTO chat_messages (session_id, role, content) VALUES (?, ?, ?)",
+            (sid, role, content),
+        )
+        self.conn.commit()
+        self.touch_chat_session(sid)
+        if role == "user":
+            self.maybe_autotitle_chat_session(sid, content)
         row = self.conn.execute(
             "SELECT * FROM chat_messages WHERE id = ?", (cur.lastrowid,)
         ).fetchone()
         return dict(row)
 
-    def get_chat_messages(self, limit: int = 50) -> list[dict[str, Any]]:
+    def get_chat_messages(
+        self,
+        limit: int = 50,
+        session_id: int | None = None,
+    ) -> list[dict[str, Any]]:
+        sid = int(session_id) if session_id is not None else int(self.ensure_chat_session()["id"])
         rows = self.conn.execute(
             """
             SELECT * FROM (
-                SELECT * FROM chat_messages ORDER BY id DESC LIMIT ?
+                SELECT * FROM chat_messages
+                WHERE session_id = ?
+                ORDER BY id DESC LIMIT ?
             ) sub ORDER BY id ASC
             """,
-            (limit,),
+            (sid, limit),
         ).fetchall()
         return [dict(r) for r in rows]
 
-    def clear_chat(self) -> None:
-        self.conn.execute("DELETE FROM chat_messages")
+    def get_all_chat_messages(self, session_id: int) -> list[dict[str, Any]]:
+        rows = self.conn.execute(
+            """
+            SELECT * FROM chat_messages
+            WHERE session_id = ?
+            ORDER BY id ASC
+            """,
+            (int(session_id),),
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+    def clear_chat(self, session_id: int | None = None) -> None:
+        sid = int(session_id) if session_id is not None else int(self.ensure_chat_session()["id"])
+        self.conn.execute("DELETE FROM chat_messages WHERE session_id = ?", (sid,))
+        self.conn.execute(
+            """
+            UPDATE chat_sessions
+            SET summary = '',
+                summary_upto_id = NULL,
+                updated_at = datetime('now', 'localtime')
+            WHERE id = ?
+            """,
+            (sid,),
+        )
         self.conn.commit()
 
     # --- exercises ---
@@ -1435,6 +1572,12 @@ class Repository:
                 else None,
                 "protein_g": (targets["protein_target_g"] or 0) - totals["protein_g"]
                 if targets.get("protein_target_g")
+                else None,
+                "carb_g": (targets["carb_target_g"] or 0) - totals["carb_g"]
+                if targets.get("carb_target_g")
+                else None,
+                "fat_g": (targets["fat_target_g"] or 0) - totals["fat_g"]
+                if targets.get("fat_target_g")
                 else None,
             },
         }

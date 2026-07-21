@@ -18,23 +18,13 @@ repo = get_repo()
 render_sidebar()
 
 st.title("饮食管理")
-st.caption("这里看进度和明细；记账请到「教练对话」用文字或拍照。")
 
 if st.session_state.pop("nutrition_saved_flash", False):
-    st.success("饮食目标已保存")
-    st.toast("饮食目标已保存")
+    st.toast("目标已保存")
 if st.session_state.pop("meal_logged_flash", False):
-    st.success("已记录")
     st.toast("已记录")
 
-with st.expander("去记账", expanded=False):
-    go1, go2 = st.columns(2)
-    with go1:
-        st.page_link("pages/1_教练对话.py", label="去教练对话记账", icon="💬")
-    with go2:
-        if st.button("快捷：喝了一瓶可乐（发给教练）", width="stretch"):
-            st.session_state["pending_chat"] = "喝了一瓶可乐，帮我记到饮食里"
-            st.switch_page("pages/1_教练对话.py")
+st.page_link("pages/1_教练对话.py", label="去教练对话记账", icon="💬")
 
 target = st.date_input("日期", value=date.today())
 day = repo.get_nutrition_day(target.isoformat())
@@ -57,24 +47,48 @@ c2.metric(
     if not targets.get("protein_target_g")
     else f"目标 {targets['protein_target_g']:.0f}",
 )
-c3.metric("碳水 g", f"{totals['carb_g']:.0f}")
-c4.metric("脂肪 g", f"{totals['fat_g']:.0f}")
+c3.metric(
+    "碳水 g",
+    f"{totals['carb_g']:.0f}",
+    None
+    if not targets.get("carb_target_g")
+    else f"目标 {targets['carb_target_g']:.0f}",
+)
+c4.metric(
+    "脂肪 g",
+    f"{totals['fat_g']:.0f}",
+    None
+    if not targets.get("fat_target_g")
+    else f"目标 {targets['fat_target_g']:.0f}",
+)
 
-if targets.get("calorie_target"):
-    ratio = min(1.0, totals["calories"] / float(targets["calorie_target"]))
-    st.progress(
-        ratio,
-        text=f"热量进度 {totals['calories']:.0f}/{targets['calorie_target']:.0f}",
-    )
-if targets.get("protein_target_g"):
-    pr = min(1.0, totals["protein_g"] / float(targets["protein_target_g"]))
-    st.progress(
-        pr,
-        text=f"蛋白进度 {totals['protein_g']:.0f}/{targets['protein_target_g']:.0f}",
-    )
 
-if not targets.get("calorie_target") and not targets.get("protein_target_g"):
-    st.info("还没设饮食目标。可在教练对话里让教练估算，或在下方填写。")
+def _progress(label: str, current: float, target_val: float | None) -> None:
+    if not target_val:
+        return
+    ratio = min(1.0, float(current) / float(target_val))
+    rem = float(target_val) - float(current)
+    rem_txt = f"还差 {rem:.0f}" if rem > 0 else f"超出 {-rem:.0f}"
+    st.progress(ratio, text=f"{label} {current:.0f}/{target_val:.0f}（{rem_txt}）")
+
+
+_progress("热量", totals["calories"], targets.get("calorie_target"))
+_progress("蛋白", totals["protein_g"], targets.get("protein_target_g"))
+_progress("碳水", totals["carb_g"], targets.get("carb_target_g"))
+_progress("脂肪", totals["fat_g"], targets.get("fat_target_g"))
+
+if not any(
+    targets.get(k)
+    for k in ("calorie_target", "protein_target_g", "carb_target_g", "fat_target_g")
+):
+    st.info("还没设饮食目标。可在教练对话里让教练估算，或在下方填写热量/蛋白/碳水/脂肪。")
+elif not targets.get("carb_target_g") or not targets.get("fat_target_g"):
+    missing = []
+    if not targets.get("carb_target_g"):
+        missing.append("碳水")
+    if not targets.get("fat_target_g"):
+        missing.append("脂肪")
+    st.caption(f"尚未设置{' / '.join(missing)}目标，可在下方「饮食目标」补上。")
 
 st.divider()
 st.subheader("当日记录")
@@ -97,100 +111,100 @@ else:
         ]
     )
     st.dataframe(df.drop(columns=["id"]), width="stretch", hide_index=True)
-    with st.expander("删除记录", expanded=False):
-        del_id = st.selectbox(
-            "删除某条记录",
-            options=[0] + [int(m["id"]) for m in meals],
-            format_func=lambda x: "不删除"
-            if x == 0
-            else next(
-                f"#{m['id']} {m['meal_type']}·{m['name']}"
-                for m in meals
-                if m["id"] == x
-            ),
-        )
-        if del_id and st.button("确认删除"):
-            repo.delete_meal(int(del_id))
-            st.rerun()
+    del_id = st.selectbox(
+        "删除记录",
+        options=[0] + [int(m["id"]) for m in meals],
+        format_func=lambda x: "不删除"
+        if x == 0
+        else next(
+            f"#{m['id']} {m['meal_type']}·{m['name']}"
+            for m in meals
+            if m["id"] == x
+        ),
+    )
+    if del_id and st.button("确认删除"):
+        repo.delete_meal(int(del_id))
+        st.rerun()
 
 st.divider()
-with st.expander("饮食目标", expanded=False):
-    profile = repo.get_profile()
-    with st.form("nutrition_targets"):
-        t1, t2 = st.columns(2)
-        cal = t1.number_input(
-            "每日热量目标 kcal",
-            min_value=0.0,
-            value=float(profile["calorie_target"] or 0),
-            step=50.0,
+st.subheader("饮食目标")
+profile = repo.get_profile()
+with st.form("nutrition_targets"):
+    t1, t2 = st.columns(2)
+    cal = t1.number_input(
+        "每日热量目标 kcal",
+        min_value=0.0,
+        value=float(profile["calorie_target"] or 0),
+        step=50.0,
+    )
+    pro = t2.number_input(
+        "每日蛋白目标 g",
+        min_value=0.0,
+        value=float(profile["protein_target_g"] or 0),
+        step=5.0,
+    )
+    t3, t4 = st.columns(2)
+    carb_t = t3.number_input(
+        "每日碳水目标 g",
+        min_value=0.0,
+        value=float(profile["carb_target_g"] or 0),
+        step=5.0,
+    )
+    fat_t = t4.number_input(
+        "每日脂肪目标 g",
+        min_value=0.0,
+        value=float(profile["fat_target_g"] or 0),
+        step=5.0,
+    )
+    if st.form_submit_button("保存饮食目标"):
+        repo.update_profile(
+            calorie_target=cal if cal else None,
+            protein_target_g=pro if pro else None,
+            carb_target_g=carb_t if carb_t else None,
+            fat_target_g=fat_t if fat_t else None,
         )
-        pro = t2.number_input(
-            "每日蛋白目标 g",
-            min_value=0.0,
-            value=float(profile["protein_target_g"] or 0),
-            step=5.0,
+        st.session_state["nutrition_saved_flash"] = True
+        st.rerun()
+
+st.divider()
+st.subheader("近 7 天")
+recent = repo.get_recent_nutrition(7)
+if not recent["daily"]:
+    st.caption("暂无记录")
+else:
+    st.dataframe(pd.DataFrame(recent["daily"]), width="stretch", hide_index=True)
+
+st.divider()
+st.subheader("手动记账")
+with st.form("log_meal_form"):
+    m1, m2 = st.columns([2, 1])
+    with m1:
+        meal_name = st.text_input("食物 / 菜名")
+    with m2:
+        meal_type = st.selectbox(
+            "餐次",
+            ["早餐", "午餐", "晚餐", "加餐", "蛋白粉", "其他"],
         )
-        t3, t4 = st.columns(2)
-        carb_t = t3.number_input(
-            "每日碳水目标 g",
-            min_value=0.0,
-            value=float(profile["carb_target_g"] or 0),
-            step=5.0,
-        )
-        fat_t = t4.number_input(
-            "每日脂肪目标 g",
-            min_value=0.0,
-            value=float(profile["fat_target_g"] or 0),
-            step=5.0,
-        )
-        if st.form_submit_button("保存饮食目标"):
-            # 填 0 = 清空目标；须把 None 写进库，不能跳过更新
-            repo.update_profile(
-                calorie_target=cal if cal else None,
-                protein_target_g=pro if pro else None,
-                carb_target_g=carb_t if carb_t else None,
-                fat_target_g=fat_t if fat_t else None,
+    n1, n2, n3, n4 = st.columns(4)
+    calories = n1.number_input("热量 kcal", min_value=0.0, value=0.0, step=10.0)
+    protein = n2.number_input("蛋白 g", min_value=0.0, value=0.0, step=1.0)
+    carb = n3.number_input("碳水 g", min_value=0.0, value=0.0, step=1.0)
+    fat = n4.number_input("脂肪 g", min_value=0.0, value=0.0, step=1.0)
+    meal_notes = st.text_input("备注", placeholder="可选")
+    submitted = st.form_submit_button("添加记录")
+    if submitted:
+        if not meal_name.strip():
+            st.error("请填写食物名称")
+        else:
+            repo.log_meal(
+                name=meal_name.strip(),
+                meal_type=meal_type,
+                calories=calories if calories else None,
+                protein_g=protein if protein else None,
+                carb_g=carb if carb else None,
+                fat_g=fat if fat else None,
+                notes=meal_notes,
+                target_date=target.isoformat(),
             )
-            st.session_state["nutrition_saved_flash"] = True
+            st.session_state["meal_logged_flash"] = True
             st.rerun()
-
-with st.expander("近 7 天饮食汇总", expanded=False):
-    recent = repo.get_recent_nutrition(7)
-    if not recent["daily"]:
-        st.caption("暂无记录")
-    else:
-        st.dataframe(pd.DataFrame(recent["daily"]), width="stretch", hide_index=True)
-
-with st.expander("手动精确填写（可选）", expanded=False):
-    with st.form("log_meal_form"):
-        m1, m2 = st.columns([2, 1])
-        with m1:
-            meal_name = st.text_input("食物 / 菜名")
-        with m2:
-            meal_type = st.selectbox(
-                "餐次",
-                ["早餐", "午餐", "晚餐", "加餐", "蛋白粉", "其他"],
-            )
-        n1, n2, n3, n4 = st.columns(4)
-        calories = n1.number_input("热量 kcal", min_value=0.0, value=0.0, step=10.0)
-        protein = n2.number_input("蛋白 g", min_value=0.0, value=0.0, step=1.0)
-        carb = n3.number_input("碳水 g", min_value=0.0, value=0.0, step=1.0)
-        fat = n4.number_input("脂肪 g", min_value=0.0, value=0.0, step=1.0)
-        meal_notes = st.text_input("备注", placeholder="可选")
-        submitted = st.form_submit_button("添加记录")
-        if submitted:
-            if not meal_name.strip():
-                st.error("请填写食物名称")
-            else:
-                repo.log_meal(
-                    name=meal_name.strip(),
-                    meal_type=meal_type,
-                    calories=calories if calories else None,
-                    protein_g=protein if protein else None,
-                    carb_g=carb if carb else None,
-                    fat_g=fat if fat else None,
-                    notes=meal_notes,
-                    target_date=target.isoformat(),
-                )
-                st.session_state["meal_logged_flash"] = True
-                st.rerun()

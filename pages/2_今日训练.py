@@ -323,66 +323,66 @@ else:
         st.divider()
 
 
-with st.expander("加动作", expanded=not sets):
-    with st.form("add_exercise_planned"):
-        name_in = st.text_input("动作名称")
-        c1, c2, c3 = st.columns(3)
-        sets_n = c1.number_input("组数", min_value=1, value=3, step=1)
-        w = c2.number_input("重量 kg", min_value=0.0, value=0.0, step=1.0)
-        r = c3.text_input("次数", value="8-12")
-        if st.form_submit_button("加入今日", type="primary"):
-            if not name_in.strip():
-                st.error("请填写动作名称")
+st.subheader("加动作")
+with st.form("add_exercise_planned"):
+    name_in = st.text_input("动作名称")
+    c1, c2, c3 = st.columns(3)
+    sets_n = c1.number_input("组数", min_value=1, value=3, step=1)
+    w = c2.number_input("重量 kg", min_value=0.0, value=0.0, step=1.0)
+    r = c3.text_input("次数", value="8-12")
+    if st.form_submit_button("加入今日", type="primary"):
+        if not name_in.strip():
+            st.error("请填写动作名称")
+        else:
+            out = repo.add_today_exercise(
+                name_in.strip(),
+                sets=int(sets_n),
+                reps=r.strip() or "8-12",
+                weight_kg=w or None,
+                target_date=target.isoformat(),
+            )
+            if out.get("ok"):
+                st.rerun()
             else:
-                out = repo.add_today_exercise(
-                    name_in.strip(),
-                    sets=int(sets_n),
-                    reps=r.strip() or "8-12",
-                    weight_kg=w or None,
-                    target_date=target.isoformat(),
-                )
-                if out.get("ok"):
-                    st.rerun()
-                else:
-                    st.error(out.get("error") or "添加失败")
+                st.error(out.get("error") or "添加失败")
 
-with st.expander("消耗 / 备注 / 其他", expanded=False):
-    burn = workout.get("calories_burned")
-    can_ai = get_api_key() and not get_api_key().startswith("sk-xxxxx")
-    b1, b2 = st.columns(2)
-    with b1:
-        if st.button("AI 估算消耗", disabled=not can_ai or done == 0, width="stretch"):
-            with st.spinner("估算中…"):
-                try:
-                    result = estimate_workout_calories(target.isoformat(), save=True)
-                    st.toast(f"约 {result['calories_burned']} kcal")
-                    st.rerun()
-                except MissingAPIKeyError as exc:
-                    st.error(str(exc))
-                except Exception as exc:  # noqa: BLE001
-                    st.error(str(exc))
-        if burn is not None:
-            st.caption(f"当前消耗 {float(burn):.0f} kcal")
-    with b2:
-        if st.button("结束剩余组并收工", width="stretch"):
-            n = repo.skip_remaining_sets(workout["id"])
-            repo.update_workout(workout["id"], status="done")
-            st.toast(f"已去掉 {n} 组")
-            st.rerun()
-
-    notes = st.text_area("训练备注", value=workout.get("notes") or "")
-    n1, n2 = st.columns(2)
-    if n1.button("保存备注", width="stretch"):
-        repo.update_workout(workout["id"], notes=notes)
-        st.toast("已保存")
-    if n2.button("标记今日完成", type="primary", width="stretch"):
-        repo.update_workout(workout["id"], status="done", notes=notes)
+st.subheader("消耗 / 备注")
+burn = workout.get("calories_burned")
+can_ai = get_api_key() and not get_api_key().startswith("sk-xxxxx")
+b1, b2 = st.columns(2)
+with b1:
+    if st.button("AI 估算消耗", disabled=not can_ai or done == 0, width="stretch"):
+        with st.spinner("估算中…"):
+            try:
+                result = estimate_workout_calories(target.isoformat(), save=True)
+                st.toast(f"约 {result['calories_burned']} kcal")
+                st.rerun()
+            except MissingAPIKeyError as exc:
+                st.error(str(exc))
+            except Exception as exc:  # noqa: BLE001
+                st.error(str(exc))
+    if burn is not None:
+        st.caption(f"当前消耗 {float(burn):.0f} kcal")
+with b2:
+    if st.button("结束剩余组并收工", width="stretch"):
+        n = repo.skip_remaining_sets(workout["id"])
+        repo.update_workout(workout["id"], status="done")
+        st.toast(f"已去掉 {n} 组")
         st.rerun()
 
-    st.page_link("pages/3_训练计划.py", label="改一周模板", icon="📋")
-    if st.button("按周计划重置今日（清空本日）"):
-        for s in repo.get_sets(workout["id"]):
-            repo.conn.execute("DELETE FROM sets WHERE id = ?", (s["id"],))
-        repo.conn.commit()
-        repo.ensure_today_sets_from_plan(target, force=True)
-        st.rerun()
+notes = st.text_area("训练备注", value=workout.get("notes") or "")
+n1, n2 = st.columns(2)
+if n1.button("保存备注", width="stretch"):
+    repo.update_workout(workout["id"], notes=notes)
+    st.toast("已保存")
+if n2.button("标记今日完成", type="primary", width="stretch"):
+    repo.update_workout(workout["id"], status="done", notes=notes)
+    st.rerun()
+
+st.page_link("pages/3_训练计划.py", label="改一周模板", icon="📋")
+if st.button("按周计划重置今日（清空本日）"):
+    for s in repo.get_sets(workout["id"]):
+        repo.conn.execute("DELETE FROM sets WHERE id = ?", (s["id"],))
+    repo.conn.commit()
+    repo.ensure_today_sets_from_plan(target, force=True)
+    st.rerun()

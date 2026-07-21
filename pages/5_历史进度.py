@@ -76,64 +76,63 @@ def parse_selected_date(state) -> str | None:
     return None
 
 
-with st.expander("体态与图例", expanded=False):
-    profile = repo.get_profile()
-    m1, m2 = st.columns(2)
-    if profile.get("weight_kg"):
-        m1.metric("当前体重 (kg)", profile["weight_kg"])
-    if profile.get("body_fat_pct"):
-        m2.metric("当前体脂 (%)", profile["body_fat_pct"])
-    c1, c2, c3, c4 = st.columns(4)
-    c1.markdown(
-        f"<span style='color:{KIND_STYLE['done']['color']}'>●</span> 已完成",
-        unsafe_allow_html=True,
-    )
-    c2.markdown(
-        f"<span style='color:{KIND_STYLE['in_progress']['color']}'>●</span> 进行中",
-        unsafe_allow_html=True,
-    )
-    c3.markdown(
-        f"<span style='color:{KIND_STYLE['planned']['color']}'>●</span> 计划",
-        unsafe_allow_html=True,
-    )
-    c4.markdown(
-        f"<span style='color:{KIND_STYLE['rest']['color']}'>●</span> 休息",
-        unsafe_allow_html=True,
-    )
+profile = repo.get_profile()
+m1, m2 = st.columns(2)
+if profile.get("weight_kg"):
+    m1.metric("当前体重 (kg)", profile["weight_kg"])
+if profile.get("body_fat_pct"):
+    m2.metric("当前体脂 (%)", profile["body_fat_pct"])
+c1, c2, c3, c4 = st.columns(4)
+c1.markdown(
+    f"<span style='color:{KIND_STYLE['done']['color']}'>●</span> 已完成",
+    unsafe_allow_html=True,
+)
+c2.markdown(
+    f"<span style='color:{KIND_STYLE['in_progress']['color']}'>●</span> 进行中",
+    unsafe_allow_html=True,
+)
+c3.markdown(
+    f"<span style='color:{KIND_STYLE['planned']['color']}'>●</span> 计划",
+    unsafe_allow_html=True,
+)
+c4.markdown(
+    f"<span style='color:{KIND_STYLE['rest']['color']}'>●</span> 休息",
+    unsafe_allow_html=True,
+)
 
-with st.expander("体重 / 体脂趋势", expanded=False):
-    metrics = repo.list_body_metrics(days=180)
-    if len(metrics) < 2:
-        st.caption("在「设置」保存体重或体脂后，这里会留下历史点。至少 2 次记录可看趋势。")
-    else:
-        chart_df = pd.DataFrame(metrics)
-        plot_cols = [c for c in ["weight_kg", "body_fat_pct"] if c in chart_df.columns]
-        show = chart_df.set_index("date")[plot_cols].rename(
-            columns={"weight_kg": "体重kg", "body_fat_pct": "体脂%"}
+st.subheader("体重 / 体脂")
+metrics = repo.list_body_metrics(days=180)
+if len(metrics) < 2:
+    st.caption("在「设置」保存体重或体脂后，至少 2 次记录可看趋势。")
+else:
+    chart_df = pd.DataFrame(metrics)
+    plot_cols = [c for c in ["weight_kg", "body_fat_pct"] if c in chart_df.columns]
+    show = chart_df.set_index("date")[plot_cols].rename(
+        columns={"weight_kg": "体重kg", "body_fat_pct": "体脂%"}
+    )
+    st.line_chart(show)
+with st.form("quick_body_log"):
+    b1, b2 = st.columns(2)
+    w_in = b1.number_input(
+        "今日体重 kg",
+        min_value=0.0,
+        value=float(repo.get_profile().get("weight_kg") or 0),
+        step=0.1,
+    )
+    f_in = b2.number_input(
+        "今日体脂 %",
+        min_value=0.0,
+        max_value=60.0,
+        value=float(repo.get_profile().get("body_fat_pct") or 0),
+        step=0.1,
+    )
+    if st.form_submit_button("记入今日并更新画像"):
+        repo.update_profile(
+            weight_kg=w_in if w_in else None,
+            body_fat_pct=f_in if f_in else None,
         )
-        st.line_chart(show)
-    with st.form("quick_body_log"):
-        b1, b2 = st.columns(2)
-        w_in = b1.number_input(
-            "今日体重 kg",
-            min_value=0.0,
-            value=float(repo.get_profile().get("weight_kg") or 0),
-            step=0.1,
-        )
-        f_in = b2.number_input(
-            "今日体脂 %",
-            min_value=0.0,
-            max_value=60.0,
-            value=float(repo.get_profile().get("body_fat_pct") or 0),
-            step=0.1,
-        )
-        if st.form_submit_button("记入今日并更新画像"):
-            repo.update_profile(
-                weight_kg=w_in if w_in else None,
-                body_fat_pct=f_in if f_in else None,
-            )
-            st.toast("已记录")
-            st.rerun()
+        st.toast("已记录")
+        st.rerun()
 
 today = date.today()
 cal_start = today.replace(day=1) - timedelta(days=200)
@@ -224,25 +223,25 @@ with go3:
 
 day_report = repo.get_daily_report(selected)
 if day_report:
-    with st.expander(f"已存日报：{day_report.get('title') or selected}", expanded=False):
-        st.markdown(day_report.get("content") or "")
+    st.markdown(f"**日报：{day_report.get('title') or selected}**")
+    st.markdown(day_report.get("content") or "")
 
-with st.expander("动作重量趋势", expanded=False):
-    progress = repo.get_exercise_progress(days=90)
-    if not progress:
-        st.caption("暂无带重量的完成记录。")
-    else:
-        pdf = pd.DataFrame(progress)
-        exercises = sorted(pdf["exercise_name"].unique().tolist())
-        pick = st.multiselect(
-            "选择动作", exercises, default=exercises[:3], key="hist_ex_pick"
+st.subheader("动作重量趋势")
+progress = repo.get_exercise_progress(days=90)
+if not progress:
+    st.caption("暂无带重量的完成记录。")
+else:
+    pdf = pd.DataFrame(progress)
+    exercises = sorted(pdf["exercise_name"].unique().tolist())
+    pick = st.multiselect(
+        "选择动作", exercises, default=exercises[:3], key="hist_ex_pick"
+    )
+    if pick:
+        filtered = pdf[pdf["exercise_name"].isin(pick)].copy()
+        pivot = filtered.pivot_table(
+            index="date",
+            columns="exercise_name",
+            values="max_weight",
+            aggfunc="max",
         )
-        if pick:
-            filtered = pdf[pdf["exercise_name"].isin(pick)].copy()
-            pivot = filtered.pivot_table(
-                index="date",
-                columns="exercise_name",
-                values="max_weight",
-                aggfunc="max",
-            )
-            st.line_chart(pivot)
+        st.line_chart(pivot)

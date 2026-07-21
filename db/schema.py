@@ -98,11 +98,22 @@ CREATE TABLE IF NOT EXISTS sets (
     FOREIGN KEY (workout_id) REFERENCES workouts(id) ON DELETE CASCADE
 );
 
+CREATE TABLE IF NOT EXISTS chat_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL DEFAULT '新对话',
+    summary TEXT NOT NULL DEFAULT '',
+    summary_upto_id INTEGER,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE TABLE IF NOT EXISTS chat_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id INTEGER,
     role TEXT NOT NULL,
     content TEXT NOT NULL,
-    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+    FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS meals (
@@ -200,6 +211,59 @@ def _migrate_workout_columns(conn: sqlite3.Connection) -> None:
             conn.execute(sql)
 
 
+def _migrate_chat_sessions(conn: sqlite3.Connection) -> None:
+    """Ensure chat_sessions exists and chat_messages.session_id is backfilled."""
+    conn.execute(
+        """
+        CREATE TABLE IF NOT EXISTS chat_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            title TEXT NOT NULL DEFAULT '新对话',
+            summary TEXT NOT NULL DEFAULT '',
+            summary_upto_id INTEGER,
+            created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
+            updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+        )
+        """
+    )
+    msg_cols = {row[1] for row in conn.execute("PRAGMA table_info(chat_messages)").fetchall()}
+    if "session_id" not in msg_cols:
+        conn.execute("ALTER TABLE chat_messages ADD COLUMN session_id INTEGER")
+
+    orphan = conn.execute(
+        """
+        SELECT COUNT(*) AS n FROM chat_messages
+        WHERE session_id IS NULL
+        """
+    ).fetchone()["n"]
+    session_count = conn.execute("SELECT COUNT(*) AS n FROM chat_sessions").fetchone()["n"]
+
+    if orphan or session_count == 0:
+        # Prefer attaching orphans to an existing default session; else create one.
+        default = conn.execute(
+            "SELECT id FROM chat_sessions ORDER BY id ASC LIMIT 1"
+        ).fetchone()
+        if default is None:
+            cur = conn.execute(
+                "INSERT INTO chat_sessions (title) VALUES (?)",
+                ("默认对话",),
+            )
+            session_id = int(cur.lastrowid)
+        else:
+            session_id = int(default["id"])
+        if orphan:
+            conn.execute(
+                "UPDATE chat_messages SET session_id = ? WHERE session_id IS NULL",
+                (session_id,),
+            )
+
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_chat_session ON chat_messages(session_id)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_chat_sessions_updated ON chat_sessions(updated_at)"
+    )
+
+
 def init_db(db_path: Path | None = None) -> None:
     """Create tables and ensure a default profile row exists."""
     conn = get_connection(db_path)
@@ -207,6 +271,7 @@ def init_db(db_path: Path | None = None) -> None:
         conn.executescript(SCHEMA_SQL)
         _migrate_profile_columns(conn)
         _migrate_workout_columns(conn)
+        _migrate_chat_sessions(conn)
         row = conn.execute("SELECT id FROM profile WHERE id = 1").fetchone()
         if row is None:
             conn.execute(

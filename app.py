@@ -1,6 +1,8 @@
-"""个人健身 Agent — 首页概览。"""
+"""个人健身 Agent — 今日仪表盘。"""
 
 from __future__ import annotations
+
+from datetime import date
 
 import streamlit as st
 
@@ -9,7 +11,7 @@ from db.schema import init_db
 from ui import render_sidebar
 
 st.set_page_config(
-    page_title="健身 Agent",
+    page_title="健身仪表盘",
     page_icon="💪",
     layout="wide",
     initial_sidebar_state="collapsed",
@@ -20,120 +22,211 @@ init_db()
 repo = get_repo()
 render_sidebar()
 
-st.title("个人健身 Agent")
-st.caption("你的私人训练助手")
+st.markdown(
+    """
+    <style>
+    div[data-testid="stMetric"] {
+        background: linear-gradient(160deg, #f3f7f4 0%, #e8f0ea 100%);
+        border: 1px solid #d5e3d9;
+        border-radius: 12px;
+        padding: 0.75rem 0.9rem;
+    }
+    div[data-testid="stMetric"] label { color: #4a5c52 !important; }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
-api_key = get_api_key()
-if not api_key or api_key.startswith("sk-xxxxx"):
-    st.warning("尚未配置 MIMO_API_KEY，请到「设置」填写后再开始对话。")
-    st.page_link("pages/6_设置.py", label="去设置 API Key", icon="⚙️")
-
+WEEKDAY_CN = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
+today_d = date.today()
+today_s = today_d.isoformat()
 profile = repo.get_profile()
-with st.expander("我的画像", expanded=False):
-    col1, col2, col3, col4, col5 = st.columns(5)
-    col1.metric("目标", profile.get("goal") or "-")
-    col2.metric("性别", profile.get("gender") or "-")
-    col3.metric("经验", profile.get("experience") or "-")
-    col4.metric("每周天数", profile.get("days_per_week") or "-")
-    col5.metric("器械", profile.get("equipment") or "-")
-    if profile.get("goal_detail") or profile.get("target_weight_kg"):
-        parts = []
-        if profile.get("goal_detail"):
-            parts.append(profile["goal_detail"])
-        if profile.get("target_weight_kg"):
-            parts.append(f"目标体重 {profile['target_weight_kg']:g} kg")
-        st.caption("具体目标：" + " · ".join(parts))
-
-st.divider()
-st.subheader("下一步")
-
+api_key = get_api_key()
 plan_exists = bool(repo.get_current_plan())
 today = repo.get_today_workout()
-plan = today.get("plan")
+plan = today.get("plan") or {}
 sets = today.get("sets") or []
 done = sum(1 for s in sets if s.get("completed"))
 total = len(sets)
-
-if not api_key or api_key.startswith("sk-xxxxx"):
-    st.info("先配置 API Key，才能和教练对话生成计划。")
-elif not plan_exists:
-    st.info("还没有训练计划。")
-    c1, c2 = st.columns(2)
-    with c1:
-        st.page_link("pages/1_教练对话.py", label="让教练生成一周计划", icon="💬")
-    with c2:
-        st.page_link("pages/3_训练计划.py", label="手动编辑训练计划", icon="📋")
-elif plan and plan.get("rest"):
-    st.success(f"今天是休息日（{today['date']}），好好恢复。")
-    c1, c2, c3 = st.columns(3)
-    with c1:
-        st.page_link("pages/1_教练对话.py", label="问问教练恢复建议", icon="💬")
-    with c2:
-        st.page_link("pages/5_历史进度.py", label="看历史日历", icon="📅")
-    with c3:
-        st.page_link("pages/3_训练计划.py", label="改训练计划", icon="📋")
-elif total and done >= total:
-    st.success(f"今日「{(plan or {}).get('name') or '训练'}」已全部打卡完成。")
-    r1, r2 = st.columns(2)
-    with r1:
-        st.page_link("pages/7_每日报告.py", label="生成今日报告", icon="📝")
-    with r2:
-        st.page_link("pages/5_历史进度.py", label="在日历里回顾", icon="📅")
-else:
-    name = (plan or {}).get("name") or "训练"
-    st.write(f"**今天：{name}** · {today['date']}")
-    if total:
-        st.progress(done / total, text=f"已完成 {done}/{total} 组")
-        by_ex: dict[str, list] = {}
-        for s in sets:
-            by_ex.setdefault(s["exercise_name"], []).append(s)
-        pending = [
-            ex for ex, ex_sets in by_ex.items() if not all(x.get("completed") for x in ex_sets)
-        ]
-        if pending:
-            st.caption("待完成：" + "、".join(pending[:5]))
-    else:
-        st.caption("今日暂无具体动作，可让教练补充安排。")
-    st.page_link("pages/2_今日训练.py", label="开始 / 继续今日训练", icon="🏋️")
-
-# 饮食快捷
-st.divider()
-nutri = repo.get_nutrition_day()
+nutri = repo.get_nutrition_day(today_s)
 nt = nutri["targets"]
 tot = nutri["totals"]
-st.subheader("今日饮食")
-if nt.get("calorie_target") or nt.get("protein_target_g") or nutri["meals"]:
-    nc1, nc2, nc3 = st.columns(3)
-    nc1.metric(
-        "热量",
-        f"{tot['calories']:.0f}"
-        + (f"/{nt['calorie_target']:.0f}" if nt.get("calorie_target") else ""),
-    )
-    nc2.metric(
-        "蛋白",
-        f"{tot['protein_g']:.0f}"
-        + (f"/{nt['protein_target_g']:.0f}" if nt.get("protein_target_g") else ""),
-    )
-    nc3.metric("餐次", len(nutri["meals"]))
-else:
-    st.caption("还没有饮食记录或目标。去教练对话说一声就能记。")
-d1, d2 = st.columns(2)
-with d1:
-    st.page_link("pages/1_教练对话.py", label="去教练对话记账", icon="💬")
-with d2:
-    st.page_link("pages/4_饮食管理.py", label="查看饮食明细", icon="🥗")
+meals = nutri["meals"]
 
-st.divider()
-with st.expander("近 7 天训练", expanded=False):
-    days = repo.get_completion_last_n_days(7)
-    cols = st.columns(7)
-    for i, d in enumerate(days):
-        with cols[i]:
-            label = d["weekday"]
-            st.markdown(f"**{label}**")
-            if d["total_sets"] == 0:
-                st.caption("—")
-            elif d["done"]:
-                st.caption("完成")
+
+def _ratio(current: float, target: float | None) -> float | None:
+    if not target:
+        return None
+    return min(1.0, float(current) / float(target))
+
+
+def _progress(label: str, current: float, target: float | None) -> None:
+    if not target:
+        return
+    rem = float(target) - float(current)
+    rem_txt = f"还差 {rem:.0f}" if rem > 0 else f"超出 {-rem:.0f}"
+    st.progress(
+        _ratio(current, target) or 0.0,
+        text=f"{label} {current:.0f}/{target:.0f}（{rem_txt}）",
+    )
+
+
+# ---------- Header ----------
+goal = profile.get("goal") or "未设目标"
+st.title("今日仪表盘")
+st.caption(
+    f"{today_s} {WEEKDAY_CN[today_d.weekday()]}"
+    f" · {goal}"
+    + (f" · {profile['goal_detail']}" if profile.get("goal_detail") else "")
+)
+
+if not api_key or api_key.startswith("sk-xxxxx"):
+    st.warning("尚未配置 MIMO_API_KEY，教练对话不可用。")
+    st.page_link("pages/6_设置.py", label="去设置 API Key", icon="⚙️")
+
+# ---------- Top KPIs ----------
+k1, k2, k3, k4, k5 = st.columns(5)
+if plan.get("rest"):
+    k1.metric("今日训练", "休息")
+elif total:
+    k1.metric("训练组数", f"{done}/{total}", f"{int(100 * done / total)}%")
+else:
+    k1.metric("训练组数", "—" if plan_exists else "无计划")
+
+k2.metric(
+    "热量 kcal",
+    f"{tot['calories']:.0f}",
+    None if not nt.get("calorie_target") else f"目标 {nt['calorie_target']:.0f}",
+)
+k3.metric(
+    "蛋白 g",
+    f"{tot['protein_g']:.0f}",
+    None if not nt.get("protein_target_g") else f"目标 {nt['protein_target_g']:.0f}",
+)
+k4.metric(
+    "碳水 g",
+    f"{tot['carb_g']:.0f}",
+    None if not nt.get("carb_target_g") else f"目标 {nt['carb_target_g']:.0f}",
+)
+k5.metric(
+    "脂肪 g",
+    f"{tot['fat_g']:.0f}",
+    None if not nt.get("fat_target_g") else f"目标 {nt['fat_target_g']:.0f}",
+)
+
+# ---------- Main: training + nutrition ----------
+left, right = st.columns(2)
+
+with left:
+    st.subheader("训练")
+    if not plan_exists:
+        st.info("还没有训练计划。")
+        st.page_link("pages/1_教练对话.py", label="让教练生成计划", icon="💬")
+        st.page_link("pages/3_训练计划.py", label="手动编辑计划", icon="📋")
+    elif plan.get("rest"):
+        st.success("今天是休息日，好好恢复。")
+        st.page_link("pages/1_教练对话.py", label="问问恢复建议", icon="💬")
+        st.page_link("pages/7_每日报告.py", label="写每日报告", icon="📝")
+    else:
+        name = plan.get("name") or "训练"
+        st.markdown(f"**{name}**")
+        if total:
+            st.progress(done / total, text=f"已完成 {done}/{total} 组")
+            by_ex: dict[str, list] = {}
+            for s in sets:
+                by_ex.setdefault(s["exercise_name"], []).append(s)
+            rows = []
+            for ex, ex_sets in by_ex.items():
+                c = sum(1 for x in ex_sets if x.get("completed"))
+                rows.append(f"{'✓' if c >= len(ex_sets) else '○'} {ex} {c}/{len(ex_sets)}")
+            st.caption("  ·  ".join(rows[:8]))
+            if done >= total:
+                st.success("今日训练已全部打卡。")
+                st.page_link("pages/7_每日报告.py", label="生成今日报告", icon="📝")
             else:
-                st.caption(f"{d['completed_sets']}/{d['total_sets']}")
+                st.page_link("pages/2_今日训练.py", label="继续打卡", icon="🏋️")
+        else:
+            st.caption("今日暂无具体动作，可让教练补充。")
+            st.page_link("pages/1_教练对话.py", label="让教练安排今日", icon="💬")
+            st.page_link("pages/2_今日训练.py", label="打开今日训练", icon="🏋️")
+
+with right:
+    st.subheader("饮食")
+    st.caption(f"已记 {len(meals)} 餐")
+    _progress("热量", tot["calories"], nt.get("calorie_target"))
+    _progress("蛋白", tot["protein_g"], nt.get("protein_target_g"))
+    _progress("碳水", tot["carb_g"], nt.get("carb_target_g"))
+    _progress("脂肪", tot["fat_g"], nt.get("fat_target_g"))
+    if not any(
+        nt.get(k)
+        for k in ("calorie_target", "protein_target_g", "carb_target_g", "fat_target_g")
+    ):
+        st.caption("还没设饮食目标，可在饮食管理或让教练估算。")
+    elif not meals:
+        st.caption("今天还没有饮食记录。")
+    else:
+        preview = "、".join(
+            f"{m.get('meal_type') or ''}{m.get('name') or ''}" for m in meals[:4]
+        )
+        st.caption(preview + ("…" if len(meals) > 4 else ""))
+    st.page_link("pages/1_教练对话.py", label="文字 / 拍照记账", icon="💬")
+    st.page_link("pages/4_饮食管理.py", label="饮食明细与目标", icon="🥗")
+
+# ---------- Week strip ----------
+st.subheader("本周训练")
+week = repo.get_completion_last_n_days(7)
+cols = st.columns(7)
+for i, d in enumerate(week):
+    with cols[i]:
+        is_today = d["date"] == today_s
+        label = d["weekday"].replace("周", "")
+        title = f"**{label}**" + (" ·今" if is_today else "")
+        st.markdown(title)
+        plan_day = repo.get_plan_for_date(date.fromisoformat(d["date"]))
+        if plan_day and plan_day.get("rest") and d["total_sets"] == 0:
+            st.caption("休")
+        elif d["total_sets"] == 0:
+            st.caption("—")
+        elif d["done"]:
+            st.caption("✓ 完成")
+        else:
+            st.caption(f"{d['completed_sets']}/{d['total_sets']}")
+
+# ---------- Body + profile ----------
+b1, b2, b3, b4 = st.columns(4)
+b1.metric(
+    "体重 kg",
+    f"{profile['weight_kg']:g}" if profile.get("weight_kg") else "—",
+    None
+    if not profile.get("target_weight_kg")
+    else f"目标 {profile['target_weight_kg']:g}",
+)
+b2.metric(
+    "体脂 %",
+    f"{profile['body_fat_pct']:g}" if profile.get("body_fat_pct") else "—",
+    None
+    if not profile.get("target_body_fat_pct")
+    else f"目标 {profile['target_body_fat_pct']:g}",
+)
+b3.metric("经验", profile.get("experience") or "—")
+b4.metric(
+    "每周 / 单次",
+    f"{profile.get('days_per_week') or '—'}天"
+    + (
+        f" · {profile['session_minutes']}分"
+        if profile.get("session_minutes")
+        else ""
+    ),
+)
+
+st.caption(
+    " · ".join(
+        [
+            f"性别 {profile.get('gender') or '未设'}",
+            f"年龄 {profile.get('age') or '未设'}",
+            f"器械 {profile.get('equipment') or '未设'}",
+            f"活动量 {profile.get('activity_level') or '未设'}",
+            f"分化 {profile.get('preferred_split') or '未设'}",
+        ]
+    )
+)

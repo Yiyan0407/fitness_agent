@@ -59,7 +59,7 @@ def render_sidebar() -> None:
             st.page_link("pages/2_今日训练.py", label="继续打卡", icon="🏋️")
 
         st.divider()
-        st.page_link("app.py", label="首页", icon="🏠")
+        st.page_link("app.py", label="仪表盘", icon="🏠")
         st.page_link("pages/1_教练对话.py", label="教练对话", icon="💬")
         st.page_link("pages/2_今日训练.py", label="今日训练", icon="🏋️")
         st.page_link("pages/3_训练计划.py", label="训练计划", icon="📋")

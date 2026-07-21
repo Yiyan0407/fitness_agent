@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import hmac
 import time
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 import extra_streamlit_components as stx
 import streamlit as st
@@ -55,8 +55,49 @@ def verify_remember_token(token: str | None, password: str) -> bool:
 
 
 def _cookie_manager() -> stx.CookieManager:
-    # Stable key so the component is reused across pages in one session.
     return stx.CookieManager(key="fitness_auth_cookies")
+
+
+def _read_remember_token(cm: stx.CookieManager) -> str | None:
+    """Read remember token from request cookies and CookieManager."""
+    # Full page reload: available immediately via HTTP Cookie header
+    try:
+        raw = st.context.cookies.get(COOKIE_NAME)
+        if raw:
+            return str(raw)
+    except Exception:
+        pass
+    # Same session / component path
+    try:
+        val = cm.get(COOKIE_NAME)
+        if val:
+            return str(val)
+    except Exception:
+        pass
+    return None
+
+
+def _flush_cookie_ops(cm: stx.CookieManager) -> None:
+    """Apply pending set/delete so the CookieManager iframe can actually run.
+
+    Important: never call cm.set()/delete() and st.rerun() in the same run —
+    the set iframe would be cancelled before writing the browser cookie.
+    """
+    token = st.session_state.pop("_pending_remember_set", None)
+    if token:
+        # naive datetime: js-cookie Date parsing is more reliable
+        cm.set(
+            COOKIE_NAME,
+            token,
+            key="fitness_remember_set",
+            path="/",
+            expires_at=datetime.now() + timedelta(days=REMEMBER_DAYS),
+            max_age=float(REMEMBER_DAYS * 86400),
+            same_site="lax",
+        )
+
+    if st.session_state.pop("_pending_remember_clear", None):
+        cm.delete(COOKIE_NAME, key="fitness_remember_del")
 
 
 def require_login() -> None:
@@ -66,17 +107,29 @@ def require_login() -> None:
         return
 
     cm = _cookie_manager()
+    _flush_cookie_ops(cm)
 
     if st.session_state.get("authenticated"):
         return
 
-    token = cm.get(COOKIE_NAME)
+    # Give CookieManager one frame to hydrate from the browser after cold start
+    if not st.session_state.get("_auth_cookie_ready"):
+        st.session_state["_auth_cookie_ready"] = True
+        token = _read_remember_token(cm)
+        if verify_remember_token(token, password):
+            st.session_state.authenticated = True
+            return
+        # No token yet on this first frame — wait for component getAll callback
+        st.caption("正在恢复登录状态…")
+        st.stop()
+
+    token = _read_remember_token(cm)
     if verify_remember_token(token, password):
         st.session_state.authenticated = True
         return
 
     st.title("健身 Agent")
-    st.caption("请输入访问密码。勾选「记住设备」后，刷新或换页不必再输。")
+    st.caption("请输入访问密码。勾选「记住设备」后，关闭再打开也不用重输。")
     with st.form("login_form"):
         entered = st.text_input("密码", type="password")
         remember = st.checkbox("记住这台设备（30 天）", value=True)
@@ -85,15 +138,12 @@ def require_login() -> None:
         if entered == password:
             st.session_state.authenticated = True
             if remember:
-                cm.set(
-                    COOKIE_NAME,
-                    make_remember_token(password),
-                    expires_at=datetime.now(timezone.utc)
-                    + timedelta(days=REMEMBER_DAYS),
-                    same_site="lax",
-                )
+                # Defer cookie write to next run so the component can render
+                st.session_state["_pending_remember_set"] = make_remember_token(password)
+                st.session_state.pop("_pending_remember_clear", None)
             else:
-                cm.delete(COOKIE_NAME)
+                st.session_state["_pending_remember_clear"] = True
+                st.session_state.pop("_pending_remember_set", None)
             st.rerun()
         st.error("密码错误")
     st.stop()
@@ -101,10 +151,10 @@ def require_login() -> None:
 
 def logout() -> None:
     st.session_state.authenticated = False
-    try:
-        _cookie_manager().delete(COOKIE_NAME)
-    except Exception:
-        pass
+    st.session_state["_pending_remember_clear"] = True
+    st.session_state.pop("_pending_remember_set", None)
+    # Force cookie hydration path again after logout
+    st.session_state.pop("_auth_cookie_ready", None)
 
 
 def render_sidebar() -> None:

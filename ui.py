@@ -2,32 +2,109 @@
 
 from __future__ import annotations
 
-from datetime import date
+import hashlib
+import hmac
+import time
+from datetime import datetime, timedelta, timezone
 
+import extra_streamlit_components as stx
 import streamlit as st
 
 from bootstrap import get_api_key, get_app_password, get_repo
 
+COOKIE_NAME = "fitness_remember"
+REMEMBER_DAYS = 30
+
+
+def _auth_secret(password: str) -> bytes:
+    import os
+
+    from bootstrap import load_env
+
+    load_env()
+    raw = (os.getenv("APP_AUTH_SECRET") or "").strip() or password
+    return hashlib.sha256(f"fitness-agent-auth|{raw}".encode("utf-8")).digest()
+
+
+def make_remember_token(password: str, days: int = REMEMBER_DAYS) -> str:
+    exp = int(time.time()) + max(1, int(days)) * 86400
+    payload = f"v1.{exp}"
+    sig = hmac.new(
+        _auth_secret(password), payload.encode("utf-8"), hashlib.sha256
+    ).hexdigest()[:32]
+    return f"{payload}.{sig}"
+
+
+def verify_remember_token(token: str | None, password: str) -> bool:
+    if not token or not password:
+        return False
+    try:
+        parts = str(token).strip().split(".")
+        if len(parts) != 3:
+            return False
+        payload = f"{parts[0]}.{parts[1]}"
+        sig = parts[2]
+        expect = hmac.new(
+            _auth_secret(password), payload.encode("utf-8"), hashlib.sha256
+        ).hexdigest()[:32]
+        if not hmac.compare_digest(sig, expect):
+            return False
+        return int(parts[1]) >= int(time.time())
+    except Exception:
+        return False
+
+
+def _cookie_manager() -> stx.CookieManager:
+    # Stable key so the component is reused across pages in one session.
+    return stx.CookieManager(key="fitness_auth_cookies")
+
 
 def require_login() -> None:
-    """Block the page until the correct APP_PASSWORD is entered."""
+    """Block until APP_PASSWORD is entered; optionally remember device 30 days."""
     password = get_app_password()
     if not password:
         return
+
+    cm = _cookie_manager()
+
     if st.session_state.get("authenticated"):
         return
 
+    token = cm.get(COOKIE_NAME)
+    if verify_remember_token(token, password):
+        st.session_state.authenticated = True
+        return
+
     st.title("健身 Agent")
-    st.caption("请输入访问密码")
+    st.caption("请输入访问密码。勾选「记住设备」后，刷新或换页不必再输。")
     with st.form("login_form"):
         entered = st.text_input("密码", type="password")
+        remember = st.checkbox("记住这台设备（30 天）", value=True)
         submitted = st.form_submit_button("进入", type="primary", use_container_width=True)
     if submitted:
         if entered == password:
             st.session_state.authenticated = True
+            if remember:
+                cm.set(
+                    COOKIE_NAME,
+                    make_remember_token(password),
+                    expires_at=datetime.now(timezone.utc)
+                    + timedelta(days=REMEMBER_DAYS),
+                    same_site="lax",
+                )
+            else:
+                cm.delete(COOKIE_NAME)
             st.rerun()
         st.error("密码错误")
     st.stop()
+
+
+def logout() -> None:
+    st.session_state.authenticated = False
+    try:
+        _cookie_manager().delete(COOKIE_NAME)
+    except Exception:
+        pass
 
 
 def render_sidebar() -> None:
@@ -75,7 +152,7 @@ def render_sidebar() -> None:
         if get_app_password() and st.session_state.get("authenticated"):
             st.divider()
             if st.button("退出登录", use_container_width=True):
-                st.session_state.authenticated = False
+                logout()
                 st.rerun()
 
 

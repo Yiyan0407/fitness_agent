@@ -8,14 +8,12 @@ import pandas as pd
 import streamlit as st
 
 from bootstrap import get_repo, load_env
-from db.schema import init_db
 from ui import render_sidebar
 
 st.set_page_config(page_title="饮食管理", page_icon="🥗", layout="wide")
 load_env()
-init_db()
-repo = get_repo()
 render_sidebar()
+repo = get_repo()
 
 st.title("饮食管理")
 

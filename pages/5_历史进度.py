@@ -9,14 +9,12 @@ import streamlit as st
 from streamlit_calendar import calendar
 
 from bootstrap import get_repo, load_env
-from db.schema import init_db
 from ui import render_sidebar
 
 st.set_page_config(page_title="历史进度", page_icon="📈", layout="wide")
 load_env()
-init_db()
-repo = get_repo()
 render_sidebar()
+repo = get_repo()
 
 st.title("历史进度")
 

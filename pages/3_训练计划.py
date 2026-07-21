@@ -9,14 +9,12 @@ import streamlit as st
 
 from bootstrap import get_repo, load_env
 from db.repository import WEEKDAY_CN, WEEKDAY_KEYS
-from db.schema import init_db
 from ui import render_sidebar
 
 st.set_page_config(page_title="训练计划", page_icon="📋", layout="wide")
 load_env()
-init_db()
-repo = get_repo()
 render_sidebar()
+repo = get_repo()
 
 st.title("训练计划")
 st.caption("手动编辑一周模板：增删动作、改组数次数重量。保存后「今日训练」会按新计划同步（未开始打卡时）。")

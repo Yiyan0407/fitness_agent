@@ -15,14 +15,12 @@ from agent.report_render import (
     sets_df,
 )
 from bootstrap import get_api_key, get_repo, load_env
-from db.schema import init_db
 from ui import render_sidebar
 
 st.set_page_config(page_title="每日报告", page_icon="📝", layout="wide")
 load_env()
-init_db()
-repo = get_repo()
 render_sidebar()
+repo = get_repo()
 
 st.title("每日报告")
 st.caption("练完、吃完后来这里生成当日复盘，保存后可随时回看。")

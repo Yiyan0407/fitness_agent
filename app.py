@@ -7,7 +7,6 @@ from datetime import date
 import streamlit as st
 
 from bootstrap import get_api_key, get_repo, load_env
-from db.schema import init_db
 from ui import render_sidebar
 
 st.set_page_config(
@@ -18,9 +17,8 @@ st.set_page_config(
 )
 
 load_env()
-init_db()
-repo = get_repo()
 render_sidebar()
+repo = get_repo()
 
 st.markdown(
     """

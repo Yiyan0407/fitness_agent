@@ -8,6 +8,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
+from db.accounts import init_accounts, user_db_path
 from db.repository import Repository
 from db.schema import init_db
 
@@ -24,10 +25,10 @@ def get_api_key() -> str:
     return (os.getenv("MIMO_API_KEY") or "").strip()
 
 
-def get_app_password() -> str:
-    """App login password from APP_PASSWORD; empty means no login gate."""
+def get_admin_password() -> str:
+    """Admin password required to create new accounts."""
     load_env()
-    return (os.getenv("APP_PASSWORD") or "").strip()
+    return (os.getenv("ADMIN_PASSWORD") or "").strip()
 
 
 def save_api_key_to_env(api_key: str) -> None:
@@ -47,11 +48,35 @@ def upsert_env_var(key: str, value: str) -> None:
     os.environ[key] = value
 
 
-@lru_cache(maxsize=1)
+def get_current_username() -> str | None:
+    """Logged-in username from Streamlit session, if any."""
+    try:
+        import streamlit as st
+
+        name = st.session_state.get("username")
+        if name and st.session_state.get("authenticated"):
+            return str(name)
+    except Exception:
+        pass
+    return None
+
+
+@lru_cache(maxsize=8)
+def _repo_for_user(username: str) -> Repository:
+    path = user_db_path(username)
+    init_db(path)
+    return Repository(path)
+
+
 def get_repo() -> Repository:
-    init_db()
-    return Repository()
+    """Return Repository bound to the current logged-in user."""
+    load_env()
+    init_accounts()
+    username = get_current_username()
+    if not username:
+        raise RuntimeError("未登录，无法访问用户数据")
+    return _repo_for_user(username)
 
 
 def reset_repo_cache() -> None:
-    get_repo.cache_clear()
+    _repo_for_user.cache_clear()

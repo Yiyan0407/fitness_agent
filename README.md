@@ -1,6 +1,6 @@
 # 个人健身 Agent
 
-基于 Streamlit + LangChain + 小米 MiMo 的个人健身训练助手。支持对话生成计划、今日打卡、历史进度。
+基于 Streamlit + LangChain + 小米 MiMo 的个人健身训练助手。支持多账户、对话生成计划、今日打卡、历史进度。
 
 ## 环境要求
 
@@ -17,12 +17,13 @@ conda activate fitness_agent
 pip install -r requirements.txt
 ```
 
-2. 配置 API Key：
+2. 配置环境变量：
 
 ```bash
 cp .env.example .env
 # 编辑 .env：
-# MIMO_API_KEY=...   # 教练对话 / 文字记账 / 饮食拍照（同一 Key）
+# ADMIN_PASSWORD=...   # 新建账户时必填的管理员密码
+# MIMO_API_KEY=...     # 教练对话 / 文字记账 / 饮食拍照（同一 Key）
 # 可选：MIMO_VISION_MODEL=mimo-v2.5
 ```
 
@@ -35,8 +36,11 @@ streamlit run app.py
 # 默认 http://localhost:8502
 ```
 
+从旧版无缝升级时：若存在 `data/fitness.db`，会自动挂到账户 **jyy**（初始密码 `jyy`；你这边若已迁过，密码仍是库里那份）。全新安装不会预建账户，在登录页用管理员密码「新建账户」即可。
+
 ## 功能
 
+- **登录 / 多账户**：用户名 + 个人密码；新建账户需 `ADMIN_PASSWORD`
 - **首页**：今日训练概览、近 7 天完成情况
 - **教练对话**：训练计划 / 改练 / 文字与拍照饮食记账
 - **今日训练**：按计划打卡，记录重量/次数/RPE
@@ -61,4 +65,4 @@ python scripts/build_exercises.py
 
 - LLM：MiMo (`mimo-v2.5-pro`)，OpenAI 兼容接口
 - Agent：LangChain `create_agent`（tool-calling 循环）
-- 存储：本地 SQLite（`data/fitness.db`）
+- 存储：账户元数据 `data/accounts.db`；每账户独立 SQLite `data/users/<用户名>/fitness.db`

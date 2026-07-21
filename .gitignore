@@ -183,6 +183,7 @@ cython_debug/
 .venv/
 data/*.db
 data/*.db-*
+data/users/
 data/meal_images/
 data/fonts/
 data/_free_exercises_cache.json

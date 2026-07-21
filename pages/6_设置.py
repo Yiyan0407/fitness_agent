@@ -8,20 +8,21 @@ import streamlit as st
 
 from bootstrap import (
     get_api_key,
+    get_current_username,
     get_repo,
     load_env,
     reset_repo_cache,
     save_api_key_to_env,
     upsert_env_var,
 )
-from db.schema import DB_PATH, init_db
+from db.accounts import user_db_path
+from db.schema import init_db
 from ui import render_sidebar
 
 st.set_page_config(page_title="设置", page_icon="⚙️", layout="centered")
 load_env()
-init_db()
-repo = get_repo()
 render_sidebar()
+repo = get_repo()
 
 st.title("设置")
 
@@ -269,8 +270,14 @@ with st.form("profile_form"):
         st.rerun()
 
 st.divider()
-st.caption(f"数据库：{DB_PATH}")
+_user = get_current_username() or ""
+_db = user_db_path(_user) if _user else None
+st.caption(f"当前账户：`{_user}`")
+st.caption(f"数据库：{_db}")
 if st.button("重新初始化表结构（保留已有数据，仅补建缺失表）"):
-    init_db()
-    reset_repo_cache()
-    st.success("已执行 init_db()")
+    if _db is not None:
+        init_db(_db)
+        reset_repo_cache()
+        st.success("已执行 init_db()")
+    else:
+        st.error("未登录")

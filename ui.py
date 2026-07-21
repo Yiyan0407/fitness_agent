@@ -6,52 +6,76 @@ import hashlib
 import hmac
 import time
 from datetime import datetime, timedelta
+from urllib.parse import quote, unquote
 
 import extra_streamlit_components as stx
 import streamlit as st
 
-from bootstrap import get_api_key, get_app_password, get_repo
+from bootstrap import (
+    get_admin_password,
+    get_api_key,
+    get_current_username,
+    get_repo,
+    load_env,
+    reset_repo_cache,
+)
+from db.accounts import (
+    authenticate,
+    create_user,
+    init_accounts,
+    validate_username,
+)
 
 COOKIE_NAME = "fitness_remember"
 REMEMBER_DAYS = 30
 
 
-def _auth_secret(password: str) -> bytes:
+def _auth_secret() -> bytes:
     import os
 
-    from bootstrap import load_env
-
     load_env()
-    raw = (os.getenv("APP_AUTH_SECRET") or "").strip() or password
+    raw = (
+        (os.getenv("APP_AUTH_SECRET") or "").strip()
+        or (os.getenv("ADMIN_PASSWORD") or "").strip()
+        or "fitness-agent-fallback-secret"
+    )
     return hashlib.sha256(f"fitness-agent-auth|{raw}".encode("utf-8")).digest()
 
 
-def make_remember_token(password: str, days: int = REMEMBER_DAYS) -> str:
+def make_remember_token(username: str, days: int = REMEMBER_DAYS) -> str:
     exp = int(time.time()) + max(1, int(days)) * 86400
-    payload = f"v1.{exp}"
+    user = quote(str(username).strip(), safe="")
+    payload = f"v2.{user}.{exp}"
     sig = hmac.new(
-        _auth_secret(password), payload.encode("utf-8"), hashlib.sha256
+        _auth_secret(), payload.encode("utf-8"), hashlib.sha256
     ).hexdigest()[:32]
     return f"{payload}.{sig}"
 
 
-def verify_remember_token(token: str | None, password: str) -> bool:
-    if not token or not password:
-        return False
+def verify_remember_token(token: str | None) -> str | None:
+    """Return username if token is valid, else None."""
+    if not token:
+        return None
     try:
         parts = str(token).strip().split(".")
-        if len(parts) != 3:
-            return False
-        payload = f"{parts[0]}.{parts[1]}"
-        sig = parts[2]
+        if len(parts) != 4 or parts[0] != "v2":
+            return None
+        user = unquote(parts[1])
+        exp = int(parts[2])
+        sig = parts[3]
+        payload = f"v2.{parts[1]}.{parts[2]}"
         expect = hmac.new(
-            _auth_secret(password), payload.encode("utf-8"), hashlib.sha256
+            _auth_secret(), payload.encode("utf-8"), hashlib.sha256
         ).hexdigest()[:32]
         if not hmac.compare_digest(sig, expect):
-            return False
-        return int(parts[1]) >= int(time.time())
+            return None
+        if exp < int(time.time()):
+            return None
+        if not user:
+            return None
+        return user
     except Exception:
-        return False
+        return None
 
 
 def _cookie_manager() -> stx.CookieManager:
@@ -60,14 +84,12 @@ def _cookie_manager() -> stx.CookieManager:
 
 def _read_remember_token(cm: stx.CookieManager) -> str | None:
     """Read remember token from request cookies and CookieManager."""
-    # Full page reload: available immediately via HTTP Cookie header
     try:
         raw = st.context.cookies.get(COOKIE_NAME)
         if raw:
             return str(raw)
     except Exception:
         pass
-    # Same session / component path
     try:
         val = cm.get(COOKIE_NAME)
         if val:
@@ -78,14 +100,9 @@ def _read_remember_token(cm: stx.CookieManager) -> str | None:
 
 
 def _flush_cookie_ops(cm: stx.CookieManager) -> None:
-    """Apply pending set/delete so the CookieManager iframe can actually run.
-
-    Important: never call cm.set()/delete() and st.rerun() in the same run —
-    the set iframe would be cancelled before writing the browser cookie.
-    """
+    """Apply pending set/delete so the CookieManager iframe can actually run."""
     token = st.session_state.pop("_pending_remember_set", None)
     if token:
-        # naive datetime: js-cookie Date parsing is more reliable
         cm.set(
             COOKIE_NAME,
             token,
@@ -100,61 +117,104 @@ def _flush_cookie_ops(cm: stx.CookieManager) -> None:
         cm.delete(COOKIE_NAME, key="fitness_remember_del")
 
 
+def _set_logged_in(username: str, *, remember: bool) -> None:
+    st.session_state.authenticated = True
+    st.session_state.username = username
+    reset_repo_cache()
+    if remember:
+        st.session_state["_pending_remember_set"] = make_remember_token(username)
+        st.session_state.pop("_pending_remember_clear", None)
+    else:
+        st.session_state["_pending_remember_clear"] = True
+        st.session_state.pop("_pending_remember_set", None)
+
+
 def require_login() -> None:
-    """Block until APP_PASSWORD is entered; optionally remember device 30 days."""
-    password = get_app_password()
-    if not password:
-        return
+    """Block until a user logs in; optionally remember device 30 days."""
+    load_env()
+    init_accounts()
 
     cm = _cookie_manager()
     _flush_cookie_ops(cm)
 
-    if st.session_state.get("authenticated"):
+    if st.session_state.get("authenticated") and st.session_state.get("username"):
         return
 
-    # Give CookieManager one frame to hydrate from the browser after cold start
+    from db.accounts import get_user
+
     if not st.session_state.get("_auth_cookie_ready"):
         st.session_state["_auth_cookie_ready"] = True
         token = _read_remember_token(cm)
-        if verify_remember_token(token, password):
+        user = verify_remember_token(token)
+        if user and get_user(user):
             st.session_state.authenticated = True
+            st.session_state.username = user
             return
-        # No token yet on this first frame — wait for component getAll callback
         st.caption("正在恢复登录状态…")
         st.stop()
 
     token = _read_remember_token(cm)
-    if verify_remember_token(token, password):
+    user = verify_remember_token(token)
+    if user and get_user(user):
         st.session_state.authenticated = True
+        st.session_state.username = user
         return
 
     st.title("健身 Agent")
-    st.caption("请输入访问密码。勾选「记住设备」后，关闭再打开也不用重输。")
+    st.caption("登录已有账户，或展开下方用管理员密码新建账户。")
+
     with st.form("login_form"):
-        entered = st.text_input("密码", type="password")
+        username = st.text_input("用户名", placeholder="例如 jyy")
+        password = st.text_input("密码", type="password")
         remember = st.checkbox("记住这台设备（30 天）", value=True)
-        submitted = st.form_submit_button("进入", type="primary", use_container_width=True)
+        submitted = st.form_submit_button("登录", type="primary", use_container_width=True)
     if submitted:
-        if entered == password:
-            st.session_state.authenticated = True
-            if remember:
-                # Defer cookie write to next run so the component can render
-                st.session_state["_pending_remember_set"] = make_remember_token(password)
-                st.session_state.pop("_pending_remember_clear", None)
-            else:
-                st.session_state["_pending_remember_clear"] = True
-                st.session_state.pop("_pending_remember_set", None)
+        name = (username or "").strip()
+        if authenticate(name, password or ""):
+            _set_logged_in(name, remember=remember)
             st.rerun()
-        st.error("密码错误")
+        st.error("用户名或密码错误")
+
+    with st.expander("新建账户", expanded=False):
+        admin = get_admin_password()
+        if not admin:
+            st.error("未配置 ADMIN_PASSWORD，无法新建账户。请在 .env 中设置。")
+        with st.form("create_account_form"):
+            new_user = st.text_input("新用户名", key="create_username")
+            new_pw = st.text_input("新密码", type="password", key="create_password")
+            new_pw2 = st.text_input("确认密码", type="password", key="create_password2")
+            admin_pw = st.text_input("管理员密码", type="password", key="create_admin")
+            created = st.form_submit_button("创建并登录", use_container_width=True)
+        if created:
+            if not admin:
+                st.error("未配置 ADMIN_PASSWORD")
+            elif (admin_pw or "") != admin:
+                st.error("管理员密码错误")
+            elif (new_pw or "") != (new_pw2 or ""):
+                st.error("两次密码不一致")
+            else:
+                err = validate_username(new_user or "")
+                if err:
+                    st.error(err)
+                else:
+                    try:
+                        create_user(new_user.strip(), new_pw or "")
+                        _set_logged_in(new_user.strip(), remember=True)
+                        st.success(f"已创建账户 {new_user.strip()}")
+                        st.rerun()
+                    except ValueError as exc:
+                        st.error(str(exc))
+
     st.stop()
 
 
 def logout() -> None:
     st.session_state.authenticated = False
+    st.session_state.pop("username", None)
     st.session_state["_pending_remember_clear"] = True
     st.session_state.pop("_pending_remember_set", None)
-    # Force cookie hydration path again after logout
     st.session_state.pop("_auth_cookie_ready", None)
+    reset_repo_cache()
 
 
 def render_sidebar() -> None:
@@ -162,7 +222,8 @@ def render_sidebar() -> None:
     require_login()
     repo = get_repo()
     with st.sidebar:
-        st.markdown("### 今日")
+        who = get_current_username() or ""
+        st.markdown(f"### 今日 · `{who}`")
         plan_exists = bool(repo.get_current_plan())
         today = repo.get_today_workout()
         plan = today.get("plan") or {}
@@ -199,7 +260,7 @@ def render_sidebar() -> None:
         if not key or key.startswith("sk-xxxxx"):
             st.warning("未配置 API Key")
 
-        if get_app_password() and st.session_state.get("authenticated"):
+        if st.session_state.get("authenticated"):
             st.divider()
             if st.button("退出登录", use_container_width=True):
                 logout()

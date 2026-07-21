@@ -10,14 +10,12 @@ import streamlit as st
 from agent.calorie_burn import estimate_workout_calories
 from agent.llm import MissingAPIKeyError
 from bootstrap import get_api_key, get_repo, load_env
-from db.schema import init_db
 from ui import render_sidebar
 
 st.set_page_config(page_title="今日训练", page_icon="🏋️", layout="wide")
 load_env()
-init_db()
-repo = get_repo()
 render_sidebar()
+repo = get_repo()
 
 st.title("今日训练")
 

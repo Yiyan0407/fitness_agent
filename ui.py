@@ -12,6 +12,7 @@ import extra_streamlit_components as stx
 import streamlit as st
 
 from bootstrap import (
+    bind_current_username,
     get_admin_password,
     get_api_key,
     get_current_username,
@@ -120,6 +121,7 @@ def _flush_cookie_ops(cm: stx.CookieManager) -> None:
 def _set_logged_in(username: str, *, remember: bool) -> None:
     st.session_state.authenticated = True
     st.session_state.username = username
+    bind_current_username(username)
     reset_repo_cache()
     if remember:
         st.session_state["_pending_remember_set"] = make_remember_token(username)
@@ -138,6 +140,7 @@ def require_login() -> None:
     _flush_cookie_ops(cm)
 
     if st.session_state.get("authenticated") and st.session_state.get("username"):
+        bind_current_username(str(st.session_state.username))
         return
 
     from db.accounts import get_user
@@ -149,6 +152,7 @@ def require_login() -> None:
         if user and get_user(user):
             st.session_state.authenticated = True
             st.session_state.username = user
+            bind_current_username(user)
             return
         st.caption("正在恢复登录状态…")
         st.stop()
@@ -158,6 +162,7 @@ def require_login() -> None:
     if user and get_user(user):
         st.session_state.authenticated = True
         st.session_state.username = user
+        bind_current_username(user)
         return
 
     st.title("健身 Agent")
@@ -211,6 +216,7 @@ def require_login() -> None:
 def logout() -> None:
     st.session_state.authenticated = False
     st.session_state.pop("username", None)
+    bind_current_username(None)
     st.session_state["_pending_remember_clear"] = True
     st.session_state.pop("_pending_remember_set", None)
     st.session_state.pop("_auth_cookie_ready", None)

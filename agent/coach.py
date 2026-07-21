@@ -180,6 +180,14 @@ def _load_session_context(session_id: int | None) -> tuple[str, list[dict]]:
     return summary, recent
 
 
+def _ensure_user_bound() -> None:
+    """Bind username into ContextVar so tool threads can call get_repo()."""
+    from bootstrap import get_current_username
+
+    if not get_current_username():
+        raise RuntimeError("未登录，无法访问用户数据")
+
+
 def run_coach(
     user_input: str,
     chat_history_rows: list[dict] | None = None,
@@ -187,6 +195,7 @@ def run_coach(
     session_id: int | None = None,
 ) -> str:
     """Run one coach turn and return the assistant text reply."""
+    _ensure_user_bound()
     summary = ""
     history = chat_history_rows
     if session_id is not None:
@@ -224,6 +233,7 @@ def stream_coach(
     Status markers are lines starting with ``\\0status:`` so the UI can show
     tool progress without mixing them into the final reply text.
     """
+    _ensure_user_bound()
     summary = ""
     history = chat_history_rows
     if session_id is not None:

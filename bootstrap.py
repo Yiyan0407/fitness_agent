@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+from contextvars import ContextVar
 from functools import lru_cache
 from pathlib import Path
 
@@ -14,6 +15,10 @@ from db.schema import init_db
 
 ROOT = Path(__file__).resolve().parent
 ENV_PATH = ROOT / ".env"
+
+# LangChain ToolNode runs tools in ContextThreadPoolExecutor workers where
+# Streamlit session_state is unavailable. Bind username here so get_repo() works.
+_bound_username: ContextVar[str | None] = ContextVar("fitness_username", default=None)
 
 
 def load_env() -> None:
@@ -48,14 +53,24 @@ def upsert_env_var(key: str, value: str) -> None:
     os.environ[key] = value
 
 
+def bind_current_username(username: str | None) -> None:
+    """Bind username for the current request (incl. LangChain tool threads)."""
+    _bound_username.set((username or "").strip() or None)
+
+
 def get_current_username() -> str | None:
-    """Logged-in username from Streamlit session, if any."""
+    """Logged-in username from request binding or Streamlit session."""
+    bound = _bound_username.get()
+    if bound:
+        return bound
     try:
         import streamlit as st
 
         name = st.session_state.get("username")
         if name and st.session_state.get("authenticated"):
-            return str(name)
+            username = str(name)
+            bind_current_username(username)
+            return username
     except Exception:
         pass
     return None
@@ -75,6 +90,7 @@ def get_repo() -> Repository:
     username = get_current_username()
     if not username:
         raise RuntimeError("未登录，无法访问用户数据")
+    bind_current_username(username)
     return _repo_for_user(username)
 
 

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import sqlite3
 import threading
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -32,71 +33,32 @@ WEEKDAY_CN = {
     "sunday": "周日",
 }
 
-# One lock per DB file so LangChain tool threads never interleave sqlite calls.
-_DB_LOCKS: dict[str, threading.RLock] = {}
-_DB_LOCKS_GUARD = threading.Lock()
-
-# Bumped when connection strategy changes (invalidates hot-reload leftovers).
-REPO_IMPL_VERSION = 3
-
-
-def _lock_for(db_path: Path | None) -> threading.RLock:
-    key = str(db_path.resolve()) if isinstance(db_path, Path) else str(db_path or ":default:")
-    with _DB_LOCKS_GUARD:
-        lock = _DB_LOCKS.get(key)
-        if lock is None:
-            lock = threading.RLock()
-            _DB_LOCKS[key] = lock
-        return lock
-
 
 class Repository:
+    """Per-user SQLite access.
+
+    LangChain tools run in a thread pool; a single shared connection would raise
+    ``bad parameter or other API misuse``. Each thread gets its own connection.
+    """
+
     def __init__(self, db_path: Path | None = None) -> None:
         init_db(db_path)
         self.db_path = db_path
-        self._lock = _lock_for(db_path)
-        self._raw_conn = get_connection(db_path)
-        self._impl_version = REPO_IMPL_VERSION
+        self._local = threading.local()
 
     @property
-    def conn(self):
-        # Drop legacy attribute from older hot-reloaded instances.
-        legacy = self.__dict__.get("conn")
-        if legacy is not None and legacy is not self._raw_conn:
-            try:
-                legacy.close()
-            except Exception:
-                pass
-            self.__dict__.pop("conn", None)
-        return self._raw_conn
+    def conn(self) -> sqlite3.Connection:
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = get_connection(self.db_path)
+            self._local.conn = conn
+        return conn
 
     def close(self) -> None:
-        with self._lock:
-            self._raw_conn.close()
-
-    def __getattribute__(self, name: str):
-        """Serialize public method calls — ToolNode runs tools in parallel threads."""
-        if name.startswith("_") or name in {
-            "db_path",
-            "close",
-            "conn",
-            "__class__",
-            "__dict__",
-            "__repr__",
-            "__str__",
-            "__doc__",
-        }:
-            return object.__getattribute__(self, name)
-        attr = object.__getattribute__(self, name)
-        if callable(attr):
-            lock = object.__getattribute__(self, "_lock")
-
-            def locked(*args, **kwargs):
-                with lock:
-                    return attr(*args, **kwargs)
-
-            return locked
-        return attr
+        conn = getattr(self._local, "conn", None)
+        if conn is not None:
+            conn.close()
+            self._local.conn = None
 
     # --- profile ---
 

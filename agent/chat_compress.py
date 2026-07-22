@@ -85,7 +85,7 @@ def _summarize(old_summary: str, to_compress: list[dict[str, Any]]) -> str:
     if old_summary.strip():
         user_parts.append("【旧摘要】\n" + old_summary.strip())
     user_parts.append("【需压缩的对话】\n" + transcript)
-    llm = get_llm(temperature=0.2, streaming=False)
+    llm = get_llm(temperature=0.2, streaming=False, thinking=False)
     resp = llm.invoke(
         [
             SystemMessage(content=SUMMARY_PROMPT),

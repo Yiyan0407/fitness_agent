@@ -62,9 +62,7 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
 - 用户要「写日报/生成复盘」→ generate_daily_report_ai；仅改已有正文可用 save_daily_report。
 
 ## 饮食与体态
-- 先 get_nutrition_day / get_profile；记账：单样用 log_meal，一句话里多道食物优先用 log_meals 一次写完。
-- 工具返回 ok/saved_count>0 即已入库，必须据此确认「已记」，禁止说「没记上」；写完后用返回的 day 汇报剩余量。
-- 改错 → update_meal；删除 → delete_meal。
+- 先 get_nutrition_day / get_profile；记账 → log_meal；改错 → update_meal；删除 → delete_meal。
 - 饮食目标分「训练日」与「休息日」两套，可按周计划 rest 自动切换：
   - 训练日：calorie_target / protein_target_g / carb_target_g / fat_target_g
   - 休息日：calorie_target_rest / protein_target_g_rest / carb_target_g_rest / fat_target_g_rest
@@ -248,9 +246,7 @@ def run_coach(
             history = recent
     agent = build_agent(streaming=False)
     result = agent.invoke(
-        {"messages": _prepare_messages(user_input, history, summary=summary)},
-        # Serialize tool calls: shared sqlite must not run in parallel.
-        config={"max_concurrency": 1},
+        {"messages": _prepare_messages(user_input, history, summary=summary)}
     )
     messages = result.get("messages") or []
     for msg in reversed(messages):
@@ -296,8 +292,6 @@ def stream_coach(
     for mode, data in agent.stream(
         inputs,
         stream_mode=["messages", "updates"],
-        # Serialize tool calls: shared sqlite must not run in parallel.
-        config={"max_concurrency": 1},
     ):
         if mode == "updates" and isinstance(data, dict):
             if "tools" in data:

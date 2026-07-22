@@ -10,7 +10,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 from db.accounts import init_accounts, user_db_path
-from db.repository import REPO_IMPL_VERSION, Repository
+from db.repository import Repository
 from db.schema import init_db
 
 ROOT = Path(__file__).resolve().parent
@@ -77,7 +77,7 @@ def get_current_username() -> str | None:
 
 
 @lru_cache(maxsize=8)
-def _repo_for_user(username: str, impl_version: int) -> Repository:
+def _repo_for_user(username: str) -> Repository:
     path = user_db_path(username)
     init_db(path)
     return Repository(path)
@@ -91,17 +91,8 @@ def get_repo() -> Repository:
     if not username:
         raise RuntimeError("未登录，无法访问用户数据")
     bind_current_username(username)
-    repo = _repo_for_user(username, REPO_IMPL_VERSION)
-    # Streamlit hot-reload can leave older Repository instances in lru_cache.
-    if getattr(repo, "_impl_version", 0) != REPO_IMPL_VERSION:
-        reset_repo_cache()
-        repo = _repo_for_user(username, REPO_IMPL_VERSION)
-    return repo
+    return _repo_for_user(username)
 
 
 def reset_repo_cache() -> None:
     _repo_for_user.cache_clear()
-
-
-# Drop any cached repos from a previous code version after reload.
-reset_repo_cache()

@@ -6,19 +6,14 @@ import hashlib
 import hmac
 import re
 import secrets
-import shutil
 import sqlite3
 from pathlib import Path
 from typing import Any
 
-from db.schema import DATA_DIR, DB_PATH, init_db
+from db.schema import DATA_DIR, init_db
 
 ACCOUNTS_DB = DATA_DIR / "accounts.db"
 USERS_DIR = DATA_DIR / "users"
-LEGACY_DB = DB_PATH  # data/fitness.db
-DEFAULT_USER = "jyy"
-# 仅在从旧版 data/fitness.db 升级时，给承接账户 jyy 设的初始密码
-LEGACY_MIGRATE_PASSWORD = "jyy"
 USERNAME_RE = re.compile(r"^[a-zA-Z0-9_\u4e00-\u9fff]{1,32}$")
 
 _PBKDF2_ITERS = 200_000
@@ -86,7 +81,7 @@ def _accounts_conn() -> sqlite3.Connection:
 
 
 def init_accounts() -> None:
-    """Create accounts DB, migrate legacy fitness.db under user jyy if needed."""
+    """Create accounts DB if needed."""
     conn = _accounts_conn()
     try:
         conn.execute(
@@ -100,42 +95,8 @@ def init_accounts() -> None:
             """
         )
         conn.commit()
-        _maybe_migrate_legacy(conn)
     finally:
         conn.close()
-
-
-def _maybe_migrate_legacy(conn: sqlite3.Connection) -> None:
-    """If old single-user data/fitness.db exists, attach it under account jyy.
-
-    Fresh installs (no legacy DB) create no users — use the login page to register.
-    """
-    target = user_db_path(DEFAULT_USER)
-    has_jyy = (
-        conn.execute(
-            "SELECT id FROM users WHERE username = ?", (DEFAULT_USER,)
-        ).fetchone()
-        is not None
-    )
-
-    # Already migrated earlier: nothing to do unless leftover legacy file
-    if has_jyy:
-        if LEGACY_DB.exists() and not target.exists():
-            target.parent.mkdir(parents=True, exist_ok=True)
-            shutil.move(str(LEGACY_DB), str(target))
-        return
-
-    if not LEGACY_DB.exists():
-        return
-
-    conn.execute(
-        "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-        (DEFAULT_USER, hash_password(LEGACY_MIGRATE_PASSWORD)),
-    )
-    conn.commit()
-    target.parent.mkdir(parents=True, exist_ok=True)
-    if not target.exists():
-        shutil.move(str(LEGACY_DB), str(target))
 
 
 def list_usernames() -> list[str]:
@@ -217,4 +178,3 @@ def change_password(username: str, new_password: str) -> None:
             raise ValueError("用户不存在")
     finally:
         conn.close()
-

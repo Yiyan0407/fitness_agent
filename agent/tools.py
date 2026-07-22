@@ -523,60 +523,6 @@ def log_meal(
 
 
 @tool
-def log_meals(meals_json: str, target_date: Optional[str] = None) -> str:
-    """一次记录多道食物（用户一句话里列了好几样时优先用这个，不要并行多次 log_meal）。
-
-    meals_json 必须是 JSON 数组，每项字段：
-    name（必填）, meal_type（早餐/午餐/晚餐/加餐/蛋白粉/其他）,
-    calories, protein_g, carb_g, fat_g, notes。
-    示例：[{"name":"牛奶半杯","meal_type":"晚餐","calories":82,"protein_g":4,"carb_g":6,"fat_g":4,"notes":""}]
-    """
-    try:
-        data = json.loads(meals_json)
-    except json.JSONDecodeError as exc:
-        return _ok({"ok": False, "error": f"meals_json 解析失败: {exc}"})
-    if not isinstance(data, list) or not data:
-        return _ok({"ok": False, "error": "meals_json 必须是非空 JSON 数组"})
-
-    repo = get_repo()
-    saved: list[dict[str, Any]] = []
-    errors: list[str] = []
-    for i, item in enumerate(data):
-        if not isinstance(item, dict):
-            errors.append(f"第{i + 1}项不是对象")
-            continue
-        name = str(item.get("name") or "").strip()
-        if not name:
-            errors.append(f"第{i + 1}项缺少 name")
-            continue
-        try:
-            row = repo.log_meal(
-                name=name,
-                meal_type=str(item.get("meal_type") or "正餐"),
-                calories=item.get("calories"),
-                protein_g=item.get("protein_g"),
-                carb_g=item.get("carb_g"),
-                fat_g=item.get("fat_g"),
-                notes=str(item.get("notes") or ""),
-                target_date=target_date,
-            )
-            saved.append(row)
-        except Exception as exc:  # noqa: BLE001
-            errors.append(f"{name}: {exc}")
-
-    summary = repo.get_nutrition_day(target_date)
-    return _ok(
-        {
-            "ok": len(saved) > 0 and not errors,
-            "saved_count": len(saved),
-            "meals": saved,
-            "errors": errors,
-            "day": summary,
-        }
-    )
-
-
-@tool
 def update_meal(
     meal_id: int,
     name: Optional[str] = None,
@@ -898,7 +844,6 @@ ALL_TOOLS = [
     get_nutrition_day,
     get_recent_nutrition,
     log_meal,
-    log_meals,
     update_meal,
     delete_meal,
     # body

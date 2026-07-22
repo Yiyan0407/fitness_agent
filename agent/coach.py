@@ -248,7 +248,9 @@ def run_coach(
             history = recent
     agent = build_agent(streaming=False)
     result = agent.invoke(
-        {"messages": _prepare_messages(user_input, history, summary=summary)}
+        {"messages": _prepare_messages(user_input, history, summary=summary)},
+        # Serialize tool calls: shared sqlite must not run in parallel.
+        config={"max_concurrency": 1},
     )
     messages = result.get("messages") or []
     for msg in reversed(messages):
@@ -294,6 +296,8 @@ def stream_coach(
     for mode, data in agent.stream(
         inputs,
         stream_mode=["messages", "updates"],
+        # Serialize tool calls: shared sqlite must not run in parallel.
+        config={"max_concurrency": 1},
     ):
         if mode == "updates" and isinstance(data, dict):
             if "tools" in data:

@@ -14,31 +14,43 @@ from bootstrap import get_repo
 
 WEEKDAY_CN = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
 
-REPORT_SYSTEM = """你是用户的私人健身教练，写「当日复盘报告」。
-只根据给定 JSON 写简洁可执行的中文 Markdown，禁止编造未出现的动作、餐食或计划。
+REPORT_SYSTEM = """你是资深私人健身教练兼运动营养顾问，撰写「当日专业复盘报告」。
+只根据给定 JSON 写中文 Markdown；禁止编造未出现的动作、餐食、重量或计划。
 
-界面「数据一览」已有营养对照、餐次、训练组次表格，因此正文里禁止再输出 Markdown 表格或大段罗列数字清单。
-用短段落做判断与建议，数字只在必要时点出关键值（如完成度、某动作重量/RPE、热量缺口感）。
+界面「数据一览」已有营养对照、餐次、训练组次表格——正文禁止再输出 Markdown 表格，也不要整段复述组次/餐次清单。
+用专业分析段落展开；关键数字（完成度、代表组重量×次数×RPE、热量/蛋白相对目标、消耗 kcal）可嵌入论述，但重点是判断、因果与下一步。
 
-结构（用 ## 标题，不要改名）：
+结构（用 ## 标题，不要改名；可在节内用 ### 小节）：
 ## 一句话总结
 ## 训练复盘
-## 饮食复盘
+## 饮食与能量
+## 恢复与状态
 ## 做得好的点
-## 可改进
+## 可改进与风险
 ## 明天建议
+## 本周视角（可选，有 recent_training 时写）
 
-写作要点：
-1. 语气鼓励但务实，适合晚上 1 分钟读完。
-2. 训练复盘：点评完成度与执行质量（强度/RPE、是否按计划、跳过了什么及影响）；有 calories_burned 可带一句消耗；休息日写恢复与状态。不要复述整张组次表。
-3. 饮食复盘：相对目标谈是否够蛋白、是否过量/不足、与训练日匹配度；没记账就明确写「今日饮食记录不足」。不要再列餐次明细表。
-4. 「做得好的点」「可改进」各 2～4 条短句，具体可执行，避免空话。
-5. 「明天建议」必须严格跟 upcoming_plans（尤其明天）：
-   - 明天有训练：课次名 + 重点动作提醒 + 睡眠/碳水/热身等准备；禁止写成「明天休息」。
-   - 明天休息/无安排：恢复、拉伸、步行等。
-   - 后天可带一句，勿喧宾夺主。
-6. 结合 recent_training：若明天硬课且近期完成度很高，建议早点睡、控制力竭，但仍以执行明天计划为前提。
-7. 全文约 350～600 字；禁止表格、禁止用代码块包全文、不要输出 JSON。
+写作要求：
+1. 语气专业、清晰、可执行；像教练写的课后报告，不是口号文案。
+2. 「一句话总结」：用 1～2 句概括今日训练执行 + 饮食/能量是否匹配目标。
+3. 「训练复盘」（核心，写充分）：
+   - 计划执行：完成组数/总组、是否按 today_plan；跳过或未完成动作的影响与优先级。
+   - 强度与质量：挑 2～4 个关键动作点评负荷、次数、RPE 是否合理（过易/到位/过高）；模式问题（如全程 RPE 偏高、大重量次数崩）要点明。
+   - 有 calories_burned 时结合训练量解读消耗是否合理；休息日则写恢复日安排与建议。
+   - 不要只报数字，要给「所以下次怎么调」的一句结论。
+4. 「饮食与能量」：
+   - 相对目标分析热量、蛋白、碳水、脂肪是否匹配今日训练（练日蛋白/碳水、休息日可略降等）。
+   - 若 JSON 含 energy_balance 且 ok=true，据此解读常规消耗/运动消耗/摄入与缺口（deficit 正为缺口）；勿另编 TDEE。
+   - 没记账写「今日饮食记录不足」，并说明这对评估恢复与下周调整的影响。
+5. 「恢复与状态」：结合 user_note、睡眠字段（若有）、伤病史、今日 RPE 谈恢复风险与简单恢复手段（睡眠、拉伸、步行、下一次课热身注意）。
+6. 「做得好的点」：3～5 条，具体到行为（例如某动作完成度、蛋白达标、按计划收工）。
+7. 「可改进与风险」：3～5 条，写清问题 → 原因假设 → 可执行改法；涉及伤痛只给保守建议。
+8. 「明天建议」必须严格跟 upcoming_plans（尤其明天）：
+   - 明天有训练：课次名、重点动作、强度预期、睡眠/碳水/热身/可能的替代思路；禁止写成「明天休息」。
+   - 明天休息：恢复内容与活动上限。
+   - 后天可一句带过。
+9. 「本周视角」：用 recent_training 看完成度趋势与疲劳堆积，给 2～4 句节奏建议；数据不足可省略整节。
+10. 全文约 800～1400 字；禁止表格、禁止代码块包全文、不要输出 JSON。
 """
 
 
@@ -214,6 +226,19 @@ def generate_daily_report(
         **context,
         "user_note": (user_note or "").strip(),
     }
+    try:
+        from agent.energy import energy_balance
+
+        nutri = (snapshot.get("nutrition") or {}).get("totals") or {}
+        burn = (snapshot.get("workout") or {}).get("calories_burned")
+        payload["energy_balance"] = energy_balance(
+            profile=snapshot.get("profile") or repo.get_profile(),
+            intake_kcal=nutri.get("calories"),
+            exercise_kcal=burn,
+        )
+    except Exception:
+        pass
+
     tomorrow = context.get("tomorrow") or {}
     hint = ""
     if tomorrow and not tomorrow.get("rest") and tomorrow.get("exercises"):
@@ -229,13 +254,14 @@ def generate_daily_report(
             "在周计划里是休息日，「明天建议」可以给恢复建议。"
         )
 
-    llm = get_llm(temperature=0.35, thinking=False)
+    llm = get_llm(temperature=0.4, thinking=False)
     resp = llm.invoke(
         [
             SystemMessage(content=REPORT_SYSTEM),
             HumanMessage(
                 content=(
-                    "请根据以下 JSON 数据写当日复盘报告：\n"
+                    "请根据以下 JSON 数据撰写详细专业的当日复盘报告"
+                    "（分析充分，仍禁止表格）：\n"
                     + json.dumps(payload, ensure_ascii=False, default=str)
                     + hint
                 )

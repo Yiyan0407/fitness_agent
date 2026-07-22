@@ -7,6 +7,7 @@ from datetime import date
 import streamlit as st
 
 from bootstrap import get_api_key, get_repo, load_env
+from agent.energy import deficit_delta_text, energy_balance
 from ui import render_sidebar
 
 st.set_page_config(
@@ -50,6 +51,13 @@ nutri = repo.get_nutrition_day(today_s)
 nt = nutri["targets"]
 tot = nutri["totals"]
 meals = nutri["meals"]
+workout_row = today.get("workout") or {}
+burn = workout_row.get("calories_burned")
+balance = energy_balance(
+    profile=profile,
+    intake_kcal=tot.get("calories"),
+    exercise_kcal=burn,
+)
 
 
 def _ratio(current: float, target: float | None) -> float | None:
@@ -83,7 +91,7 @@ if not api_key or api_key.startswith("sk-xxxxx"):
     st.page_link("pages/6_设置.py", label="去设置 API Key", icon="⚙️")
 
 # ---------- Top KPIs ----------
-k1, k2, k3, k4, k5 = st.columns(5)
+k1, k2, k3, k4, k5, k6 = st.columns(6)
 if plan.get("rest"):
     k1.metric("今日训练", "休息")
 elif total:
@@ -92,25 +100,51 @@ else:
     k1.metric("训练组数", "—" if plan_exists else "无计划")
 
 k2.metric(
-    "热量 kcal",
+    "热量摄入",
     f"{tot['calories']:.0f}",
     None if not nt.get("calorie_target") else f"目标 {nt['calorie_target']:.0f}",
 )
-k3.metric(
+if balance.get("ok"):
+    k3.metric(
+        "热量缺口",
+        f"{balance['deficit']:.0f}",
+        deficit_delta_text(balance),
+    )
+else:
+    k3.metric("热量缺口", "—", "需完善身高体重年龄")
+k4.metric(
     "蛋白 g",
     f"{tot['protein_g']:.0f}",
     None if not nt.get("protein_target_g") else f"目标 {nt['protein_target_g']:.0f}",
 )
-k4.metric(
+k5.metric(
     "碳水 g",
     f"{tot['carb_g']:.0f}",
     None if not nt.get("carb_target_g") else f"目标 {nt['carb_target_g']:.0f}",
 )
-k5.metric(
+k6.metric(
     "脂肪 g",
     f"{tot['fat_g']:.0f}",
     None if not nt.get("fat_target_g") else f"目标 {nt['fat_target_g']:.0f}",
 )
+if balance.get("ok"):
+    ex_txt = (
+        f"{balance['exercise_used']:.0f}"
+        if burn is not None
+        else "未估(按0)"
+    )
+    st.caption(
+        f"缺口 = 常规消耗 {balance['baseline']:.0f}"
+        f"（{balance['activity_level']}）+ 运动 {ex_txt}"
+        f" − 摄入 {balance['intake']:.0f} kcal"
+        + (" · 练完可在「今日训练」估算消耗" if burn is None else "")
+    )
+elif balance.get("missing"):
+    st.caption(
+        "热量缺口需先在设置填写："
+        + "、".join(balance["missing"])
+        + "（常规消耗 = BMR×日常活动量）"
+    )
 
 # ---------- Main: training + nutrition ----------
 left, right = st.columns(2)

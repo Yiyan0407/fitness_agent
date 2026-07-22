@@ -7,6 +7,7 @@ from datetime import date
 import streamlit as st
 
 from agent.daily_report import build_report_context, generate_daily_report
+from agent.energy import deficit_delta_text, energy_balance
 from agent.llm import MissingAPIKeyError
 from agent.report_render import (
     meals_df,
@@ -52,23 +53,33 @@ plan = snapshot.get("plan") or {}
 detail = repo.get_day_detail(ds)
 day_sets = detail.get("sets") or []
 
-c1, c2, c3, c4, c5 = st.columns(5)
+c1, c2, c3, c4, c5, c6 = st.columns(6)
 c1.metric("训练组数", f"{w.get('completed_sets') or 0}/{w.get('total_sets') or 0}")
 burn = w.get("calories_burned")
 c2.metric("运动消耗", f"{float(burn):.0f}" if burn is not None else "未估")
 nt = n.get("totals") or {}
 tg = n.get("targets") or {}
+profile = snapshot.get("profile") or repo.get_profile()
+balance = energy_balance(
+    profile=profile,
+    intake_kcal=nt.get("calories"),
+    exercise_kcal=burn,
+)
 c3.metric(
     "摄入热量",
     f"{nt.get('calories') or 0:.0f}",
     None if not tg.get("calorie_target") else f"目标 {tg['calorie_target']:.0f}",
 )
-c4.metric(
+if balance.get("ok"):
+    c4.metric("热量缺口", f"{balance['deficit']:.0f}", deficit_delta_text(balance))
+else:
+    c4.metric("热量缺口", "—")
+c5.metric(
     "蛋白 g",
     f"{nt.get('protein_g') or 0:.0f}",
     None if not tg.get("protein_target_g") else f"目标 {tg['protein_target_g']:.0f}",
 )
-c5.metric("餐次", len(n.get("meals") or []))
+c6.metric("餐次", len(n.get("meals") or []))
 m1, m2 = st.columns(2)
 m1.metric(
     "碳水 g",
@@ -80,6 +91,11 @@ m2.metric(
     f"{nt.get('fat_g') or 0:.0f}",
     None if not tg.get("fat_target_g") else f"目标 {tg['fat_target_g']:.0f}",
 )
+if balance.get("ok"):
+    st.caption(
+        f"缺口 = 常规 {balance['baseline']:.0f} + 运动 "
+        f"{balance['exercise_used']:.0f} − 摄入 {balance['intake']:.0f} kcal"
+    )
 if w.get("calories_burned_note"):
     st.caption(w["calories_burned_note"])
 if plan.get("rest"):

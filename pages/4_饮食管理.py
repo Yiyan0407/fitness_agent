@@ -8,6 +8,7 @@ import pandas as pd
 import streamlit as st
 
 from bootstrap import get_repo, load_env
+from agent.energy import deficit_delta_text, energy_balance
 from ui import render_sidebar
 
 st.set_page_config(page_title="饮食管理", page_icon="🥗", layout="wide")
@@ -29,36 +30,71 @@ day = repo.get_nutrition_day(target.isoformat())
 totals = day["totals"]
 targets = day["targets"]
 meals = day["meals"]
+profile = repo.get_profile()
+detail = repo.get_day_detail(target.isoformat())
+workout = detail.get("workout") or {}
+burn = workout.get("calories_burned")
+balance = energy_balance(
+    profile=profile,
+    intake_kcal=totals.get("calories"),
+    exercise_kcal=burn,
+)
 
-c1, c2, c3, c4 = st.columns(4)
+c1, c2, c3, c4, c5 = st.columns(5)
 c1.metric(
-    "热量 kcal",
+    "热量摄入",
     f"{totals['calories']:.0f}",
     None
     if not targets.get("calorie_target")
     else f"目标 {targets['calorie_target']:.0f}",
 )
-c2.metric(
+if balance.get("ok"):
+    c2.metric("热量缺口", f"{balance['deficit']:.0f}", deficit_delta_text(balance))
+else:
+    c2.metric("热量缺口", "—")
+c3.metric(
     "蛋白质 g",
     f"{totals['protein_g']:.0f}",
     None
     if not targets.get("protein_target_g")
     else f"目标 {targets['protein_target_g']:.0f}",
 )
-c3.metric(
+c4.metric(
     "碳水 g",
     f"{totals['carb_g']:.0f}",
     None
     if not targets.get("carb_target_g")
     else f"目标 {targets['carb_target_g']:.0f}",
 )
-c4.metric(
+c5.metric(
     "脂肪 g",
     f"{totals['fat_g']:.0f}",
     None
     if not targets.get("fat_target_g")
     else f"目标 {targets['fat_target_g']:.0f}",
 )
+
+if balance.get("ok"):
+    b1, b2, b3 = st.columns(3)
+    b1.metric("常规消耗", f"{balance['baseline']:.0f}")
+    b2.metric(
+        "运动消耗",
+        f"{balance['exercise_used']:.0f}" if burn is not None else "未估",
+        None if burn is not None else "暂按 0",
+    )
+    b3.metric("总消耗", f"{balance['total_out']:.0f}")
+    st.caption(
+        f"缺口 = 常规 {balance['baseline']:.0f}（{balance['activity_level']}）"
+        f" + 运动 {balance['exercise_used']:.0f}"
+        f" − 摄入 {balance['intake']:.0f} kcal"
+        " · 正数=缺口，负数=盈余"
+    )
+elif balance.get("missing"):
+    st.info(
+        "要算热量缺口，请先在「设置」填写："
+        + "、".join(balance["missing"])
+        + "，并确认日常活动量。"
+    )
 
 
 def _progress(label: str, current: float, target_val: float | None) -> None:

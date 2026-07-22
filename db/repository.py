@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import threading
 from datetime import date, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -36,10 +37,24 @@ class Repository:
     def __init__(self, db_path: Path | None = None) -> None:
         init_db(db_path)
         self.db_path = db_path
-        self.conn = get_connection(db_path)
+        # One connection per thread. LangChain ToolNode runs tools in a thread
+        # pool; sharing a single sqlite3 connection causes InterfaceError
+        # ("bad parameter or other API misuse") under parallel log_meal etc.
+        self._local = threading.local()
+
+    @property
+    def conn(self):
+        conn = getattr(self._local, "conn", None)
+        if conn is None:
+            conn = get_connection(self.db_path)
+            self._local.conn = conn
+        return conn
 
     def close(self) -> None:
-        self.conn.close()
+        conn = getattr(self._local, "conn", None)
+        if conn is not None:
+            conn.close()
+            self._local.conn = None
 
     # --- profile ---
 

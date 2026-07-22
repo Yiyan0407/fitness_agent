@@ -343,18 +343,8 @@ def log_meal_from_image(
     )
     try:
         saved = _save_meal_image(image_bytes, filename, int(row["id"]))
-        # append image path into notes for traceability
         note = (row.get("notes") or "") + f" | 图:{saved}"
-        get_repo().conn.execute(
-            "UPDATE meals SET notes = ? WHERE id = ?",
-            (note[:500], row["id"]),
-        )
-        get_repo().conn.commit()
-        row = dict(
-            get_repo().conn.execute(
-                "SELECT * FROM meals WHERE id = ?", (row["id"],)
-            ).fetchone()
-        )
+        row = get_repo().update_meal(int(row["id"]), notes=note[:500])
         parsed["image_path"] = saved
     except OSError:
         pass

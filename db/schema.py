@@ -170,9 +170,15 @@ CREATE INDEX IF NOT EXISTS idx_body_metrics_date ON body_metrics(date);
 def get_connection(db_path: Path | None = None) -> sqlite3.Connection:
     path = db_path or DB_PATH
     path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(path), check_same_thread=False)
+    # timeout: wait on lock when coach tools write in parallel
+    conn = sqlite3.connect(str(path), check_same_thread=False, timeout=30.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    # WAL allows concurrent readers + one writer (LangChain tool threads)
+    try:
+        conn.execute("PRAGMA journal_mode=WAL")
+    except sqlite3.Error:
+        pass
     return conn
 
 

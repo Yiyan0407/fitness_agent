@@ -71,6 +71,10 @@ class Repository:
             "protein_target_g",
             "carb_target_g",
             "fat_target_g",
+            "calorie_target_rest",
+            "protein_target_g_rest",
+            "carb_target_g_rest",
+            "fat_target_g_rest",
             "notes",
         }
         # 这些字段允许显式传入 None，表示清空（设置页用 0 表示「没有」）
@@ -86,6 +90,10 @@ class Repository:
             "protein_target_g",
             "carb_target_g",
             "fat_target_g",
+            "calorie_target_rest",
+            "protein_target_g_rest",
+            "carb_target_g_rest",
+            "fat_target_g_rest",
         }
         updates: dict[str, Any] = {}
         for k, v in fields.items():
@@ -1464,13 +1472,73 @@ class Repository:
 
     # --- nutrition / meals ---
 
-    def get_nutrition_targets(self) -> dict[str, Any]:
+    def _day_is_rest(self, target_date: str | None = None) -> bool | None:
+        """True=休息日, False=训练日, None=无周计划无法判断（按训练日目标）。"""
+        ds = target_date or date.today().isoformat()
+        plan = self.get_plan_for_date(date.fromisoformat(ds)) or {}
+        if not plan:
+            return None
+        if plan.get("rest"):
+            return True
+        exercises = plan.get("exercises") or []
+        if not exercises:
+            return True
+        return False
+
+    def get_nutrition_targets(self, target_date: str | None = None) -> dict[str, Any]:
+        """Effective macros for a date: rest day uses *_rest when set, else train targets."""
         profile = self.get_profile()
-        return {
+        ds = target_date or date.today().isoformat()
+        is_rest = self._day_is_rest(ds)
+        if is_rest is True:
+            day_kind = "rest"
+        elif is_rest is False:
+            day_kind = "train"
+        else:
+            day_kind = "unknown"
+
+        train = {
             "calorie_target": profile.get("calorie_target"),
             "protein_target_g": profile.get("protein_target_g"),
             "carb_target_g": profile.get("carb_target_g"),
             "fat_target_g": profile.get("fat_target_g"),
+        }
+        rest = {
+            "calorie_target": profile.get("calorie_target_rest"),
+            "protein_target_g": profile.get("protein_target_g_rest"),
+            "carb_target_g": profile.get("carb_target_g_rest"),
+            "fat_target_g": profile.get("fat_target_g_rest"),
+        }
+
+        use_rest = day_kind == "rest"
+        effective: dict[str, Any] = {}
+        used_rest_field = False
+        for key in (
+            "calorie_target",
+            "protein_target_g",
+            "carb_target_g",
+            "fat_target_g",
+        ):
+            if use_rest and rest.get(key) is not None:
+                effective[key] = rest[key]
+                used_rest_field = True
+            else:
+                effective[key] = train.get(key)
+
+        if day_kind == "rest" and used_rest_field:
+            source = "rest"
+        elif day_kind == "rest":
+            source = "train_fallback"
+        else:
+            source = "train"
+
+        return {
+            **effective,
+            "day_kind": day_kind,
+            "targets_source": source,
+            "date": ds,
+            "train": train,
+            "rest": rest,
             "goal": profile.get("goal"),
             "weight_kg": profile.get("weight_kg"),
             "target_weight_kg": profile.get("target_weight_kg"),
@@ -1560,12 +1628,13 @@ class Repository:
             "carb_g": sum(float(m["carb_g"] or 0) for m in meals),
             "fat_g": sum(float(m["fat_g"] or 0) for m in meals),
         }
-        targets = self.get_nutrition_targets()
+        targets = self.get_nutrition_targets(ds)
         return {
             "date": ds,
             "meals": meals,
             "totals": totals,
             "targets": targets,
+            "day_kind": targets.get("day_kind"),
             "remaining": {
                 "calories": (targets["calorie_target"] or 0) - totals["calories"]
                 if targets.get("calorie_target")
@@ -1665,8 +1734,11 @@ class Repository:
                     "protein_target_g": nutri["targets"].get("protein_target_g"),
                     "carb_target_g": nutri["targets"].get("carb_target_g"),
                     "fat_target_g": nutri["targets"].get("fat_target_g"),
+                    "day_kind": nutri["targets"].get("day_kind"),
+                    "targets_source": nutri["targets"].get("targets_source"),
                 },
                 "remaining": nutri.get("remaining"),
+                "day_kind": nutri.get("day_kind"),
                 "meals": [
                     {
                         "meal_type": m.get("meal_type"),

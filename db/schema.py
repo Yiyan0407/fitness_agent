@@ -33,6 +33,10 @@ DEFAULT_PROFILE = {
     "protein_target_g": None,
     "carb_target_g": None,
     "fat_target_g": None,
+    "calorie_target_rest": None,
+    "protein_target_g_rest": None,
+    "carb_target_g_rest": None,
+    "fat_target_g_rest": None,
     "notes": "",
 }
 
@@ -61,6 +65,10 @@ CREATE TABLE IF NOT EXISTS profile (
     protein_target_g REAL,
     carb_target_g REAL,
     fat_target_g REAL,
+    calorie_target_rest REAL,
+    protein_target_g_rest REAL,
+    carb_target_g_rest REAL,
+    fat_target_g_rest REAL,
     notes TEXT NOT NULL DEFAULT '',
     updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
@@ -192,6 +200,10 @@ def _migrate_profile_columns(conn: sqlite3.Connection) -> None:
         "protein_target_g": "ALTER TABLE profile ADD COLUMN protein_target_g REAL",
         "carb_target_g": "ALTER TABLE profile ADD COLUMN carb_target_g REAL",
         "fat_target_g": "ALTER TABLE profile ADD COLUMN fat_target_g REAL",
+        "calorie_target_rest": "ALTER TABLE profile ADD COLUMN calorie_target_rest REAL",
+        "protein_target_g_rest": "ALTER TABLE profile ADD COLUMN protein_target_g_rest REAL",
+        "carb_target_g_rest": "ALTER TABLE profile ADD COLUMN carb_target_g_rest REAL",
+        "fat_target_g_rest": "ALTER TABLE profile ADD COLUMN fat_target_g_rest REAL",
     }
     for col, sql in migrations.items():
         if col not in cols:

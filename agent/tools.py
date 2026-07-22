@@ -59,11 +59,17 @@ def update_profile(
     protein_target_g: Optional[float] = None,
     carb_target_g: Optional[float] = None,
     fat_target_g: Optional[float] = None,
+    calorie_target_rest: Optional[float] = None,
+    protein_target_g_rest: Optional[float] = None,
+    carb_target_g_rest: Optional[float] = None,
+    fat_target_g_rest: Optional[float] = None,
     notes: Optional[str] = None,
 ) -> str:
-    """更新用户画像。age 为年龄；activity_level 如久坐/轻度活动/中度活动/重度活动；
-    session_minutes 为单次可练分钟；preferred_split 如全身/推拉腿/上下肢/五分化/随教练；
-    diet_prefs 为饮食偏好与忌口；target_body_fat_pct 为目标体脂%。"""
+    """更新用户画像。饮食目标分两套：
+    calorie/protein/carb/fat_target(_g) = 训练日目标；
+    同名字段加 _rest = 休息日目标（未设时休息日回退用训练日目标）。
+    activity_level 如久坐/轻度活动/中度活动/重度活动；
+    session_minutes 为单次可练分钟；preferred_split 如全身/推拉腿/上下肢/五分化/随教练。"""
     fields = {
         "goal": goal,
         "goal_detail": goal_detail,
@@ -87,6 +93,10 @@ def update_profile(
         "protein_target_g": protein_target_g,
         "carb_target_g": carb_target_g,
         "fat_target_g": fat_target_g,
+        "calorie_target_rest": calorie_target_rest,
+        "protein_target_g_rest": protein_target_g_rest,
+        "carb_target_g_rest": carb_target_g_rest,
+        "fat_target_g_rest": fat_target_g_rest,
         "notes": notes,
     }
     updated = get_repo().update_profile(**{k: v for k, v in fields.items() if v is not None})
@@ -473,7 +483,8 @@ def list_exercises(query: str = "", muscle: str = "", equipment: str = "") -> st
 
 @tool
 def get_nutrition_day(target_date: Optional[str] = None) -> str:
-    """获取某日饮食记录与热量/蛋白总量，以及与目标的差值。默认今天。"""
+    """获取某日饮食记录与热量/蛋白总量，以及与目标的差值。
+    targets 已按周计划自动选用训练日或休息日目标（含 day_kind）。默认今天。"""
     return _ok(get_repo().get_nutrition_day(target_date))
 
 
@@ -660,6 +671,138 @@ def delete_daily_report(target_date: str) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Analysis / convenience (high-value coach actions)
+# ---------------------------------------------------------------------------
+
+
+@tool
+def estimate_workout_burn(
+    target_date: Optional[str] = None,
+    save: bool = True,
+) -> str:
+    """AI 估算某日训练的额外运动消耗（kcal，不含全天 BMR），默认写入该日 workout。
+    练完后、算热量缺口或写日报前可先调用。无完成组时接近 0。"""
+    from agent.calorie_burn import estimate_workout_calories
+
+    result = estimate_workout_calories(target_date, save=save)
+    return _ok({"ok": True, **result})
+
+
+@tool
+def generate_daily_report_ai(
+    target_date: Optional[str] = None,
+    user_note: str = "",
+    estimate_burn_if_missing: bool = True,
+) -> str:
+    """用 AI 生成并保存某日专业复盘报告（训练/饮食/恢复/明天建议）。
+    用户说「写日报」「生成今日报告」时用本工具，不要只用 save_daily_report 手写空壳。"""
+    from agent.daily_report import generate_daily_report
+
+    result = generate_daily_report(
+        target_date,
+        user_note=user_note or "",
+        save=True,
+        estimate_burn_if_missing=estimate_burn_if_missing,
+    )
+    return _ok(
+        {
+            "ok": True,
+            "date": result.get("date"),
+            "title": result.get("title"),
+            "content": result.get("content"),
+            "stats": result.get("stats"),
+        }
+    )
+
+
+@tool
+def get_energy_balance(target_date: Optional[str] = None) -> str:
+    """查询某日热量账：常规消耗（画像 BMR×活动量）+ 运动消耗 − 摄入 = 缺口。
+    deficit 正数=缺口，负数=盈余。运动消耗未估时按 0。"""
+    from agent.energy import energy_balance
+
+    repo = get_repo()
+    ds = target_date or None
+    snapshot = repo.get_day_snapshot(ds)
+    nutri = (snapshot.get("nutrition") or {}).get("totals") or {}
+    burn = (snapshot.get("workout") or {}).get("calories_burned")
+    balance = energy_balance(
+        profile=snapshot.get("profile") or repo.get_profile(),
+        intake_kcal=nutri.get("calories"),
+        exercise_kcal=burn,
+    )
+    return _ok(
+        {
+            "date": snapshot.get("date"),
+            "balance": balance,
+            "nutrition_targets": (snapshot.get("nutrition") or {}).get("targets"),
+            "hint": "缺口 = baseline + exercise − intake；练完可先 estimate_workout_burn",
+        }
+    )
+
+
+@tool
+def get_day_snapshot(target_date: Optional[str] = None) -> str:
+    """读取某日综合快照：画像摘要、计划、训练完成情况、饮食合计与目标、运动消耗。
+    需要一眼看懂整天时优先用本工具，比分别多次查询更省。"""
+    return _ok(get_repo().get_day_snapshot(target_date))
+
+
+@tool
+def add_planned_set(
+    exercise_name: str,
+    weight_kg: Optional[float] = None,
+    reps: Optional[int] = None,
+    notes: str = "",
+    target_date: Optional[str] = None,
+) -> str:
+    """给某日某个动作追加 1 组未完成计划组（「再加一组」）。
+    不传重量/次数则沿用该动作上一组。"""
+    name = get_repo().resolve_exercise_name(exercise_name)
+    workout = get_repo().get_today_workout(target_date)["workout"]
+    row = get_repo().add_planned_set(
+        int(workout["id"]),
+        name,
+        weight_kg=weight_kg,
+        reps=reps,
+        notes=notes or "",
+    )
+    return _ok({"ok": True, "set": row})
+
+
+@tool
+def drop_last_incomplete_set(
+    exercise_name: str,
+    target_date: Optional[str] = None,
+) -> str:
+    """删除某动作最后一组未完成计划组（「少一组」）。不影响已完成组。"""
+    name = get_repo().resolve_exercise_name(exercise_name)
+    workout = get_repo().get_today_workout(target_date)["workout"]
+    ok = get_repo().drop_last_incomplete_set(int(workout["id"]), name)
+    return _ok({"ok": bool(ok), "exercise_name": name})
+
+
+@tool
+def get_last_completed_set(
+    exercise_name: str,
+    before_date: Optional[str] = None,
+) -> str:
+    """查询某动作最近一次已完成组（重量/次数/RPE/日期），用于建议今日负荷。
+    before_date 不传则截至今天（不含强制排除今天时由仓库逻辑处理）。"""
+    name = get_repo().resolve_exercise_name(exercise_name)
+    row = get_repo().get_last_completed_set(name, before_date=before_date)
+    if not row:
+        return _ok({"ok": False, "exercise_name": name, "message": "暂无该动作完成记录"})
+    return _ok({"ok": True, "exercise_name": name, "set": row})
+
+
+@tool
+def get_week_completion(days: int = 7) -> str:
+    """近 N 天训练完成度一览（每日计划名、完成组/总组、是否完成）。默认 7 天。"""
+    return _ok({"days": get_repo().get_completion_last_n_days(int(days))})
+
+
+# ---------------------------------------------------------------------------
 # Registry
 # ---------------------------------------------------------------------------
 
@@ -682,12 +825,19 @@ ALL_TOOLS = [
     replace_today_exercise,
     skip_remaining_sets,
     apply_to_remaining_sets,
+    add_planned_set,
+    drop_last_incomplete_set,
     update_workout,
     resync_today_from_plan,
-    # history
+    # history / analysis
     get_recent_history,
     get_exercise_progress,
     get_day_detail,
+    get_day_snapshot,
+    get_last_completed_set,
+    get_week_completion,
+    get_energy_balance,
+    estimate_workout_burn,
     # library
     list_exercises,
     # nutrition
@@ -704,5 +854,6 @@ ALL_TOOLS = [
     get_daily_report,
     list_daily_reports,
     save_daily_report,
+    generate_daily_report_ai,
     delete_daily_report,
 ]

@@ -184,7 +184,11 @@ with left:
 
 with right:
     st.subheader("饮食")
-    st.caption(f"已记 {len(meals)} 餐")
+    kind = nt.get("day_kind")
+    kind_label = (
+        "休息日目标" if kind == "rest" else ("训练日目标" if kind == "train" else "饮食目标")
+    )
+    st.caption(f"已记 {len(meals)} 餐 · {kind_label}")
     _progress("热量", tot["calories"], nt.get("calorie_target"))
     _progress("蛋白", tot["protein_g"], nt.get("protein_target_g"))
     _progress("碳水", tot["carb_g"], nt.get("carb_target_g"))
@@ -193,7 +197,7 @@ with right:
         nt.get(k)
         for k in ("calorie_target", "protein_target_g", "carb_target_g", "fat_target_g")
     ):
-        st.caption("还没设饮食目标，可在饮食管理或让教练估算。")
+        st.caption("还没设饮食目标，可在饮食管理或让教练估算（可分训练日/休息日）。")
     elif not meals:
         st.caption("今天还没有饮食记录。")
     else:

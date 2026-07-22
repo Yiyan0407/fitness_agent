@@ -201,31 +201,60 @@ with st.form("profile_form"):
         step=0.5,
         help="没有可填 0；影响恢复与容量建议",
     )
-    st.markdown("##### 饮食目标")
+    st.markdown("##### 饮食目标（训练日）")
+    st.caption("周计划里非休息日使用；进度条按当天计划自动切换。")
     d1, d2 = st.columns(2)
     calorie_target = d1.number_input(
-        "每日热量 kcal",
+        "训练日热量 kcal",
         min_value=0.0,
         value=float(profile["calorie_target"] or 0),
         step=50.0,
     )
     protein_target = d2.number_input(
-        "每日蛋白 g",
+        "训练日蛋白 g",
         min_value=0.0,
         value=float(profile["protein_target_g"] or 0),
         step=5.0,
     )
     d3, d4 = st.columns(2)
     carb_target = d3.number_input(
-        "每日碳水 g",
+        "训练日碳水 g",
         min_value=0.0,
         value=float(profile["carb_target_g"] or 0),
         step=5.0,
     )
     fat_target = d4.number_input(
-        "每日脂肪 g",
+        "训练日脂肪 g",
         min_value=0.0,
         value=float(profile["fat_target_g"] or 0),
+        step=5.0,
+    )
+    st.markdown("##### 饮食目标（休息日，可选）")
+    st.caption("不填则休息日沿用训练日目标。常见：热量/碳水略低，蛋白接近。")
+    r1, r2 = st.columns(2)
+    calorie_target_rest = r1.number_input(
+        "休息日热量 kcal",
+        min_value=0.0,
+        value=float(profile.get("calorie_target_rest") or 0),
+        step=50.0,
+    )
+    protein_target_rest = r2.number_input(
+        "休息日蛋白 g",
+        min_value=0.0,
+        value=float(profile.get("protein_target_g_rest") or 0),
+        step=5.0,
+    )
+    r3, r4 = st.columns(2)
+    carb_target_rest = r3.number_input(
+        "休息日碳水 g",
+        min_value=0.0,
+        value=float(profile.get("carb_target_g_rest") or 0),
+        step=5.0,
+    )
+    fat_target_rest = r4.number_input(
+        "休息日脂肪 g",
+        min_value=0.0,
+        value=float(profile.get("fat_target_g_rest") or 0),
         step=5.0,
     )
     diet_prefs = st.text_area(
@@ -264,6 +293,10 @@ with st.form("profile_form"):
             protein_target_g=_num_or_clear(protein_target),
             carb_target_g=_num_or_clear(carb_target),
             fat_target_g=_num_or_clear(fat_target),
+            calorie_target_rest=_num_or_clear(calorie_target_rest),
+            protein_target_g_rest=_num_or_clear(protein_target_rest),
+            carb_target_g_rest=_num_or_clear(carb_target_rest),
+            fat_target_g_rest=_num_or_clear(fat_target_rest),
             notes=notes if notes is not None else "",
         )
         st.session_state["profile_saved_flash"] = True

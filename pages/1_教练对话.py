@@ -214,7 +214,12 @@ tot = nutri["totals"]
 tgt = nutri["targets"]
 diet_bits = [f"今日已记 {len(nutri['meals'])} 餐", f"{tot['calories']:.0f} kcal"]
 if tgt.get("calorie_target"):
-    diet_bits[-1] = f"{tot['calories']:.0f}/{tgt['calorie_target']:.0f} kcal"
+    kind = tgt.get("day_kind")
+    tag = "休" if kind == "rest" else ("练" if kind == "train" else "")
+    diet_bits[-1] = (
+        f"{tot['calories']:.0f}/{tgt['calorie_target']:.0f} kcal"
+        + (f"（{tag}）" if tag else "")
+    )
 st.caption(" · ".join(diet_bits))
 
 st.divider()

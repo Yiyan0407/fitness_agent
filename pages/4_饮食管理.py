@@ -162,32 +162,72 @@ else:
 
 st.divider()
 st.subheader("饮食目标")
+_kind = targets.get("day_kind")
+if _kind == "rest":
+    st.caption(
+        "所选日期在周计划中是**休息日**，上方进度使用休息日目标"
+        + ("（未设项已回退训练日）" if targets.get("targets_source") == "train_fallback" else "")
+        + "。"
+    )
+elif _kind == "train":
+    st.caption("所选日期在周计划中是**训练日**，上方进度使用训练日目标。")
+else:
+    st.caption("尚无周计划，暂按训练日目标对照。")
+
 profile = repo.get_profile()
 with st.form("nutrition_targets"):
+    st.markdown("**训练日**")
     t1, t2 = st.columns(2)
     cal = t1.number_input(
-        "每日热量目标 kcal",
+        "训练日热量 kcal",
         min_value=0.0,
         value=float(profile["calorie_target"] or 0),
         step=50.0,
     )
     pro = t2.number_input(
-        "每日蛋白目标 g",
+        "训练日蛋白 g",
         min_value=0.0,
         value=float(profile["protein_target_g"] or 0),
         step=5.0,
     )
     t3, t4 = st.columns(2)
     carb_t = t3.number_input(
-        "每日碳水目标 g",
+        "训练日碳水 g",
         min_value=0.0,
         value=float(profile["carb_target_g"] or 0),
         step=5.0,
     )
     fat_t = t4.number_input(
-        "每日脂肪目标 g",
+        "训练日脂肪 g",
         min_value=0.0,
         value=float(profile["fat_target_g"] or 0),
+        step=5.0,
+    )
+    st.markdown("**休息日（可选）**")
+    r1, r2 = st.columns(2)
+    cal_r = r1.number_input(
+        "休息日热量 kcal",
+        min_value=0.0,
+        value=float(profile.get("calorie_target_rest") or 0),
+        step=50.0,
+    )
+    pro_r = r2.number_input(
+        "休息日蛋白 g",
+        min_value=0.0,
+        value=float(profile.get("protein_target_g_rest") or 0),
+        step=5.0,
+    )
+    r3, r4 = st.columns(2)
+    carb_r = r3.number_input(
+        "休息日碳水 g",
+        min_value=0.0,
+        value=float(profile.get("carb_target_g_rest") or 0),
+        step=5.0,
+    )
+    fat_r = r4.number_input(
+        "休息日脂肪 g",
+        min_value=0.0,
+        value=float(profile.get("fat_target_g_rest") or 0),
         step=5.0,
     )
     if st.form_submit_button("保存饮食目标"):
@@ -196,6 +236,10 @@ with st.form("nutrition_targets"):
             protein_target_g=pro if pro else None,
             carb_target_g=carb_t if carb_t else None,
             fat_target_g=fat_t if fat_t else None,
+            calorie_target_rest=cal_r if cal_r else None,
+            protein_target_g_rest=pro_r if pro_r else None,
+            carb_target_g_rest=carb_r if carb_r else None,
+            fat_target_g_rest=fat_r if fat_r else None,
         )
         st.session_state["nutrition_saved_flash"] = True
         st.rerun()

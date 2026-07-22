@@ -17,14 +17,14 @@ from bootstrap import (
 )
 from db.accounts import user_db_path
 from db.schema import init_db
-from ui import render_sidebar
+from ui import page_header, render_sidebar
 
 st.set_page_config(page_title="设置", page_icon="⚙️", layout="centered")
 load_env()
 render_sidebar()
 repo = get_repo()
 
-st.title("设置")
+page_header("设置", "API Key、个人画像与饮食目标。")
 
 if st.session_state.pop("profile_saved_flash", False):
     st.success("画像已保存")

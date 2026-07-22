@@ -4,3 +4,16 @@ port = 8502
 [client]
 # 关闭默认多页导航，避免与自定义侧边栏重复
 showSidebarNavigation = false
+
+# 仅定义 [theme]（不写 theme.light / theme.dark）即可锁定单一浅色，无法在设置里切换暗色
+[theme]
+base = "light"
+primaryColor = "#0f766e"
+backgroundColor = "#f4f7f5"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#1a2421"
+
+[theme.sidebar]
+backgroundColor = "#fbfcfb"
+secondaryBackgroundColor = "#ffffff"
+textColor = "#1a2421"

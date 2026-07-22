@@ -9,15 +9,17 @@ import streamlit as st
 
 from bootstrap import get_repo, load_env
 from db.repository import WEEKDAY_CN, WEEKDAY_KEYS
-from ui import render_sidebar
+from ui import page_header, render_sidebar
 
 st.set_page_config(page_title="训练计划", page_icon="📋", layout="wide")
 load_env()
 render_sidebar()
 repo = get_repo()
 
-st.title("训练计划")
-st.caption("手动编辑一周模板：增删动作、改组数次数重量。保存后「今日训练」会按新计划同步（未开始打卡时）。")
+page_header(
+    "训练计划",
+    "手动编辑一周模板；保存后「今日训练」会按新计划同步（未开始打卡时）。",
+)
 
 
 def empty_week() -> dict:

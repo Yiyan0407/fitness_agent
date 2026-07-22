@@ -10,14 +10,14 @@ import streamlit as st
 from agent.calorie_burn import estimate_workout_calories
 from agent.llm import MissingAPIKeyError
 from bootstrap import get_api_key, get_repo, load_env
-from ui import render_sidebar
+from ui import page_header, render_sidebar
 
 st.set_page_config(page_title="今日训练", page_icon="🏋️", layout="wide")
 load_env()
 render_sidebar()
 repo = get_repo()
 
-st.title("今日训练")
+page_header("今日训练", "按组打卡、调重量次数，练完可估算消耗。")
 
 jump = st.session_state.pop("workout_jump_date", None)
 if jump:

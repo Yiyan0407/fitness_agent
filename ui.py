@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import hmac
+import html
 import time
 from datetime import datetime, timedelta
 from urllib.parse import quote, unquote
@@ -131,6 +132,234 @@ def _set_logged_in(username: str, *, remember: bool) -> None:
         st.session_state.pop("_pending_remember_set", None)
 
 
+def logout() -> None:
+    st.session_state.authenticated = False
+    st.session_state.pop("username", None)
+    bind_current_username(None)
+    st.session_state["_pending_remember_clear"] = True
+    st.session_state.pop("_pending_remember_set", None)
+    st.session_state.pop("_auth_cookie_ready", None)
+    reset_repo_cache()
+
+
+def inject_global_styles(*, narrow: bool = False) -> None:
+    """Shared layout CSS. Call once per page (via render_sidebar / login)."""
+    max_w = "420px" if narrow else "1120px"
+    st.markdown(
+        f"""
+        <style>
+        :root, html, [data-theme="dark"], html[data-theme="dark"], .stApp {{
+            --fa-bg: #f4f7f5;
+            --fa-ink: #1a2421;
+            --fa-muted: #5b6b63;
+            --fa-accent: #0f766e;
+            --fa-card: #ffffff;
+            --fa-border: #d5e3d9;
+            --fa-metric-bg: linear-gradient(160deg, #f3f7f4 0%, #e8f0ea 100%);
+            --fa-sidebar-bg: #fbfcfb;
+            --fa-nav-hover: #eef5f1;
+            --fa-nav-label: #8a9a92;
+            --fa-wash-1: #e7f2ec;
+            --fa-wash-2: #eef4f1;
+            --fa-header-bg: rgba(255, 255, 255, 0.92);
+            color-scheme: light;
+        }}
+        .stApp {{
+            background:
+                radial-gradient(1200px 480px at 10% -10%, var(--fa-wash-1) 0%, transparent 55%),
+                radial-gradient(900px 420px at 100% 0%, var(--fa-wash-2) 0%, transparent 50%),
+                var(--fa-bg) !important;
+            color: var(--fa-ink);
+        }}
+        .block-container {{
+            max-width: {max_w} !important;
+            padding-top: 3.25rem !important;
+            padding-bottom: 3.5rem !important;
+            padding-left: 1.5rem !important;
+            padding-right: 1.5rem !important;
+        }}
+        h1 {{
+            letter-spacing: -0.02em;
+            color: var(--fa-ink) !important;
+            margin-bottom: 0.15rem !important;
+        }}
+        h2, h3 {{
+            color: var(--fa-ink) !important;
+        }}
+        div[data-testid="stCaptionContainer"] {{
+            color: var(--fa-muted) !important;
+        }}
+        div[data-testid="stMetric"] {{
+            background: var(--fa-metric-bg);
+            border: 1px solid var(--fa-border);
+            border-radius: 12px;
+            padding: 0.7rem 0.85rem;
+        }}
+        div[data-testid="stMetric"] label {{
+            color: var(--fa-muted) !important;
+        }}
+        div[data-testid="stMetric"] [data-testid="stMetricValue"] {{
+            color: var(--fa-ink) !important;
+        }}
+        div[data-testid="stMetric"] [data-testid="stMetricDelta"] {{
+            color: var(--fa-muted) !important;
+        }}
+        hr {{
+            margin: 1.1rem 0 1.25rem !important;
+            border-color: var(--fa-border) !important;
+        }}
+        [data-testid="stSidebar"] {{
+            background: var(--fa-sidebar-bg) !important;
+            border-right: 1px solid var(--fa-border);
+            color: var(--fa-ink) !important;
+        }}
+        [data-testid="stSidebar"] .block-container {{
+            padding-top: 1.25rem !important;
+        }}
+        [data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"],
+        [data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] span,
+        [data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"] p {{
+            border-radius: 8px;
+            margin: 0.12rem 0;
+            padding: 0.35rem 0.55rem !important;
+            color: var(--fa-ink) !important;
+        }}
+        [data-testid="stSidebar"] a[data-testid="stPageLink-NavLink"]:hover {{
+            background: var(--fa-nav-hover);
+        }}
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"],
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p,
+        [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] span,
+        [data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+        [data-testid="stSidebar"] [data-testid="stCaptionContainer"] p,
+        [data-testid="stSidebar"] [data-testid="stWidgetLabel"],
+        [data-testid="stSidebar"] [data-testid="stWidgetLabel"] p,
+        [data-testid="stSidebar"] label,
+        [data-testid="stSidebar"] .fa-nav-label,
+        [data-testid="stSidebar"] .fa-side-status,
+        [data-testid="stSidebar"] .fa-side-status .fa-user,
+        [data-testid="stSidebar"] .fa-side-status .fa-plan {{
+            color: var(--fa-ink) !important;
+        }}
+        [data-testid="stSidebar"] .fa-side-status .fa-user,
+        [data-testid="stSidebar"] .fa-nav-label {{
+            color: var(--fa-muted) !important;
+        }}
+        [data-testid="stSidebar"] button,
+        [data-testid="stSidebar"] button p,
+        [data-testid="stSidebar"] button span {{
+            color: var(--fa-ink) !important;
+            border-color: var(--fa-border) !important;
+        }}
+        [data-testid="stSidebar"] button[kind="secondary"],
+        [data-testid="stSidebar"] [data-testid="stBaseButton-secondary"] {{
+            background-color: var(--fa-card) !important;
+            color: var(--fa-ink) !important;
+            border: 1px solid var(--fa-border) !important;
+        }}
+        [data-testid="stSidebar"] button[kind="primary"],
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"],
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] p,
+        [data-testid="stSidebar"] [data-testid="stBaseButton-primary"] span {{
+            background-color: var(--fa-accent) !important;
+            color: #ffffff !important;
+            border-color: var(--fa-accent) !important;
+        }}
+        [data-testid="stSidebar"] [data-testid="stProgress"] {{
+            color: var(--fa-ink);
+        }}
+        header[data-testid="stHeader"] {{
+            background: var(--fa-header-bg);
+        }}
+        .fa-page-header {{
+            margin: 0 0 1.1rem 0;
+        }}
+        .fa-page-header h1 {{
+            font-size: 1.75rem;
+            font-weight: 700;
+            margin: 0 0 0.25rem 0;
+            color: var(--fa-ink);
+        }}
+        .fa-page-header p {{
+            margin: 0;
+            color: var(--fa-muted);
+            font-size: 0.95rem;
+            line-height: 1.45;
+        }}
+        .fa-side-status {{
+            background: var(--fa-card);
+            border: 1px solid var(--fa-border);
+            border-radius: 12px;
+            padding: 0.75rem 0.85rem;
+            margin-bottom: 0.35rem;
+        }}
+        .fa-side-status .fa-user {{
+            font-size: 0.8rem;
+            color: var(--fa-muted);
+            margin-bottom: 0.2rem;
+        }}
+        .fa-side-status .fa-plan {{
+            font-weight: 600;
+            color: var(--fa-ink);
+            font-size: 0.98rem;
+        }}
+        .fa-nav-label {{
+            font-size: 0.72rem;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--fa-nav-label);
+            margin: 0.85rem 0 0.25rem 0.15rem;
+            font-weight: 600;
+        }}
+        .fa-week-cell {{
+            background: var(--fa-card);
+            border: 1px solid var(--fa-border);
+            border-radius: 10px;
+            padding: 0.55rem 0.4rem;
+            text-align: center;
+            min-height: 4.2rem;
+        }}
+        .fa-week-cell.today {{
+            border-color: var(--fa-accent);
+            box-shadow: inset 0 0 0 1px var(--fa-accent);
+        }}
+        .fa-week-cell .wd {{
+            font-weight: 600;
+            color: var(--fa-ink);
+            font-size: 0.9rem;
+        }}
+        .fa-week-cell .st {{
+            color: var(--fa-muted);
+            font-size: 0.8rem;
+            margin-top: 0.2rem;
+        }}
+        .fa-login-wrap .block-container {{
+            max-width: 420px !important;
+        }}
+        .coach-empty {{
+            color: var(--fa-muted);
+        }}
+        .coach-empty h3 {{
+            color: var(--fa-ink);
+        }}
+        .coach-hint {{
+            color: var(--fa-muted);
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+def page_header(title: str, caption: str | None = None) -> None:
+    """Consistent page title + optional caption."""
+    cap = f"<p>{html.escape(caption)}</p>" if caption else ""
+    st.markdown(
+        f'<div class="fa-page-header"><h1>{html.escape(title)}</h1>{cap}</div>',
+        unsafe_allow_html=True,
+    )
+
+
 def require_login() -> None:
     """Block until a user logs in; optionally remember device 30 days."""
     load_env()
@@ -154,6 +383,7 @@ def require_login() -> None:
             st.session_state.username = user
             bind_current_username(user)
             return
+        inject_global_styles(narrow=True)
         st.caption("正在恢复登录状态…")
         st.stop()
 
@@ -165,8 +395,8 @@ def require_login() -> None:
         bind_current_username(user)
         return
 
-    st.title("健身 Agent")
-    st.caption("登录已有账户，或展开下方用管理员密码新建账户。")
+    inject_global_styles(narrow=True)
+    page_header("健身 Agent", "登录已有账户，或展开下方用管理员密码新建账户。")
 
     with st.form("login_form"):
         username = st.text_input("用户名", placeholder="例如 jyy")
@@ -213,23 +443,13 @@ def require_login() -> None:
     st.stop()
 
 
-def logout() -> None:
-    st.session_state.authenticated = False
-    st.session_state.pop("username", None)
-    bind_current_username(None)
-    st.session_state["_pending_remember_clear"] = True
-    st.session_state.pop("_pending_remember_set", None)
-    st.session_state.pop("_auth_cookie_ready", None)
-    reset_repo_cache()
-
-
 def render_sidebar() -> None:
-    """Fixed sidebar: today progress + quick links."""
+    """Fixed sidebar: today progress + grouped nav."""
     require_login()
+    inject_global_styles()
     repo = get_repo()
     with st.sidebar:
         who = get_current_username() or ""
-        st.markdown(f"### 今日 · `{who}`")
         plan_exists = bool(repo.get_current_plan())
         today = repo.get_today_workout()
         plan = today.get("plan") or {}
@@ -238,28 +458,47 @@ def render_sidebar() -> None:
         total = len(sets)
 
         if not plan_exists:
-            st.caption("还没有训练计划")
+            plan_line = "还没有训练计划"
+        elif plan.get("rest"):
+            plan_line = f"休息日 · {today['date']}"
+        else:
+            name = plan.get("name") or "训练"
+            plan_line = f"{name} · {today['date']}"
+
+        st.markdown(
+            f"""
+            <div class="fa-side-status">
+              <div class="fa-user">{html.escape(who)}</div>
+              <div class="fa-plan">{html.escape(plan_line)}</div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+
+        if not plan_exists:
             st.page_link("pages/1_教练对话.py", label="去生成计划", icon="💬")
             st.page_link("pages/3_训练计划.py", label="或手动编辑计划", icon="📋")
         elif plan.get("rest"):
-            st.caption(f"休息日 · {today['date']}")
+            pass
         else:
-            name = plan.get("name") or "训练"
-            st.caption(f"{name} · {today['date']}")
             if total:
                 st.progress(done / total, text=f"{done}/{total} 组")
             else:
                 st.caption("暂无组安排")
             st.page_link("pages/2_今日训练.py", label="继续打卡", icon="🏋️")
 
-        st.divider()
+        st.markdown('<div class="fa-nav-label">训练</div>', unsafe_allow_html=True)
         st.page_link("app.py", label="仪表盘", icon="🏠")
         st.page_link("pages/1_教练对话.py", label="教练对话", icon="💬")
         st.page_link("pages/2_今日训练.py", label="今日训练", icon="🏋️")
         st.page_link("pages/3_训练计划.py", label="训练计划", icon="📋")
+
+        st.markdown('<div class="fa-nav-label">饮食与记录</div>', unsafe_allow_html=True)
         st.page_link("pages/4_饮食管理.py", label="饮食管理", icon="🥗")
         st.page_link("pages/5_历史进度.py", label="历史进度", icon="📅")
         st.page_link("pages/7_每日报告.py", label="每日报告", icon="📝")
+
+        st.markdown('<div class="fa-nav-label">账户</div>', unsafe_allow_html=True)
         st.page_link("pages/6_设置.py", label="设置", icon="⚙️")
 
         key = get_api_key()
@@ -267,7 +506,6 @@ def render_sidebar() -> None:
             st.warning("未配置 API Key")
 
         if st.session_state.get("authenticated"):
-            st.divider()
             if st.button("退出登录", use_container_width=True):
                 logout()
                 st.rerun()

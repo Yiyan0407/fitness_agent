@@ -9,14 +9,14 @@ import streamlit as st
 from streamlit_calendar import calendar
 
 from bootstrap import get_repo, load_env
-from ui import render_sidebar
+from ui import page_header, render_sidebar
 
 st.set_page_config(page_title="历史进度", page_icon="📈", layout="wide")
 load_env()
 render_sidebar()
 repo = get_repo()
 
-st.title("历史进度")
+page_header("历史进度", "日历、体重体脂与动作重量趋势。")
 
 KIND_STYLE = {
     "done": {"color": "#2E7D32", "label": "已完成"},

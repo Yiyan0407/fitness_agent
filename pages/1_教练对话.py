@@ -24,16 +24,11 @@ repo = get_repo()
 st.markdown(
     """
     <style>
-    /* 不要压低 padding-top，否则会被 Streamlit 顶栏挡住 */
     .block-container {
-        padding-top: 4.75rem !important;
-        padding-bottom: 5rem !important;
         max-width: 960px !important;
+        padding-top: 4.5rem !important;
+        padding-bottom: 5rem !important;
     }
-    header[data-testid="stHeader"] {
-        background: rgba(255, 255, 255, 0.92);
-    }
-    /* 按钮文字完整显示，允许换行 */
     div[data-testid="stButton"] > button {
         white-space: normal !important;
         height: auto !important;
@@ -54,15 +49,12 @@ st.markdown(
     .coach-empty {
         text-align: center;
         padding: 3rem 0.5rem 1.5rem;
-        color: #5b6b63;
     }
     .coach-empty h3 {
-        color: #1a2421;
         font-weight: 600;
         margin-bottom: 0.35rem;
     }
     .coach-hint {
-        color: #7a8a82;
         font-size: 0.92rem;
     }
     </style>

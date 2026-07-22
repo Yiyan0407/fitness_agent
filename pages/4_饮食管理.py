@@ -9,14 +9,14 @@ import streamlit as st
 
 from bootstrap import get_repo, load_env
 from agent.energy import deficit_delta_text, energy_balance
-from ui import render_sidebar
+from ui import page_header, render_sidebar
 
 st.set_page_config(page_title="饮食管理", page_icon="🥗", layout="wide")
 load_env()
 render_sidebar()
 repo = get_repo()
 
-st.title("饮食管理")
+page_header("饮食管理", "查看进度、目标与餐次；文字/拍照记账请用教练对话。")
 
 if st.session_state.pop("nutrition_saved_flash", False):
     st.toast("目标已保存")
@@ -24,6 +24,7 @@ if st.session_state.pop("meal_logged_flash", False):
     st.toast("已记录")
 
 st.page_link("pages/1_教练对话.py", label="去教练对话记账", icon="💬")
+st.divider()
 
 target = st.date_input("日期", value=date.today())
 day = repo.get_nutrition_day(target.isoformat())

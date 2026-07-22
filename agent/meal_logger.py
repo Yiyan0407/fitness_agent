@@ -39,12 +39,15 @@ MEAL_PARSE_PROMPT = f"""你是饮食记账助手。用户会用一句话描述�
 - 若用户说了「半份/一小碗/喝了一口」，按比例下调
 """
 
-MEAL_IMAGE_PROMPT = f"""你是饮食营养识别助手。根据餐食图片识别食物，并估算图中可见整份/整盘的营养成分。
+MEAL_IMAGE_PROMPT = f"""你是饮食营养识别助手。根据餐食图片识别食物并估算营养成分。
 {MEAL_JSON_SPEC}
 - name 用中文概括盘中主要食物（2～12 字）
-- 按图中实际份量估，不要按「理想健康餐」低估
+- 默认按图中可见整份/整盘估；不要按「理想健康餐」低估
 - 有包装或饮料时按可见规格/毫升估算
 - 看不清的部分在 notes 里如实写「可见部分估算」
+- 若用户「补充说明」写了实际食用量（如只吃了三分之一/半份/剩了很多/只喝了两口），
+  必须先估整份再按该比例折算后输出 calories/protein_g/carb_g/fat_g；
+  notes 写明「整份约 X，按食用比例折算」
 """
 
 MEAL_IMAGES_DIR = DATA_DIR / "meal_images"
@@ -255,7 +258,10 @@ def parse_meal_image(
     data_url = f"data:{mime};base64,{base64.b64encode(image_bytes).decode('ascii')}"
     user_text = "请识别图中食物并估算营养成分。"
     if hint.strip():
-        user_text += f" 补充说明：{hint.strip()}"
+        user_text += (
+            f" 补充说明：{hint.strip()}"
+            "（若涉及食用比例/份量，请按实际吃下的量记账，不要按整盘未吃完的量。）"
+        )
 
     llm = get_vision_llm(temperature=0.2)
     resp = llm.invoke(

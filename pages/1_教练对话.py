@@ -185,7 +185,7 @@ with t3:
         )
         hint = st.text_input(
             "补充说明",
-            placeholder="可选，如：半份 / 晚餐",
+            placeholder="可选，如：只吃了三分之一 / 半份 / 晚餐",
             key="coach_meal_hint",
         )
         if uploaded is not None:

@@ -26,10 +26,14 @@ BURN_SYSTEM = """你是运动消耗估算助手。根据画像与当日已完成
 
 规则：
 1. 不要计入全天 BMR；EPOC 可轻度计入。
-2. 参考 weight_kg、gender、age、body_fat_pct、height_cm、experience、session_minutes，以及重量×次数与 RPE。
-3. 力量训练粗算：体重越大、组数/负荷越高、RPE 越高，消耗越高；有氧动作可略高于纯力量。
-4. 休息日或无完成组 → 接近 0；不确定也给合理整数。
-5. breakdown 只列主要动作，各项之和应接近 calories_burned。
+2. 参考 weight_kg、gender、age、body_fat_pct、height_cm、experience、session_minutes，以及重量×次数/秒与 RPE。
+3. 必须遵守输入中的 set_conventions（计量约定）：
+   - 哑铃等双手各持：weight_kg 是单手重量；
+   - 单侧动作：reps 是单侧次数，左右做完通常记为 1 组；
+   - measure=seconds 或 qty_unit=秒：reps 表示秒数，按静力时长估算，不要当成次数。
+4. 力量训练粗算：体重越大、组数/负荷越高、RPE 越高，消耗越高；有氧动作可略高于纯力量；计时支撑按时长与紧张度。
+5. 休息日或无完成组 → 接近 0；不确定也给合理整数。
+6. breakdown 只列主要动作，各项之和应接近 calories_burned。
 """
 
 
@@ -39,6 +43,8 @@ def estimate_workout_calories(
     save: bool = True,
 ) -> dict[str, Any]:
     """Ask LLM to estimate burn; optionally write to workouts row."""
+    from db.set_conventions import SET_CONVENTIONS_TEXT
+
     repo = get_repo()
     snapshot = repo.get_day_snapshot(target_date)
     ds = snapshot["date"]
@@ -46,23 +52,19 @@ def estimate_workout_calories(
     workout = repo.get_or_create_workout(date.fromisoformat(ds))
 
     llm = get_llm(temperature=0.2, thinking=False)
+    payload = {
+        "date": ds,
+        "set_conventions": snapshot.get("set_conventions") or SET_CONVENTIONS_TEXT,
+        "profile": snapshot.get("profile"),
+        "plan": snapshot.get("plan"),
+        "workout": snapshot.get("workout"),
+    }
     resp = llm.invoke(
         [
             SystemMessage(content=BURN_SYSTEM),
             HumanMessage(
-                content=(
-                    "请估算当日运动消耗：\n"
-                    + json.dumps(
-                        {
-                            "date": ds,
-                            "profile": snapshot.get("profile"),
-                            "plan": snapshot.get("plan"),
-                            "workout": snapshot.get("workout"),
-                        },
-                        ensure_ascii=False,
-                        default=str,
-                    )
-                )
+                content="请估算当日运动消耗：\n"
+                + json.dumps(payload, ensure_ascii=False, default=str)
             ),
         ]
     )

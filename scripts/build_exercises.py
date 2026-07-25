@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Build data/exercises.json from free-exercise-db + local Chinese overrides.
+"""Build data/exercises.json from free-exercise-db + local Chinese overrides + extras.
 
 Usage:
   python scripts/build_exercises.py
   python scripts/build_exercises.py --source /path/to/exercises.json
+
+Curated bodyweight / variations live in data/exercises_extra.json and are merged last.
 """
 
 from __future__ import annotations
@@ -17,6 +19,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 OUT_PATH = ROOT / "data" / "exercises.json"
 LEGACY_PATH = ROOT / "data" / "exercises.json"
+EXTRA_PATH = ROOT / "data" / "exercises_extra.json"
 CACHE_PATH = ROOT / "data" / "_free_exercises_cache.json"
 
 # Prefer jsDelivr (more reachable than raw.githubusercontent in some networks)
@@ -26,6 +29,23 @@ SOURCE_URL = (
 IMAGE_BASE = (
     "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/"
 )
+
+# 纠正已有烂译（按 id 或当前中文名）
+NAME_FIX_BY_ID: dict[str, str] = {
+    "Superman": "超人式",
+    "Cat_Stretch": "猫牛",
+    "Worlds_Greatest_Stretch": "世界最伟大拉伸",
+    "Pushups": "俯卧撑",
+    "Wide_Pushup": "宽距俯卧撑",
+}
+NAME_FIX_BY_NAME: dict[str, str] = {
+    "自重·Superman": "超人式",
+    "猫牛式": "猫牛",
+    "世界最好拉伸": "世界最伟大拉伸",
+    "俯卧撑宽距": "宽距俯卧撑",
+    "Handstand俯卧撑": "倒立俯卧撑",
+    "Clock俯卧撑": "时钟俯卧撑",
+}
 
 # 旧中文库 id → free-exercise-db id（用于补配图、合并重复）
 LEGACY_ID_TO_FREE: dict[str, str] = {
@@ -656,10 +676,16 @@ def build(source: list[dict], legacy: list[dict]) -> list[dict]:
             "image_url": img,
         }
         if zh_name in seen_zh:
-            prev = out[seen_zh[zh_name]]
-            if not prev.get("image_url") and img:
-                out[seen_zh[zh_name]] = item
-            continue
+            # Keep variation: disambiguate instead of silently dropping
+            base = zh_name
+            suffix = equip if equip and equip not in base else (en_name.split()[0] if en_name else eid)
+            candidate = f"{base}（{suffix}）"
+            n = 2
+            while candidate in seen_zh:
+                candidate = f"{base}（{suffix}{n}）"
+                n += 1
+            item["name"] = candidate
+            zh_name = candidate
         seen_zh[zh_name] = len(out)
         out.append(item)
 
@@ -729,8 +755,81 @@ def build(source: list[dict], legacy: list[dict]) -> list[dict]:
             }
         )
 
+    apply_name_fixes(out)
+    merge_extras(out)
     out.sort(key=lambda x: (x.get("muscle") or "", x.get("name") or ""))
     return out
+
+
+def apply_name_fixes(out: list[dict]) -> None:
+    """Normalize a few known bad Chinese names in place."""
+    used = {str(e.get("name") or "") for e in out}
+    for ex in out:
+        eid = str(ex.get("id") or "")
+        old = str(ex.get("name") or "")
+        new = NAME_FIX_BY_ID.get(eid) or NAME_FIX_BY_NAME.get(old)
+        if not new or new == old:
+            continue
+        if new in used and new != old:
+            # keep unique
+            candidate = f"{new}（{ex.get('equipment') or eid}）"
+            n = 2
+            while candidate in used:
+                candidate = f"{new}（{n}）"
+                n += 1
+            new = candidate
+        used.discard(old)
+        used.add(new)
+        ex["name"] = new
+
+
+def merge_extras(out: list[dict]) -> None:
+    """Append/override from data/exercises_extra.json (local curated bodyweight & variations)."""
+    if not EXTRA_PATH.exists():
+        return
+    try:
+        extras = json.loads(EXTRA_PATH.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return
+    if not isinstance(extras, list):
+        return
+
+    by_id = {str(e.get("id") or ""): i for i, e in enumerate(out) if e.get("id")}
+    used_names = {str(e.get("name") or "") for e in out}
+
+    for raw in extras:
+        if not isinstance(raw, dict):
+            continue
+        eid = str(raw.get("id") or "").strip()
+        name = str(raw.get("name") or "").strip()
+        if not eid or not name:
+            continue
+        item = {
+            "id": eid,
+            "name": name,
+            "name_en": str(raw.get("name_en") or ""),
+            "muscle": str(raw.get("muscle") or "全身"),
+            "equipment": str(raw.get("equipment") or "自重"),
+            "tips": str(raw.get("tips") or ""),
+            "image_url": str(raw.get("image_url") or ""),
+        }
+        if eid in by_id:
+            idx = by_id[eid]
+            prev = out[idx]
+            for key in ("name", "name_en", "muscle", "equipment", "tips"):
+                if item.get(key):
+                    prev[key] = item[key]
+            if item.get("image_url"):
+                prev["image_url"] = item["image_url"]
+            continue
+
+        # Already have this Chinese name (e.g. renamed from free-db) → skip
+        if name in used_names:
+            continue
+
+        by_id[eid] = len(out)
+        used_names.add(name)
+        out.append(item)
 
 
 def main() -> None:

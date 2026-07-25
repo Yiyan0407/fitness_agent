@@ -44,7 +44,8 @@ streamlit run app.py
 - **首页**：今日训练概览、近 7 天完成情况
 - **教练对话**：训练计划 / 改练 / 文字与拍照饮食记账
 - **今日训练**：按计划打卡，记录重量/次数/RPE
-- **训练计划**：手动编辑一周模板；动作库可搜、可看示范图
+- **训练计划**：手动编辑一周模板；可从动作库快捷搜索添加
+- **动作库**：按肌群/器械浏览全部动作，预览示范图与要点
 - **饮食管理**：查看饮食进度与明细
 - **每日报告**：晚上生成当日训练+饮食复盘并入库
 - **历史进度**：日历视图查看训练日，点击日期看当日详情
@@ -53,7 +54,8 @@ streamlit run app.py
 ## 动作库与配图
 
 - 本地库：`data/exercises.json`（约 900+ 动作，含中英文名、肌群、器械、要点、示范图 URL）
-- 配图来自开源 [free-exercise-db](https://github.com/yuhonas/free-exercise-db)（jsDelivr CDN），**查看配图需要联网**
+- 自重/核心变式增量：`data/exercises_extra.json`（改完后需重跑下方 build）
+- 配图来自开源 [free-exercise-db](https://github.com/yuhonas/free-exercise-db)（jsDelivr CDN），**查看配图需要联网**；extras 条目可能无图
 - 设置里的器械条件（如「家庭哑铃杠铃」）会映射到动作库标签，教练筛选可用
 - 重新生成动作库：
 

@@ -217,9 +217,12 @@ def log_set(
     set_index: Optional[int] = None,
     notes: str = "",
     target_date: Optional[str] = None,
+    measure: Optional[str] = None,
 ) -> str:
-    """记录一组已完成的训练（动作名、重量kg、次数、RPE 可选）。
+    """用户口述完成一组时必须调用。不要只口头确认却不写库。
 
+    计量：哑铃 weight_kg=单手；单侧 reps=单侧次数（左右做完通常 1 组）；
+    平板/静蹲等静力传 measure='seconds'，reps 为秒数。
     注意：本工具只追加打卡，不会删除旧动作。换动作请用 replace_today_exercise。
     """
     name = get_repo().resolve_exercise_name(exercise_name)
@@ -232,6 +235,7 @@ def log_set(
         completed=True,
         notes=notes,
         target_date=target_date,
+        measure=measure,
     )
     return _ok({"ok": True, "set": row})
 
@@ -421,6 +425,44 @@ def resync_today_from_plan(
     return _ok(get_repo().resync_today_from_plan(target_date, wipe_completed=wipe_completed))
 
 
+@tool
+def defer_workout(
+    from_date: str,
+    to_date: str,
+    note: str = "",
+) -> str:
+    """本周临时把某天的训练挪到另一天，不改周计划模板。
+
+    典型：「周五太忙，挪到周六」→ from_date=周五, to_date=周六。
+    日期可用 YYYY-MM-DD / 今天 / 明天 / 周一..周日 / monday..sunday（星期名按本周该日）。
+    效果：源日变休息（饮食按休息日），目标日出现原课表（饮食按训练日）；下周模板仍不变。
+    目标日若已有完成组会拒绝。要永久改排期请用 update_plan_day / save_plan，不要用本工具。
+    """
+    try:
+        result = get_repo().defer_workout(from_date, to_date, note=note or "")
+        return _ok(result)
+    except ValueError as exc:
+        return _ok({"ok": False, "error": str(exc)})
+
+
+@tool
+def clear_day_override(
+    target_date: str,
+    clear_pair: bool = True,
+) -> str:
+    """撤销某日的临时课表覆盖（含 defer_workout 产生的延期）。
+
+    默认 clear_pair=true：若该日是延期对的一端，源日与目标日一起恢复周模板。
+    """
+    try:
+        result = get_repo().clear_day_override(
+            target_date, clear_pair=clear_pair, resync=True
+        )
+        return _ok(result)
+    except ValueError as exc:
+        return _ok({"ok": False, "error": str(exc)})
+
+
 # ---------------------------------------------------------------------------
 # History / progress
 # ---------------------------------------------------------------------------
@@ -505,7 +547,8 @@ def log_meal(
     notes: str = "",
     target_date: Optional[str] = None,
 ) -> str:
-    """记录一餐。meal_type 可用：早餐/午餐/晚餐/加餐/蛋白粉/其他。热量和宏量营养可估算后写入。"""
+    """记录一餐到本地库。用户说吃了/喝了某样东西时必须调用（多食物优先用 log_meals）。
+    meal_type：早餐/午餐/晚餐/加餐/蛋白粉/其他。热量与宏量可估算后写入，不要只口头回复。"""
     if not name.strip():
         return _ok({"ok": False, "error": "菜名/食物名不能为空"})
     row = get_repo().log_meal(
@@ -520,6 +563,57 @@ def log_meal(
     )
     summary = get_repo().get_nutrition_day(target_date)
     return _ok({"ok": True, "meal": row, "day": summary})
+
+
+@tool
+def log_meals(meals_json: str, target_date: Optional[str] = None) -> str:
+    """一次写入多条饮食记录。用户一句话里报了多种食物时优先用本工具，不要只回复建议。
+
+    meals_json 为 JSON 数组，每项字段：
+    name(必填), meal_type(早餐/午餐/晚餐/加餐/蛋白粉/其他), calories, protein_g, carb_g, fat_g, notes。
+    示例：[{"name":"牛奶半杯","meal_type":"晚餐","calories":82,"protein_g":4,"carb_g":6,"fat_g":4},
+           {"name":"西红柿炒蛋","meal_type":"晚餐","calories":180,"protein_g":10,"carb_g":8,"fat_g":12}]
+    热量宏量自行按常见份量估算后写入。"""
+    try:
+        data = json.loads(meals_json)
+    except json.JSONDecodeError as exc:
+        return _ok({"ok": False, "error": f"meals_json 解析失败: {exc}"})
+    if not isinstance(data, list) or not data:
+        return _ok({"ok": False, "error": "meals_json 必须是非空数组"})
+
+    repo = get_repo()
+    saved: list[dict[str, Any]] = []
+    errors: list[str] = []
+    for i, item in enumerate(data):
+        if not isinstance(item, dict):
+            errors.append(f"第{i + 1}项不是对象")
+            continue
+        name = str(item.get("name") or "").strip()
+        if not name:
+            errors.append(f"第{i + 1}项缺少 name")
+            continue
+        row = repo.log_meal(
+            name=name,
+            meal_type=str(item.get("meal_type") or "正餐"),
+            calories=item.get("calories"),
+            protein_g=item.get("protein_g"),
+            carb_g=item.get("carb_g"),
+            fat_g=item.get("fat_g"),
+            notes=str(item.get("notes") or ""),
+            target_date=target_date,
+        )
+        saved.append(row)
+
+    summary = repo.get_nutrition_day(target_date)
+    return _ok(
+        {
+            "ok": bool(saved),
+            "saved_count": len(saved),
+            "meals": saved,
+            "errors": errors,
+            "day": summary,
+        }
+    )
 
 
 @tool
@@ -585,7 +679,7 @@ def log_body_metrics(
     target_date: Optional[str] = None,
     also_update_profile: bool = True,
 ) -> str:
-    """记录或更新某日体重/体脂。默认同时写回画像中的当前体重/体脂。"""
+    """用户报了体重/体脂数字时必须调用。默认同时写回画像中的当前体重/体脂。"""
     row = get_repo().log_body_metrics(
         weight_kg=weight_kg,
         body_fat_pct=body_fat_pct,
@@ -829,6 +923,8 @@ ALL_TOOLS = [
     drop_last_incomplete_set,
     update_workout,
     resync_today_from_plan,
+    defer_workout,
+    clear_day_override,
     # history / analysis
     get_recent_history,
     get_exercise_progress,
@@ -844,6 +940,7 @@ ALL_TOOLS = [
     get_nutrition_day,
     get_recent_nutrition,
     log_meal,
+    log_meals,
     update_meal,
     delete_meal,
     # body

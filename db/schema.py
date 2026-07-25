@@ -99,6 +99,7 @@ CREATE TABLE IF NOT EXISTS sets (
     set_index INTEGER NOT NULL DEFAULT 1,
     weight_kg REAL,
     reps INTEGER,
+    measure TEXT NOT NULL DEFAULT 'reps',
     rpe REAL,
     completed INTEGER NOT NULL DEFAULT 0,
     notes TEXT NOT NULL DEFAULT '',
@@ -158,6 +159,17 @@ CREATE TABLE IF NOT EXISTS body_metrics (
     updated_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
 );
 
+CREATE TABLE IF NOT EXISTS day_overrides (
+    date TEXT PRIMARY KEY,
+    rest INTEGER NOT NULL DEFAULT 0,
+    name TEXT NOT NULL DEFAULT '',
+    exercises_json TEXT NOT NULL DEFAULT '[]',
+    note TEXT NOT NULL DEFAULT '',
+    deferred_from TEXT,
+    deferred_to TEXT,
+    created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime'))
+);
+
 CREATE INDEX IF NOT EXISTS idx_sets_workout ON sets(workout_id);
 CREATE INDEX IF NOT EXISTS idx_workouts_date ON workouts(date);
 CREATE INDEX IF NOT EXISTS idx_chat_created ON chat_messages(created_at);
@@ -189,6 +201,12 @@ def init_db(db_path: Path | None = None) -> None:
     conn = get_connection(db_path)
     try:
         conn.executescript(SCHEMA_SQL)
+        # Existing installs: add sets.measure if missing
+        set_cols = {row[1] for row in conn.execute("PRAGMA table_info(sets)").fetchall()}
+        if "measure" not in set_cols:
+            conn.execute(
+                "ALTER TABLE sets ADD COLUMN measure TEXT NOT NULL DEFAULT 'reps'"
+            )
         row = conn.execute("SELECT id FROM profile WHERE id = 1").fetchone()
         if row is None:
             conn.execute(

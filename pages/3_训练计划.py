@@ -20,6 +20,10 @@ page_header(
     "训练计划",
     "手动编辑一周模板；保存后「今日训练」会按新计划同步（未开始打卡时）。",
 )
+st.caption(
+    "计量：哑铃重量=单手；单侧次数=每侧；静力可把次数写成秒（如 45 或 45s），"
+    "或在备注写 measure=seconds。"
+)
 
 
 def empty_week() -> dict:
@@ -145,61 +149,7 @@ with top2:
             st.session_state.pop(f"pick_{key}", None)
         st.rerun()
 with top3:
-    if st.button("打开动作库", width="stretch"):
-        st.session_state["show_exercise_lib"] = not st.session_state.get(
-            "show_exercise_lib", False
-        )
-
-if st.session_state.get("show_exercise_lib"):
-    st.subheader("动作库")
-    lib_all = repo.list_exercises()
-    muscles = sorted({e.get("muscle") or "" for e in lib_all if e.get("muscle")})
-    equips = sorted({e.get("equipment") or "" for e in lib_all if e.get("equipment")})
-    f1, f2, f3 = st.columns(3)
-    q = f1.text_input("搜索动作", placeholder="深蹲 / squat / 胸", key="lib_q")
-    muscle_f = f2.selectbox("肌群", ["全部"] + muscles, key="lib_muscle")
-    equip_f = f3.selectbox("器械", ["全部"] + equips, key="lib_equip")
-    filtered = repo.list_exercises(
-        query=q or "",
-        muscle="" if muscle_f == "全部" else muscle_f,
-        equipment="" if equip_f == "全部" else equip_f,
-    )
-    st.caption(f"共 {len(filtered)} 个动作（展示前 60 个）")
-    preview_name = st.selectbox(
-        "预览动作",
-        options=[""] + [e["name"] for e in filtered[:60]],
-        key="lib_preview_name",
-    )
-    if preview_name:
-        ex = next((e for e in filtered if e["name"] == preview_name), None)
-        if ex:
-            c_img, c_info = st.columns([1, 2])
-            with c_img:
-                if ex.get("image_url"):
-                    try:
-                        st.image(ex["image_url"], width=220)
-                    except Exception:
-                        st.caption("配图加载失败（需联网）")
-                else:
-                    st.caption("暂无配图")
-            with c_info:
-                st.markdown(f"**{ex['name']}**")
-                if ex.get("name_en"):
-                    st.caption(ex["name_en"])
-                st.write(
-                    f"肌群：{ex.get('muscle') or '-'} · 器械：{ex.get('equipment') or '-'}"
-                )
-                if ex.get("tips"):
-                    st.caption(ex["tips"])
-                if st.button("添加此动作到当前编辑日", key="lib_add_preview"):
-                    st.session_state["lib_pending_add"] = ex["name"]
-                    st.rerun()
-    cols = ["name", "muscle", "equipment", "tips"]
-    st.dataframe(
-        pd.DataFrame([{c: e.get(c) for c in cols} for e in filtered[:60]]),
-        width="stretch",
-        hide_index=True,
-    )
+    st.page_link("pages/8_动作库.py", label="浏览动作库", icon="📖")
 
 day_labels = [f"{WEEKDAY_CN[k]}（{k}）" for k in WEEKDAY_KEYS]
 selected_label = st.radio("选择要编辑的一天", day_labels, horizontal=True)
@@ -235,8 +185,12 @@ else:
         column_config={
             "name": st.column_config.TextColumn("动作名称", required=True, width="medium"),
             "sets": st.column_config.NumberColumn("组数", min_value=1, max_value=10, step=1),
-            "reps": st.column_config.TextColumn("次数", help="如 8 或 6-8"),
-            "weight_kg": st.column_config.NumberColumn("重量kg", min_value=0.0, step=1.0),
+            "reps": st.column_config.TextColumn(
+                "次数/秒", help="普通动作填次数如 8 或 6-8；平板等静力填秒如 45 或 45s"
+            ),
+            "weight_kg": st.column_config.NumberColumn(
+                "重量kg", min_value=0.0, step=1.0, help="哑铃等双手各持时填单手重量"
+            ),
             "notes": st.column_config.TextColumn("备注"),
         },
         key=f"editor_{day_key}",

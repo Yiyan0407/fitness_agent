@@ -492,6 +492,7 @@ def render_sidebar() -> None:
         st.page_link("pages/1_教练对话.py", label="教练对话", icon="💬")
         st.page_link("pages/2_今日训练.py", label="今日训练", icon="🏋️")
         st.page_link("pages/3_训练计划.py", label="训练计划", icon="📋")
+        st.page_link("pages/8_动作库.py", label="动作库", icon="📖")
 
         st.markdown('<div class="fa-nav-label">饮食与记录</div>', unsafe_allow_html=True)
         st.page_link("pages/4_饮食管理.py", label="饮食管理", icon="🥗")

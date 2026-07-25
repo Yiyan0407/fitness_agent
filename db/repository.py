@@ -11,6 +11,13 @@ from typing import Any
 
 from db.schema import EXERCISES_PATH, get_connection, init_db
 from db.equipment import resolve_equipment_filter
+from db.set_conventions import (
+    SET_CONVENTIONS_TEXT,
+    annotate_set,
+    annotate_sets,
+    infer_measure,
+    parse_reps_value,
+)
 
 
 WEEKDAY_KEYS = [
@@ -310,12 +317,153 @@ class Repository:
             self.sync_today_from_plan_if_idle()
         return {"ok": True, "weekday": key, "day": day, "plan": saved}
 
+    # --- day overrides (one-off schedule, does not change weekly template) ---
+
+    def get_day_override(self, target: date | str | None = None) -> dict[str, Any] | None:
+        ds = self._to_date_str(target)
+        row = self.conn.execute(
+            "SELECT * FROM day_overrides WHERE date = ?", (ds,)
+        ).fetchone()
+        if not row:
+            return None
+        data = dict(row)
+        try:
+            exercises = json.loads(data.get("exercises_json") or "[]")
+        except json.JSONDecodeError:
+            exercises = []
+        if not isinstance(exercises, list):
+            exercises = []
+        return {
+            "date": data["date"],
+            "rest": bool(data.get("rest")),
+            "name": data.get("name") or "",
+            "exercises": exercises,
+            "note": data.get("note") or "",
+            "deferred_from": data.get("deferred_from"),
+            "deferred_to": data.get("deferred_to"),
+            "created_at": data.get("created_at"),
+        }
+
+    def set_day_override(
+        self,
+        target: date | str,
+        *,
+        rest: bool,
+        name: str = "",
+        exercises: list[dict[str, Any]] | None = None,
+        note: str = "",
+        deferred_from: str | None = None,
+        deferred_to: str | None = None,
+    ) -> dict[str, Any]:
+        ds = self._to_date_str(target)
+        payload = json.dumps(exercises or [], ensure_ascii=False)
+        self.conn.execute(
+            """
+            INSERT INTO day_overrides (
+                date, rest, name, exercises_json, note, deferred_from, deferred_to
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(date) DO UPDATE SET
+                rest = excluded.rest,
+                name = excluded.name,
+                exercises_json = excluded.exercises_json,
+                note = excluded.note,
+                deferred_from = excluded.deferred_from,
+                deferred_to = excluded.deferred_to
+            """,
+            (
+                ds,
+                1 if rest else 0,
+                name or ("休息" if rest else ""),
+                payload,
+                note or "",
+                deferred_from,
+                deferred_to,
+            ),
+        )
+        self.conn.commit()
+        return self.get_day_override(ds) or {"date": ds, "rest": rest}
+
+    def clear_day_override(
+        self,
+        target: date | str,
+        *,
+        clear_pair: bool = True,
+        resync: bool = True,
+    ) -> dict[str, Any]:
+        """Remove override for a date; optionally clear the linked defer partner too."""
+        ds = self._to_date_str(target)
+        ov = self.get_day_override(ds)
+        cleared = [ds]
+        partner: str | None = None
+        if ov and clear_pair:
+            partner = ov.get("deferred_to") or ov.get("deferred_from")
+            if partner and partner != ds:
+                cleared.append(str(partner))
+
+        for d in cleared:
+            self.conn.execute("DELETE FROM day_overrides WHERE date = ?", (d,))
+        self.conn.commit()
+
+        synced: list[dict[str, Any]] = []
+        if resync:
+            for d in cleared:
+                result = self.resync_today_from_plan(d, wipe_completed=False)
+                synced.append({"date": d, **result})
+
+        return {"ok": True, "cleared": cleared, "resync": synced}
+
+    @staticmethod
+    def _to_date_str(target: date | str | None) -> str:
+        if target is None:
+            return date.today().isoformat()
+        if isinstance(target, date):
+            return target.isoformat()
+        raw = str(target).strip()
+        if not raw:
+            return date.today().isoformat()
+        return date.fromisoformat(raw[:10]).isoformat()
+
+    def resolve_calendar_date(self, raw: str | None) -> date:
+        """Parse YYYY-MM-DD / 今天 / 明天 / 周五… into a calendar date (this week for weekday)."""
+        text = (raw or "").strip()
+        if not text:
+            return date.today()
+        low = text.lower()
+        if low in ("今天", "今日", "today"):
+            return date.today()
+        if low in ("明天", "明日", "tomorrow"):
+            return date.today() + timedelta(days=1)
+        if low in ("昨天", "昨日", "yesterday"):
+            return date.today() - timedelta(days=1)
+        try:
+            return date.fromisoformat(text[:10])
+        except ValueError:
+            pass
+        key = self._normalize_weekday(text)
+        today = date.today()
+        delta = WEEKDAY_KEYS.index(key) - today.weekday()
+        return today + timedelta(days=delta)
+
     def get_plan_for_date(self, target: date | None = None) -> dict[str, Any] | None:
+        target = target or date.today()
+        key = WEEKDAY_KEYS[target.weekday()]
+        override = self.get_day_override(target)
+        if override is not None:
+            return {
+                "date": target.isoformat(),
+                "weekday": key,
+                "rest": bool(override.get("rest")),
+                "name": override.get("name") or "",
+                "exercises": list(override.get("exercises") or []),
+                "override": True,
+                "note": override.get("note") or "",
+                "deferred_from": override.get("deferred_from"),
+                "deferred_to": override.get("deferred_to"),
+            }
+
         plan = self.get_current_plan()
         if not plan:
             return None
-        target = target or date.today()
-        key = WEEKDAY_KEYS[target.weekday()]
         day = plan["content"].get(key) or plan["content"].get(WEEKDAY_CN[key])
         if day is None:
             return {"date": target.isoformat(), "weekday": key, "rest": True, "exercises": []}
@@ -326,8 +474,87 @@ class Repository:
                 "rest": bool(day.get("rest", False)),
                 "name": day.get("name", ""),
                 "exercises": day.get("exercises", []),
+                "override": False,
             }
         return {"date": target.isoformat(), "weekday": key, "rest": True, "exercises": []}
+
+    def defer_workout(
+        self,
+        from_date: date | str,
+        to_date: date | str,
+        *,
+        note: str = "",
+    ) -> dict[str, Any]:
+        """Move this week's session from from_date to to_date without changing the weekly template."""
+        src = from_date if isinstance(from_date, date) else self.resolve_calendar_date(str(from_date))
+        dst = to_date if isinstance(to_date, date) else self.resolve_calendar_date(str(to_date))
+        if src == dst:
+            raise ValueError("源日期与目标日期不能相同")
+
+        src_plan = self.get_plan_for_date(src)
+        if not src_plan or src_plan.get("rest") or not (src_plan.get("exercises") or []):
+            raise ValueError(f"{src.isoformat()} 没有可挪动的训练课（休息日或无动作）")
+
+        dst_workout = self.get_or_create_workout(dst)
+        dst_sets = self.get_sets(dst_workout["id"])
+        if any(s.get("completed") for s in dst_sets):
+            raise ValueError(
+                f"{dst.isoformat()} 已有完成组，无法覆盖。请先清空或换一天。"
+            )
+
+        exercises = list(src_plan.get("exercises") or [])
+        session_name = (src_plan.get("name") or "").strip() or "延期训练"
+        note_text = (note or "").strip() or f"由 {src.isoformat()} 临时挪来"
+
+        self.set_day_override(
+            dst,
+            rest=False,
+            name=session_name,
+            exercises=exercises,
+            note=note_text,
+            deferred_from=src.isoformat(),
+            deferred_to=None,
+        )
+        self.set_day_override(
+            src,
+            rest=True,
+            name="休息（延期）",
+            exercises=[],
+            note=(note or "").strip() or f"已临时挪到 {dst.isoformat()}",
+            deferred_from=None,
+            deferred_to=dst.isoformat(),
+        )
+
+        # Clear source day sets (now rest)
+        src_workout = self.get_or_create_workout(src)
+        self.conn.execute("DELETE FROM sets WHERE workout_id = ?", (src_workout["id"],))
+        self.conn.execute(
+            "UPDATE workouts SET status = ?, notes = ? WHERE id = ?",
+            ("skipped", f"延期至 {dst.isoformat()}", src_workout["id"]),
+        )
+        self.conn.commit()
+
+        # Rebuild destination from override
+        if dst_sets:
+            self.conn.execute("DELETE FROM sets WHERE workout_id = ?", (dst_workout["id"],))
+            self.conn.execute(
+                "UPDATE workouts SET status = 'planned' WHERE id = ?",
+                (dst_workout["id"],),
+            )
+            self.conn.commit()
+        seeded = self.ensure_today_sets_from_plan(dst, force=True)
+
+        return {
+            "ok": True,
+            "from_date": src.isoformat(),
+            "to_date": dst.isoformat(),
+            "session_name": session_name,
+            "exercise_count": len(exercises),
+            "from_plan": self.get_plan_for_date(src),
+            "to_plan": self.get_plan_for_date(dst),
+            "to_sets": seeded,
+            "note": "周模板未改；饮食目标会随这两天的训练/休息覆盖切换。",
+        }
 
     # --- workouts / sets ---
 
@@ -395,7 +622,7 @@ class Repository:
             "SELECT * FROM sets WHERE workout_id = ? ORDER BY exercise_name, set_index, id",
             (workout_id,),
         ).fetchall()
-        return [dict(r) for r in rows]
+        return annotate_sets([dict(r) for r in rows])
 
     def log_set(
         self,
@@ -407,6 +634,7 @@ class Repository:
         completed: bool = True,
         notes: str = "",
         target_date: str | None = None,
+        measure: str | None = None,
     ) -> dict[str, Any]:
         target = date.fromisoformat(target_date) if target_date else date.today()
         workout = self.get_or_create_workout(target)
@@ -419,11 +647,13 @@ class Repository:
                 (workout["id"], exercise_name),
             ).fetchone()
             set_index = int(row["mx"]) + 1
+        m = infer_measure(exercise_name, explicit=measure)
         cur = self.conn.execute(
             """
             INSERT INTO sets (
-                workout_id, exercise_name, set_index, weight_kg, reps, rpe, completed, notes
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                workout_id, exercise_name, set_index, weight_kg, reps, measure,
+                rpe, completed, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
             (
                 workout["id"],
@@ -431,6 +661,7 @@ class Repository:
                 set_index,
                 weight_kg,
                 reps,
+                m,
                 rpe,
                 1 if completed else 0,
                 notes or "",
@@ -442,7 +673,7 @@ class Repository:
         )
         self.conn.commit()
         row = self.conn.execute("SELECT * FROM sets WHERE id = ?", (cur.lastrowid,)).fetchone()
-        return dict(row)
+        return annotate_set(dict(row)) if row else {}
 
     def update_set(self, set_id: int, **fields: Any) -> dict[str, Any]:
         allowed = {
@@ -450,6 +681,7 @@ class Repository:
             "set_index",
             "weight_kg",
             "reps",
+            "measure",
             "rpe",
             "completed",
             "notes",
@@ -457,9 +689,14 @@ class Repository:
         updates = {k: v for k, v in fields.items() if k in allowed and v is not None}
         if "completed" in updates:
             updates["completed"] = 1 if updates["completed"] else 0
+        if "measure" in updates:
+            updates["measure"] = infer_measure(
+                str(updates.get("exercise_name") or ""),
+                explicit=str(updates["measure"]),
+            )
         if not updates:
             row = self.conn.execute("SELECT * FROM sets WHERE id = ?", (set_id,)).fetchone()
-            return dict(row) if row else {}
+            return annotate_set(dict(row)) if row else {}
         sets_sql = ", ".join(f"{k} = ?" for k in updates)
         self.conn.execute(
             f"UPDATE sets SET {sets_sql} WHERE id = ?",
@@ -467,7 +704,7 @@ class Repository:
         )
         self.conn.commit()
         row = self.conn.execute("SELECT * FROM sets WHERE id = ?", (set_id,)).fetchone()
-        return dict(row)
+        return annotate_set(dict(row)) if row else {}
 
     def _seed_sets_from_day_plan(self, workout_id: int, day: dict[str, Any]) -> None:
         for ex in day.get("exercises") or []:
@@ -477,25 +714,19 @@ class Repository:
             sets_count = int(ex.get("sets", 3))
             reps = ex.get("reps")
             weight = ex.get("weight_kg") or ex.get("weight")
-            reps_val = None
-            if reps is not None:
-                if isinstance(reps, int):
-                    reps_val = reps
-                else:
-                    text = str(reps)
-                    if text.isdigit():
-                        reps_val = int(text)
-                    elif "-" in text:
-                        # "6-8" -> use lower bound as default target
-                        left = text.split("-", 1)[0].strip()
-                        if left.isdigit():
-                            reps_val = int(left)
+            reps_val = parse_reps_value(reps)
+            measure = infer_measure(
+                name,
+                explicit=str(ex.get("measure") or "") or None,
+                reps_hint=reps,
+            )
             for i in range(1, sets_count + 1):
                 self.conn.execute(
                     """
                     INSERT INTO sets (
-                        workout_id, exercise_name, set_index, weight_kg, reps, completed, notes
-                    ) VALUES (?, ?, ?, ?, ?, 0, ?)
+                        workout_id, exercise_name, set_index, weight_kg, reps,
+                        measure, completed, notes
+                    ) VALUES (?, ?, ?, ?, ?, ?, 0, ?)
                     """,
                     (
                         workout_id,
@@ -503,6 +734,7 @@ class Repository:
                         i,
                         weight,
                         reps_val,
+                        measure,
                         ex.get("notes", ""),
                     ),
                 )
@@ -1198,19 +1430,31 @@ class Repository:
             weight_kg = row["last_w"]
         if reps is None:
             reps = row["last_r"]
+        measure = infer_measure(exercise_name)
+        # Prefer last set's measure if present
+        last_m = self.conn.execute(
+            """
+            SELECT measure FROM sets
+            WHERE workout_id = ? AND exercise_name = ?
+            ORDER BY set_index DESC, id DESC LIMIT 1
+            """,
+            (workout_id, exercise_name),
+        ).fetchone()
+        if last_m and last_m["measure"]:
+            measure = str(last_m["measure"])
         cur = self.conn.execute(
             """
             INSERT INTO sets (
-                workout_id, exercise_name, set_index, weight_kg, reps, completed, notes
-            ) VALUES (?, ?, ?, ?, ?, 0, ?)
+                workout_id, exercise_name, set_index, weight_kg, reps, measure, completed, notes
+            ) VALUES (?, ?, ?, ?, ?, ?, 0, ?)
             """,
-            (workout_id, exercise_name, set_index, weight_kg, reps, notes or ""),
+            (workout_id, exercise_name, set_index, weight_kg, reps, measure, notes or ""),
         )
         self.conn.commit()
         out = self.conn.execute(
             "SELECT * FROM sets WHERE id = ?", (cur.lastrowid,)
         ).fetchone()
-        return dict(out)
+        return annotate_set(dict(out)) if out else {}
 
     def get_day_detail(self, target_date: str | None = None) -> dict[str, Any]:
         """Read-only day view for calendar (does not seed planned sets)."""
@@ -1711,12 +1955,17 @@ class Repository:
                     "set_index": s.get("set_index"),
                     "weight_kg": s.get("weight_kg"),
                     "reps": s.get("reps"),
+                    "measure": s.get("measure") or infer_measure(str(s.get("exercise_name") or "")),
+                    "qty_unit": s.get("qty_unit"),
+                    "display": s.get("display"),
                     "rpe": s.get("rpe"),
+                    "weight_means": "单手重量（双手各持器械时）；杠铃/器械为总负荷",
                 }
             )
         workout = detail.get("workout") or {}
         return {
             "date": ds,
+            "set_conventions": SET_CONVENTIONS_TEXT,
             "profile": {
                 "goal": profile.get("goal"),
                 "goal_detail": profile.get("goal_detail"),

@@ -17,8 +17,13 @@ load_env()
 render_sidebar()
 repo = get_repo()
 
-page_header("今日训练", "按组打卡、调重量次数，练完可估算消耗。")
+page_header("今日训练", "按组打卡、调重量次数（或秒），练完可估算消耗。")
 
+st.caption(
+    "计量约定：哑铃等双手各持 → 重量填**单手**；"
+    "保加利亚蹲等单侧 → 次数为**单侧**，左右做完算 1 组；"
+    "平板支撑/静蹲等 → 按**秒**计。"
+)
 jump = st.session_state.pop("workout_jump_date", None)
 if jump:
     try:
@@ -89,7 +94,7 @@ def _render_feel_choices(prompt: dict, *, key_prefix: str) -> None:
     sid = int(prompt["set_id"])
     st.caption(
         f"{prompt.get('exercise_name')} · 第 {prompt.get('set_index')} 组 · "
-        f"{prompt.get('weight_kg') or '-'} kg × {prompt.get('reps') or '-'}"
+        f"{prompt.get('display') or ((str(prompt.get('weight_kg') or '-') + ' kg × ' + str(prompt.get('reps') or '-')))}"
     )
     for val, title, desc in FEEL_OPTIONS:
         if st.button(
@@ -201,17 +206,21 @@ else:
             weight = float(focus["weight_kg"] or 0)
             reps = int(focus["reps"] or 0)
             later_n = len(pending_sets) - 1
+            is_timed = (focus.get("measure") or "") == "seconds"
+            qty_label = "秒数" if is_timed else "次数"
+            weight_label = "重量 kg（单手/总重见约定）"
 
             st.caption(
                 f"第 {focus['set_index']} 组"
+                + (" · 计时" if is_timed else "")
                 + (f" · 后面还有 {later_n} 组" if later_n else "")
             )
             with st.form(f"set_form_{sid}", clear_on_submit=False):
                 f1, f2 = st.columns(2)
                 w_in = f1.number_input(
-                    "重量 kg", min_value=0.0, value=weight, step=1.0, format="%.1f"
+                    weight_label, min_value=0.0, value=weight, step=1.0, format="%.1f"
                 )
-                r_in = f2.number_input("次数", min_value=0, value=reps, step=1)
+                r_in = f2.number_input(qty_label, min_value=0, value=reps, step=1)
                 sync_rest = st.checkbox("同步到本动作剩余组", value=True)
                 c1, c2 = st.columns([3, 1])
                 do_complete = c1.form_submit_button(
@@ -221,18 +230,25 @@ else:
 
             if do_complete:
                 w_val, r_val = float(w_in), int(r_in)
-                repo.update_set(sid, weight_kg=w_val, reps=r_val)
+                repo.update_set(
+                    sid,
+                    weight_kg=w_val,
+                    reps=r_val,
+                    measure="seconds" if is_timed else "reps",
+                )
                 if sync_rest:
                     repo.apply_to_remaining_sets(
                         workout["id"], ex_name, weight_kg=w_val, reps=r_val
                     )
-                repo.complete_set(sid, weight_kg=w_val, reps=r_val)
+                done_row = repo.complete_set(sid, weight_kg=w_val, reps=r_val)
                 st.session_state["rpe_prompt"] = {
                     "set_id": sid,
                     "set_index": focus["set_index"],
                     "exercise_name": ex_name,
                     "weight_kg": w_val,
                     "reps": r_val,
+                    "measure": done_row.get("measure"),
+                    "display": done_row.get("display"),
                 }
                 st.session_state["rest_until"] = time.time() + 90
                 st.rerun()
@@ -298,7 +314,7 @@ else:
                     feel = _feel_label(s.get("rpe"))
                     line = (
                         f"第 {s['set_index']} 组 · "
-                        f"{s.get('weight_kg') or '-'} kg × {s.get('reps') or '-'} · {feel}"
+                        f"{s.get('display') or ((str(s.get('weight_kg') or '-') + ' kg × ' + str(s.get('reps') or '-')))} · {feel}"
                     )
                     d1, d2 = st.columns([4, 1])
                     d1.write(line)

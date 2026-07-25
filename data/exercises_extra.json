@@ -1,0 +1,434 @@
+[
+  {
+    "id": "extra_bird_dog",
+    "name": "鸟狗",
+    "name_en": "Bird Dog",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "四点支撑，对侧手脚伸直，骨盆保持水平，避免塌腰",
+    "image_url": ""
+  },
+  {
+    "id": "extra_hollow_hold",
+    "name": "空心支撑",
+    "name_en": "Hollow Body Hold",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "下背贴地，肩胛离地，手脚伸长呈香蕉形，收紧腹肌",
+    "image_url": ""
+  },
+  {
+    "id": "extra_dead_bug_opposite",
+    "name": "死虫（对侧）",
+    "name_en": "Dead Bug Opposite",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "仰卧，对侧手脚缓慢伸展，下背始终贴地",
+    "image_url": ""
+  },
+  {
+    "id": "extra_superman",
+    "name": "超人式",
+    "name_en": "Superman",
+    "muscle": "下背",
+    "equipment": "自重",
+    "tips": "俯卧同时抬起手脚，顶峰稍停，避免过度仰头",
+    "image_url": ""
+  },
+  {
+    "id": "extra_cat_cow",
+    "name": "猫牛",
+    "name_en": "Cat Cow",
+    "muscle": "活动度",
+    "equipment": "自重",
+    "tips": "四点支撑，吸气塌腰抬头（牛），呼气拱背低头（猫）",
+    "image_url": ""
+  },
+  {
+    "id": "extra_wide_pushup",
+    "name": "宽距俯卧撑",
+    "name_en": "Wide Grip Push-Up",
+    "muscle": "胸",
+    "equipment": "自重",
+    "tips": "手距宽于肩，更强调胸大肌外侧与肩；肘约45度",
+    "image_url": ""
+  },
+  {
+    "id": "extra_pike_pushup",
+    "name": "派克俯卧撑",
+    "name_en": "Pike Push-Up",
+    "muscle": "肩",
+    "equipment": "自重",
+    "tips": "臀抬高呈倒V，屈肘让头向地面靠近，主练三角肌前束",
+    "image_url": ""
+  },
+  {
+    "id": "extra_knee_pushup",
+    "name": "跪姿俯卧撑",
+    "name_en": "Knee Push-Up",
+    "muscle": "胸",
+    "equipment": "自重",
+    "tips": "膝盖着地减负，身体从头到膝成直线，适合入门",
+    "image_url": ""
+  },
+  {
+    "id": "extra_wall_pushup",
+    "name": "墙俯卧撑",
+    "name_en": "Wall Push-Up",
+    "muscle": "胸",
+    "equipment": "自重",
+    "tips": "对墙站立双手撑墙屈伸，负荷最低，适合康复与入门",
+    "image_url": ""
+  },
+  {
+    "id": "extra_diamond_pushup_alias",
+    "name": "窄距俯卧撑",
+    "name_en": "Close Grip Push-Up",
+    "muscle": "肱三头",
+    "equipment": "自重",
+    "tips": "双手靠近呈菱形或窄距，肘贴身，主练三头",
+    "image_url": ""
+  },
+  {
+    "id": "extra_decline_pushup",
+    "name": "下斜俯卧撑（脚高）",
+    "name_en": "Decline Push-Up Feet Elevated",
+    "muscle": "上胸",
+    "equipment": "自重",
+    "tips": "脚放高处，手撑地，更强调上胸与肩",
+    "image_url": ""
+  },
+  {
+    "id": "extra_wall_sit",
+    "name": "靠墙静蹲",
+    "name_en": "Wall Sit",
+    "muscle": "股四头",
+    "equipment": "自重",
+    "tips": "背贴墙屈膝约90度静蹲计时，膝盖不超过脚尖过多",
+    "image_url": ""
+  },
+  {
+    "id": "extra_cossack_squat",
+    "name": "哥萨克深蹲",
+    "name_en": "Cossack Squat",
+    "muscle": "股四头",
+    "equipment": "自重",
+    "tips": "宽站距侧向下蹲，另一腿伸直；练单侧腿与髋活动度",
+    "image_url": ""
+  },
+  {
+    "id": "extra_pistol_squat",
+    "name": "自重手枪蹲",
+    "name_en": "Pistol Squat",
+    "muscle": "股四头",
+    "equipment": "自重",
+    "tips": "单腿深蹲，另一腿前伸；可扶物辅助，注意膝盖轨迹",
+    "image_url": ""
+  },
+  {
+    "id": "extra_shrimp_squat",
+    "name": "虾式深蹲",
+    "name_en": "Shrimp Squat",
+    "muscle": "股四头",
+    "equipment": "自重",
+    "tips": "单腿蹲，后脚抓住靠近臀部；比手枪蹲更偏腘绳与平衡",
+    "image_url": ""
+  },
+  {
+    "id": "extra_reverse_lunge",
+    "name": "反向弓步",
+    "name_en": "Reverse Lunge",
+    "muscle": "股四头",
+    "equipment": "自重",
+    "tips": "向后撤步下蹲，前膝大致在脚上方，对膝更友好",
+    "image_url": ""
+  },
+  {
+    "id": "extra_walking_lunge",
+    "name": "行走弓步",
+    "name_en": "Walking Lunge",
+    "muscle": "股四头",
+    "equipment": "自重",
+    "tips": "连续向前弓步行走，躯干直立，步幅均匀",
+    "image_url": ""
+  },
+  {
+    "id": "extra_nordic_curl",
+    "name": "北欧腿弯举",
+    "name_en": "Nordic Hamstring Curl",
+    "muscle": "腘绳肌",
+    "equipment": "自重",
+    "tips": "跪姿脚固定，身体缓慢前倾再拉回；偏心控制腘绳肌",
+    "image_url": ""
+  },
+  {
+    "id": "extra_glute_bridge_march",
+    "name": "臀桥踏步",
+    "name_en": "Glute Bridge March",
+    "muscle": "臀",
+    "equipment": "自重",
+    "tips": "臀桥顶峰交替抬膝，保持骨盆不歪",
+    "image_url": ""
+  },
+  {
+    "id": "extra_hip_thrust_bw",
+    "name": "自重臀推",
+    "name_en": "Bodyweight Hip Thrust",
+    "muscle": "臀",
+    "equipment": "自重",
+    "tips": "上背靠凳，屈膝蹬地顶髋，顶峰挤臀，避免过度塌腰",
+    "image_url": ""
+  },
+  {
+    "id": "extra_burpee",
+    "name": "波比",
+    "name_en": "Burpee",
+    "muscle": "全身",
+    "equipment": "自重",
+    "tips": "下蹲撑地、后踢成平板、俯卧撑可选、跳起拍手；控制节奏",
+    "image_url": ""
+  },
+  {
+    "id": "extra_bear_crawl",
+    "name": "熊爬",
+    "name_en": "Bear Crawl",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "四肢着地膝离地，对侧手脚爬行，背平核心收紧",
+    "image_url": ""
+  },
+  {
+    "id": "extra_crab_walk",
+    "name": "螃蟹走",
+    "name_en": "Crab Walk",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "仰面手脚撑地臀离地前后爬，练肩后侧与核心",
+    "image_url": ""
+  },
+  {
+    "id": "extra_high_knees",
+    "name": "原地高抬腿",
+    "name_en": "High Knees",
+    "muscle": "心肺",
+    "equipment": "自重",
+    "tips": "原地快速交替提膝至髋高，摆臂配合，可计时",
+    "image_url": ""
+  },
+  {
+    "id": "extra_jumping_jack",
+    "name": "开合跳",
+    "name_en": "Jumping Jack",
+    "muscle": "心肺",
+    "equipment": "自重",
+    "tips": "跳起双手过头、双脚开合，落地轻盈",
+    "image_url": ""
+  },
+  {
+    "id": "extra_mountain_climber_slow",
+    "name": "登山者（慢速）",
+    "name_en": "Slow Mountain Climber",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "平板支撑位缓慢交替收膝，强调核心稳定而非速度",
+    "image_url": ""
+  },
+  {
+    "id": "extra_handstand_hold",
+    "name": "靠墙倒立支撑",
+    "name_en": "Wall Handstand Hold",
+    "muscle": "肩",
+    "equipment": "自重",
+    "tips": "靠墙倒立静撑，核心收紧，避免塌腰；循序渐进",
+    "image_url": ""
+  },
+  {
+    "id": "extra_pike_handstand_push",
+    "name": "倒立撑（靠墙）",
+    "name_en": "Wall Handstand Push-Up",
+    "muscle": "肩",
+    "equipment": "自重",
+    "tips": "靠墙倒立屈肘下降再推起；力量不足可先做派克俯卧撑",
+    "image_url": ""
+  },
+  {
+    "id": "extra_side_plank_dip",
+    "name": "侧平板髋升降",
+    "name_en": "Side Plank Hip Dip",
+    "muscle": "斜腹",
+    "equipment": "自重",
+    "tips": "侧平板位髋部上下点地，控制斜腹发力",
+    "image_url": ""
+  },
+  {
+    "id": "extra_plank_shoulder_tap",
+    "name": "平板支撑拍肩",
+    "name_en": "Plank Shoulder Tap",
+    "muscle": "核心",
+    "equipment": "自重",
+    "tips": "高位平板交替拍手拍对侧肩，髋尽量不晃",
+    "image_url": ""
+  },
+  {
+    "id": "extra_dead_hang",
+    "name": "悬垂静挂",
+    "name_en": "Dead Hang",
+    "muscle": "前臂",
+    "equipment": "自重",
+    "tips": "单杠悬垂放松肩胛或主动下沉，练握力与肩活动度",
+    "image_url": ""
+  },
+  {
+    "id": "extra_scapular_pullup",
+    "name": "肩胛引体",
+    "name_en": "Scapular Pull-Up",
+    "muscle": "背",
+    "equipment": "自重",
+    "tips": "悬垂位只做肩胛下沉上提，肘不弯，激活背阔启动",
+    "image_url": ""
+  },
+  {
+    "id": "extra_australian_pullup",
+    "name": "澳大利亚引体（反向划船）",
+    "name_en": "Australian Pull-Up / Inverted Row",
+    "muscle": "背",
+    "equipment": "自重",
+    "tips": "身体倾斜仰拉低杠或吊环，躯干成直线",
+    "image_url": ""
+  },
+  {
+    "id": "extra_chin_up",
+    "name": "反手引体向上",
+    "name_en": "Chin-Up",
+    "muscle": "背",
+    "equipment": "自重",
+    "tips": "掌心朝己握杠上拉，二头参与更多；顶峰下巴过杠",
+    "image_url": ""
+  },
+  {
+    "id": "extra_dip_bench",
+    "name": "凳上双杠臂屈伸",
+    "name_en": "Bench Dip",
+    "muscle": "肱三头",
+    "equipment": "自重",
+    "tips": "双手撑凳身后屈肘下降，肩勿过度前倾",
+    "image_url": ""
+  },
+  {
+    "id": "extra_calf_raise_bw",
+    "name": "自重提踵",
+    "name_en": "Bodyweight Calf Raise",
+    "muscle": "小腿",
+    "equipment": "自重",
+    "tips": "站立脚掌发力踮起，顶峰停顿，可单腿加强",
+    "image_url": ""
+  },
+  {
+    "id": "extra_single_leg_rdl_bw",
+    "name": "自重单腿硬拉",
+    "name_en": "Bodyweight Single-Leg RDL",
+    "muscle": "腘绳肌",
+    "equipment": "自重",
+    "tips": "单腿髋铰链后摆，背平，练平衡与后链",
+    "image_url": ""
+  },
+  {
+    "id": "extra_good_morning_bw",
+    "name": "自重早安式",
+    "name_en": "Bodyweight Good Morning",
+    "muscle": "下背",
+    "equipment": "自重",
+    "tips": "双手抱头髋铰链前倾至腘绳有拉伸感再起立",
+    "image_url": ""
+  },
+  {
+    "id": "extra_world_greatest_stretch",
+    "name": "世界最伟大拉伸",
+    "name_en": "World's Greatest Stretch",
+    "muscle": "活动度",
+    "equipment": "自重",
+    "tips": "弓步手撑地，同侧手旋转朝天，开胸与髋灵活",
+    "image_url": ""
+  },
+  {
+    "id": "extra_hip_flexor_stretch",
+    "name": "跪姿髋屈肌拉伸",
+    "name_en": "Kneeling Hip Flexor Stretch",
+    "muscle": "活动度",
+    "equipment": "自重",
+    "tips": "后膝跪地骨盆前倾收臀，感受前髋拉伸",
+    "image_url": ""
+  },
+  {
+    "id": "extra_couch_stretch",
+    "name": "沙发拉伸",
+    "name_en": "Couch Stretch",
+    "muscle": "活动度",
+    "equipment": "自重",
+    "tips": "后脚靠墙/沙发跪姿，开髋屈肌与股四；循序渐进",
+    "image_url": ""
+  },
+  {
+    "id": "extra_thoracic_opener",
+    "name": "开胸伸展（跪姿旋转）",
+    "name_en": "Kneeling Thoracic Rotation",
+    "muscle": "活动度",
+    "equipment": "自重",
+    "tips": "四点支撑一手抱头或伸直，旋转开胸椎",
+    "image_url": ""
+  },
+  {
+    "id": "extra_ankle_rocker",
+    "name": "脚踝摇杆",
+    "name_en": "Ankle Rocker",
+    "muscle": "活动度",
+    "equipment": "自重",
+    "tips": "半跪姿前膝向前推过脚尖，练踝背屈活动度",
+    "image_url": ""
+  },
+  {
+    "id": "extra_inchworm",
+    "name": "毛毛虫爬",
+    "name_en": "Inchworm",
+    "muscle": "全身",
+    "equipment": "自重",
+    "tips": "站立手触地前走成平板再走回，热身与后链拉伸",
+    "image_url": ""
+  },
+  {
+    "id": "extra_jump_squat",
+    "name": "跳蹲",
+    "name_en": "Jump Squat",
+    "muscle": "股四头",
+    "equipment": "自重",
+    "tips": "深蹲后向上跳，落地缓冲再蹲；落地轻柔护膝",
+    "image_url": ""
+  },
+  {
+    "id": "extra_lateral_lunge",
+    "name": "侧弓步",
+    "name_en": "Lateral Lunge",
+    "muscle": "股四头",
+    "equipment": "自重",
+    "tips": "向侧迈步屈膝，另一腿伸直，练内收与侧向稳定",
+    "image_url": ""
+  },
+  {
+    "id": "extra_step_up",
+    "name": "自重登阶",
+    "name_en": "Bodyweight Step-Up",
+    "muscle": "股四头",
+    "equipment": "自重",
+    "tips": "踏上稳固高台，躯干直立，整脚发力勿借对侧弹",
+    "image_url": ""
+  },
+  {
+    "id": "extra_box_squat_bw",
+    "name": "箱式深蹲（自重）",
+    "name_en": "Bodyweight Box Squat",
+    "muscle": "股四头",
+    "equipment": "自重",
+    "tips": "向后坐到箱子轻触再起立，强调髋主导与深度控制",
+    "image_url": ""
+  }
+]

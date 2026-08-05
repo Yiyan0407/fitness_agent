@@ -10,6 +10,11 @@ from langchain.agents import create_agent
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, SystemMessage
 
 from agent.llm import get_llm
+from agent.middleware import (
+    NO_TOOL_NEEDED_NAME,
+    required_tool_choice_middleware,
+    tools_with_no_tool_needed,
+)
 from agent.tools import ALL_TOOLS
 
 _WEEKDAY_CN = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
@@ -30,6 +35,19 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
 
 你对本地数据有完整读写能力（画像、周计划、今日打卡、饮食、体态、日报、历史）。
 凡涉及改计划、记账、打卡、改目标、改体态：必须先调工具真正写库，禁止口头说「已改/已记」却不调用。
+
+## 工具调用流程（请严格遵循）
+每轮模型调用默认必须选一个工具。流程：
+1. 先判断：仅凭当前上下文是否已足以直接作答，且**不涉及**读库/写库。
+   - 若「是」（闲聊、常识、纯建议、产品指路等）→ **必须**先调用 `no_tool_needed`，再回答。
+   - 若「否」→ 进入下一步，调用业务工具。
+2. 需要工具时，只选当前最有价值的工具，避免一次调过多。
+3. 业务工具（读库/写库）完成后，信息已足够时 → **必须先调用** `no_tool_needed`，再开始最终回答；不要在未调用它时直接输出正文。
+
+重要原则：
+1. 工具目标是「尽量少调用、获取足够信息」，不是越多越好。
+2. 不要编造工具返回结果；不确定就读工具或问一句。
+3. 涉及记账/打卡/改计划等写库时，完成写库前不得调用 `no_tool_needed`。
 
 ## 强制写库（最重要）
 用户只要在陈述事实（不是纯提问），就立刻用工具落库，不要只给建议、不要先指路去别的页面。
@@ -145,8 +163,9 @@ def build_agent(*, streaming: bool = False):
     """Build a LangChain agent graph (create_agent)."""
     return create_agent(
         model=get_llm(streaming=streaming, thinking=False),
-        tools=ALL_TOOLS,
+        tools=tools_with_no_tool_needed(ALL_TOOLS),
         system_prompt=build_system_prompt(),
+        middleware=[required_tool_choice_middleware],
         name="fitness_coach",
     )
 
@@ -306,6 +325,9 @@ def stream_coach(
 
     seen_tool_names: set[str] = set()
 
+    def _display_tool_names(names: list[str] | set[str]) -> list[str]:
+        return [n for n in names if n and n != NO_TOOL_NEEDED_NAME]
+
     # updates: tool / model step progress; messages: token chunks
     for mode, data in agent.stream(
         inputs,
@@ -313,8 +335,9 @@ def stream_coach(
     ):
         if mode == "updates" and isinstance(data, dict):
             if "tools" in data:
-                names = ", ".join(sorted(seen_tool_names)) if seen_tool_names else "工具"
-                yield f"\0status:正在执行：{names}"
+                names = _display_tool_names(seen_tool_names)
+                if names:
+                    yield f"\0status:正在执行：{', '.join(sorted(names))}"
             elif "model" in data:
                 msgs = (data.get("model") or {}).get("messages") or []
                 if msgs:
@@ -330,7 +353,9 @@ def stream_coach(
                             )
                             names.append(name)
                             seen_tool_names.add(name)
-                        yield f"\0status:准备调用：{', '.join(names)}"
+                        display = _display_tool_names(names)
+                        if display:
+                            yield f"\0status:准备调用：{', '.join(display)}"
                     else:
                         yield "\0status:正在生成回复…"
             continue
@@ -359,7 +384,8 @@ def stream_coach(
                     name = getattr(tc, "name", None)
                 if name and name not in seen_tool_names:
                     seen_tool_names.add(name)
-                    yield f"\0status:准备调用：{name}"
+                    if name != NO_TOOL_NEEDED_NAME:
+                        yield f"\0status:准备调用：{name}"
 
         text = _chunk_text(chunk)
         if tool_chunks and not text:

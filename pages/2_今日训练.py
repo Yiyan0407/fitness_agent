@@ -23,6 +23,7 @@ st.caption(
     "计量约定：哑铃等双手各持 → 重量填**单手**；"
     "保加利亚蹲等单侧 → 次数为**单侧**，左右做完算 1 组；"
     "平板支撑/静蹲等 → 按**秒**计。"
+    " 未开练的组默认沿用**上次同组**完成的重量/次数（无记录时用计划值）。"
 )
 jump = st.session_state.pop("workout_jump_date", None)
 if jump:
@@ -215,6 +216,17 @@ else:
                 + (" · 计时" if is_timed else "")
                 + (f" · 后面还有 {later_n} 组" if later_n else "")
             )
+            last_same = repo.get_last_completed_set_at_index(
+                ex_name, int(focus["set_index"]), before_date=target.isoformat()
+            )
+            if last_same:
+                disp = last_same.get("display") or (
+                    f"{last_same.get('weight_kg') or '-'} kg × {last_same.get('reps') or '-'}"
+                )
+                st.caption(
+                    f"默认来自上次第 {focus['set_index']} 组 "
+                    f"（{last_same['workout_date']}）：{disp}"
+                )
             with st.form(f"set_form_{sid}", clear_on_submit=False):
                 f1, f2 = st.columns(2)
                 w_in = f1.number_input(

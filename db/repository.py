@@ -706,21 +706,91 @@ class Repository:
         row = self.conn.execute("SELECT * FROM sets WHERE id = ?", (set_id,)).fetchone()
         return annotate_set(dict(row)) if row else {}
 
-    def _seed_sets_from_day_plan(self, workout_id: int, day: dict[str, Any]) -> None:
+    def get_last_completed_set_at_index(
+        self,
+        exercise_name: str,
+        set_index: int,
+        before_date: str | None = None,
+    ) -> dict[str, Any] | None:
+        """Last completed set for exercise + set_index (e.g. 第 3 组), before a date."""
+        before = before_date or date.today().isoformat()
+        row = self.conn.execute(
+            """
+            SELECT s.*, w.date AS workout_date
+            FROM sets s
+            JOIN workouts w ON w.id = s.workout_id
+            WHERE s.exercise_name = ?
+              AND s.set_index = ?
+              AND s.completed = 1
+              AND w.date < ?
+            ORDER BY w.date DESC, s.id DESC
+            LIMIT 1
+            """,
+            (exercise_name, int(set_index), before),
+        ).fetchone()
+        return annotate_set(dict(row)) if row else None
+
+    def _resolve_set_defaults(
+        self,
+        exercise_name: str,
+        set_index: int,
+        *,
+        plan_weight: Any = None,
+        plan_reps: Any = None,
+        plan_measure: str = "reps",
+        before_date: str | None = None,
+    ) -> tuple[Any, Any, str]:
+        """Prefer last completed same set_index; fall back to plan template."""
+        last = self.get_last_completed_set_at_index(
+            exercise_name, set_index, before_date=before_date
+        )
+        weight = plan_weight
+        reps = plan_reps
+        measure = plan_measure
+        if last:
+            if last.get("weight_kg") is not None:
+                weight = last["weight_kg"]
+            if last.get("reps") is not None:
+                reps = last["reps"]
+            if last.get("measure"):
+                measure = str(last["measure"])
+        return weight, reps, measure
+
+    def _seed_sets_from_day_plan(
+        self,
+        workout_id: int,
+        day: dict[str, Any],
+        *,
+        before_date: str | None = None,
+    ) -> None:
+        if before_date is None:
+            wrow = self.conn.execute(
+                "SELECT date FROM workouts WHERE id = ?", (workout_id,)
+            ).fetchone()
+            before_date = (wrow["date"] if wrow else date.today().isoformat())
+
         for ex in day.get("exercises") or []:
             name = ex.get("name") or ex.get("exercise") or ""
             if not name:
                 continue
             sets_count = int(ex.get("sets", 3))
             reps = ex.get("reps")
-            weight = ex.get("weight_kg") or ex.get("weight")
-            reps_val = parse_reps_value(reps)
-            measure = infer_measure(
+            plan_weight = ex.get("weight_kg") or ex.get("weight")
+            plan_reps = parse_reps_value(reps)
+            plan_measure = infer_measure(
                 name,
                 explicit=str(ex.get("measure") or "") or None,
                 reps_hint=reps,
             )
             for i in range(1, sets_count + 1):
+                weight, reps_val, measure = self._resolve_set_defaults(
+                    name,
+                    i,
+                    plan_weight=plan_weight,
+                    plan_reps=plan_reps,
+                    plan_measure=plan_measure,
+                    before_date=before_date,
+                )
                 self.conn.execute(
                     """
                     INSERT INTO sets (
@@ -798,7 +868,9 @@ class Repository:
                 (workout["id"],),
             )
 
-        self._seed_sets_from_day_plan(workout["id"], day)
+        self._seed_sets_from_day_plan(
+            workout["id"], day, before_date=target.isoformat()
+        )
         self.conn.commit()
         return self.get_sets(workout["id"])
 
@@ -1442,6 +1514,21 @@ class Repository:
         ).fetchone()
         if last_m and last_m["measure"]:
             measure = str(last_m["measure"])
+        if weight_kg is None or reps is None:
+            wrow = self.conn.execute(
+                "SELECT date FROM workouts WHERE id = ?", (workout_id,)
+            ).fetchone()
+            before = (wrow["date"] if wrow else date.today().isoformat())
+            hist = self.get_last_completed_set_at_index(
+                exercise_name, set_index, before_date=before
+            )
+            if hist:
+                if weight_kg is None and hist.get("weight_kg") is not None:
+                    weight_kg = hist["weight_kg"]
+                if reps is None and hist.get("reps") is not None:
+                    reps = hist["reps"]
+                if hist.get("measure"):
+                    measure = str(hist["measure"])
         cur = self.conn.execute(
             """
             INSERT INTO sets (

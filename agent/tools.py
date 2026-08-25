@@ -204,7 +204,8 @@ def mutate_plan_exercise(
 
 @tool
 def get_today_workout(target_date: Optional[str] = None) -> str:
-    """获取今日（或指定日期 YYYY-MM-DD）的训练安排与已记录组数。"""
+    """获取今日（或指定日期 YYYY-MM-DD）的训练安排与已记录组数。
+    首次生成未完成组时，各组默认重量/次数优先取自上次同动作、同组号的完成记录。"""
     return _ok(get_repo().get_today_workout(target_date))
 
 
@@ -880,13 +881,21 @@ def drop_last_incomplete_set(
 def get_last_completed_set(
     exercise_name: str,
     before_date: Optional[str] = None,
+    set_index: Optional[int] = None,
 ) -> str:
     """查询某动作最近一次已完成组（重量/次数/RPE/日期），用于建议今日负荷。
-    before_date 不传则截至今天（不含强制排除今天时由仓库逻辑处理）。"""
+    set_index 传入时查「上次第 N 组」；不传则返回该动作任意最近一组。
+    before_date 不传则截至今天之前。"""
     name = get_repo().resolve_exercise_name(exercise_name)
-    row = get_repo().get_last_completed_set(name, before_date=before_date)
+    if set_index is not None:
+        row = get_repo().get_last_completed_set_at_index(
+            name, int(set_index), before_date=before_date
+        )
+    else:
+        row = get_repo().get_last_completed_set(name, before_date=before_date)
     if not row:
-        return _ok({"ok": False, "exercise_name": name, "message": "暂无该动作完成记录"})
+        hint = f"第 {set_index} 组" if set_index is not None else "该动作"
+        return _ok({"ok": False, "exercise_name": name, "message": f"暂无{hint}完成记录"})
     return _ok({"ok": True, "exercise_name": name, "set": row})
 
 

@@ -568,7 +568,7 @@ def log_meal(
 
 @tool
 def log_meals(meals_json: str, target_date: Optional[str] = None) -> str:
-    """一次写入多条饮食记录。用户一句话里报了多种食物时优先用本工具，不要只回复建议。
+    """写入一条或多条饮食记录。用户说吃了/喝了时必须调用（单条也用本工具，数组里放一项）。不要只回复建议。
 
     meals_json 为 JSON 数组，每项字段：
     name(必填), meal_type(早餐/午餐/晚餐/加餐/蛋白粉/其他), calories, protein_g, carb_g, fat_g, notes。

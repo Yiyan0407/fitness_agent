@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Any
 
 from langchain.agents import create_agent
+from langchain.agents.middleware import ToolCallLimitMiddleware
 from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, SystemMessage
 
 from agent.llm import get_llm
@@ -15,7 +16,7 @@ from agent.middleware import (
     required_tool_choice_middleware,
     tools_with_no_tool_needed,
 )
-from agent.tools import ALL_TOOLS
+from agent.tool_policy import select_coach_tools
 
 _WEEKDAY_CN = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
 _WEEKDAY_KEYS = [
@@ -31,7 +32,7 @@ _WEEKDAY_KEYS = [
 SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务这一位用户。
 
 【当前时间】{now_text}
-（本地时间。说「今天/今晚/本周」以此为准；get_today_workout / get_nutrition_day / log_meal 等不传日期时默认今天。）
+（本地时间。说「今天/今晚/本周」以此为准；get_today_workout / get_nutrition_day / log_meals 等不传日期时默认今天。）
 
 你对本地数据有完整读写能力（画像、周计划、今日打卡、饮食、体态、日报、历史）。
 凡涉及改计划、记账、打卡、改目标、改体态：必须先调工具真正写库，禁止口头说「已改/已记」却不调用。
@@ -51,7 +52,7 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
 
 ## 强制写库（最重要）
 用户只要在陈述事实（不是纯提问），就立刻用工具落库，不要只给建议、不要先指路去别的页面。
-- 吃了/喝了/来了杯/加了勺… → 立刻 log_meals（多食物一次调用）或 log_meal；热量宏量自行估算写入，不要追问「要不要记」。
+- 吃了/喝了/来了杯/加了勺… → 立刻 log_meals（单条也用数组一项；多食物一次提交）；热量宏量自行估算写入，不要追问「要不要记」。
 - 练完了某组/某重量次数 → log_set；换今日动作 → replace_today_exercise；跳过 → skip_remaining_sets。
 - 体重/体脂报数 → log_body_metrics；改目标/画像 → update_profile。
 - 一句话里同时有「记账/打卡」和「提问」：先写库，再用工具结果简短回答。
@@ -59,7 +60,7 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
 
 ## 工作方式
 1. 简体中文；默认简洁可执行，少客套、少说教。
-2. 决策前需要读数据时再调 get_profile / get_current_plan / get_today_workout / get_nutrition_day；报餐记账不必先读。
+2. 决策前需要读数据时优先 get_day_snapshot；也可 get_profile / get_current_plan / get_today_workout / get_nutrition_day。报餐记账不必先读。
 3. 不编造伤病、成绩、没吃过的餐、没练过的组；不确定就读工具或问一句。
 4. 破坏性操作（wipe_completed、清空已完成组、删报告等）先确认；用户已说清「删除/重建」则可直接执行。
 
@@ -88,7 +89,7 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
   - 平板支撑/靠墙静蹲/悬垂等静力：measure=seconds，reps 存秒数；排计划可写 reps 为 45 或 "45s"。
 - 建议负荷前先 get_last_completed_set(动作名, set_index=N) 查上次第 N 组；给建议时带组数、次数或秒、重量(kg，注明单手/总重)、RPE。
 - get_today_workout 返回的未完成组已按「上次同组」预填重量/次数；无历史才用计划模板。
-- 看整天进度可用 get_day_snapshot 或 get_week_completion；单日细节 get_day_detail / get_today_workout。
+- 看整天进度优先 get_day_snapshot；训练组细节用 get_today_workout；近几天完成度用 get_week_completion。
 
 ## 消耗、缺口与日报
 - 估运动消耗 → estimate_workout_burn（写库）；查缺口 → get_energy_balance（常规+运动−摄入）。
@@ -160,13 +161,17 @@ def build_system_prompt() -> str:
     return SYSTEM_PROMPT_TEMPLATE.format(now_text=_now_context())
 
 
-def build_agent(*, streaming: bool = False):
+def build_agent(*, streaming: bool = False, tools: list | None = None):
     """Build a LangChain agent graph (create_agent)."""
+    selected = tools if tools is not None else select_coach_tools("")
     return create_agent(
         model=get_llm(streaming=streaming, thinking=False),
-        tools=tools_with_no_tool_needed(ALL_TOOLS),
+        tools=tools_with_no_tool_needed(selected),
         system_prompt=build_system_prompt(),
-        middleware=[required_tool_choice_middleware],
+        middleware=[
+            required_tool_choice_middleware,
+            ToolCallLimitMiddleware(run_limit=16, exit_behavior="end"),
+        ],
         name="fitness_coach",
     )
 
@@ -282,7 +287,10 @@ def run_coach(
             history = recent[:-1]
         else:
             history = recent
-    agent = build_agent(streaming=False)
+    agent = build_agent(
+        streaming=False,
+        tools=select_coach_tools(user_input, history),
+    )
     result = agent.invoke(
         {"messages": _prepare_messages(user_input, history, summary=summary)}
     )
@@ -321,7 +329,10 @@ def stream_coach(
         else:
             history = recent
 
-    agent = build_agent(streaming=True)
+    agent = build_agent(
+        streaming=True,
+        tools=select_coach_tools(user_input, history),
+    )
     inputs = {"messages": _prepare_messages(user_input, history, summary=summary)}
 
     seen_tool_names: set[str] = set()

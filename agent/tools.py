@@ -332,9 +332,38 @@ def update_set(
 
 @tool
 def delete_set(set_id: int) -> str:
-    """按 set_id 删除某一组打卡记录。"""
-    get_repo().delete_set(int(set_id))
-    return _ok({"ok": True, "set_id": set_id})
+    """按 set_id 删除某一组打卡记录。整日/多组请用 delete_completed_sets。"""
+    try:
+        get_repo().delete_set(int(set_id))
+        return _ok({"ok": True, "set_id": set_id})
+    except Exception as exc:  # noqa: BLE001
+        return _ok({"ok": False, "error": str(exc)})
+
+
+@tool
+def delete_completed_sets(
+    target_date: Optional[str] = None,
+    exercise_name: Optional[str] = None,
+) -> str:
+    """删除某日已完成组（补错/清空打卡）。默认整天；可指定动作。未完成计划组会保留。
+
+    用户确认「删已完成 / 清空那天打卡」后必须立刻调用本工具，禁止口头说已删。
+    """
+    try:
+        repo = get_repo()
+        name = repo.resolve_exercise_name(exercise_name) if exercise_name else None
+        workout = repo.get_today_workout(target_date)["workout"]
+        n = repo.delete_completed_sets(int(workout["id"]), name)
+        return _ok(
+            {
+                "ok": True,
+                "date": workout.get("date") or target_date,
+                "deleted_completed_sets": n,
+                "exercise_name": name,
+            }
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _ok({"ok": False, "error": str(exc)})
 
 
 @tool
@@ -982,6 +1011,7 @@ ALL_TOOLS = [
     complete_incomplete_sets,
     update_set,
     delete_set,
+    delete_completed_sets,
     add_today_exercise,
     delete_today_exercise,
     replace_today_exercise,

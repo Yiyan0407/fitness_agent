@@ -22,7 +22,7 @@ from agent.middleware import (
     required_tool_choice_middleware,
     tools_with_no_tool_needed,
 )
-from agent.tool_policy import select_coach_tools
+from agent.tool_policy import COACH_TOOLS
 
 _WEEKDAY_CN = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
 _WEEKDAY_KEYS = [
@@ -62,13 +62,14 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
 - 练完了某组/某重量次数 → log_set（填原计划组）；漏记整日 → complete_incomplete_sets；换今日动作 → replace_today_exercise；跳过 → skip_remaining_sets。
 - 体重/体脂报数 → log_body_metrics；改目标/画像 → update_profile。
 - 一句话里同时有「记账/打卡」和「提问」：先写库，再用工具结果简短回答。
-- 写库成功后才可说「已记」；禁止在未调用工具时声称已记录。
+- 写库/删库成功后才可说「已记/已删」；禁止在未调用工具、或工具未返回 ok 时声称已完成。
 
 ## 工作方式
 1. 简体中文；默认简洁可执行，少客套、少说教。
 2. 决策前需要读数据时优先 get_day_snapshot；也可 get_profile / get_current_plan / get_today_workout / get_nutrition_day。报餐记账不必先读。
 3. 不编造伤病、成绩、没吃过的餐、没练过的组；不确定就读工具或问一句。
-4. 破坏性操作（wipe_completed、清空已完成组、删报告等）先确认；用户已说清「删除/重建」则可直接执行。
+4. 破坏性操作（清空已完成组、删报告等）先确认；用户回复「确认/删/执行」后必须立刻调工具真正写库，禁止只口头说已清空。
+   删某日已完成打卡 → delete_completed_sets(日期)；不要对每组反复 delete_set。
 
 ## 排计划 / 改计划
 - 先 list_exercises（可按肌群；equipment 可用画像器械如「健身房」「家庭哑铃杠铃」「仅自重」或标签「杠铃」），优先库内动作名；避开 injuries。
@@ -88,7 +89,7 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
 ## 打卡与训练建议
 - 口述完成一组 → log_set（会填入已有未完成计划组，不会叠出重复组）。
   补整天/某动作漏记 → complete_incomplete_sets(日期)；禁止对已有计划组反复 log_set 追加。
-  改组 → update_set；删组 → delete_set；跳过剩余 → skip_remaining_sets；
+  改组 → update_set；删单组 → delete_set；清空某日已完成打卡 → delete_completed_sets；跳过剩余 → skip_remaining_sets；
   批量改剩余重量 → apply_to_remaining_sets；某动作再加一组 → add_planned_set；少一组 → drop_last_incomplete_set；
   状态/备注/手填消耗 → update_workout。
 - 计量约定（写计划/打卡/读历史时必须遵守）：
@@ -171,7 +172,7 @@ def build_system_prompt() -> str:
 
 def build_agent(*, streaming: bool = False, tools: list | None = None):
     """Build a LangChain agent graph (create_agent)."""
-    selected = tools if tools is not None else select_coach_tools("")
+    selected = tools if tools is not None else COACH_TOOLS
     return create_agent(
         model=get_llm(streaming=streaming, thinking=False),
         tools=tools_with_no_tool_needed(selected),
@@ -318,10 +319,7 @@ def run_coach(
             history = recent[:-1]
         else:
             history = recent
-    agent = build_agent(
-        streaming=False,
-        tools=select_coach_tools(user_input, history),
-    )
+    agent = build_agent(streaming=False)
     result = agent.invoke(
         {"messages": _prepare_messages(user_input, history, summary=summary)}
     )
@@ -360,10 +358,7 @@ def stream_coach(
         else:
             history = recent
 
-    agent = build_agent(
-        streaming=True,
-        tools=select_coach_tools(user_input, history),
-    )
+    agent = build_agent(streaming=True)
     inputs = {"messages": _prepare_messages(user_input, history, summary=summary)}
 
     seen_tool_names: set[str] = set()

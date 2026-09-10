@@ -1554,6 +1554,35 @@ class Repository:
         self.delete_set(row["id"])
         return True
 
+    def delete_completed_sets(
+        self,
+        workout_id: int,
+        exercise_name: str | None = None,
+    ) -> int:
+        """Delete completed sets only; keep planned incomplete rows."""
+        if exercise_name:
+            cur = self.conn.execute(
+                """
+                DELETE FROM sets
+                WHERE workout_id = ? AND exercise_name = ? AND completed = 1
+                """,
+                (workout_id, exercise_name),
+            )
+        else:
+            cur = self.conn.execute(
+                "DELETE FROM sets WHERE workout_id = ? AND completed = 1",
+                (workout_id,),
+            )
+        self.conn.commit()
+        n = int(cur.rowcount or 0)
+        remaining_done = self.conn.execute(
+            "SELECT COUNT(*) AS n FROM sets WHERE workout_id = ? AND completed = 1",
+            (workout_id,),
+        ).fetchone()
+        if remaining_done and int(remaining_done["n"]) == 0:
+            self.update_workout(workout_id, status="planned")
+        return n
+
     def apply_to_remaining_sets(
         self,
         workout_id: int,

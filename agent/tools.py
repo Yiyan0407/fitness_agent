@@ -303,7 +303,11 @@ def complete_incomplete_sets(
         repo = get_repo()
         name = repo.resolve_exercise_name(exercise_name) if exercise_name else None
         day = _iso_date(target_date).isoformat() if target_date else date.today().isoformat()
-        workout = repo.get_workout_by_date(date.fromisoformat(day))
+        d = date.fromisoformat(day)
+        workout = repo.get_workout_by_date(d)
+        if not workout:
+            repo.ensure_today_sets_from_plan(d, force=False)
+            workout = repo.get_workout_by_date(d)
         if not workout:
             return _ok(
                 {
@@ -342,6 +346,26 @@ def complete_incomplete_sets(
                 "sets": slim_sets,
             }
         )
+    except Exception as exc:  # noqa: BLE001
+        return _ok({"ok": False, "error": str(exc)})
+
+
+@tool
+def backfill_planned_sets(
+    start_date: str,
+    end_date: str,
+    rpe: Optional[float] = None,
+) -> str:
+    """按日期区间把训练日未完成计划组标为已完成（漏记补打卡）。一次覆盖多天。
+
+    start_date / end_date 必须 YYYY-MM-DD。休息日跳过；没有组的训练日会先按周计划生成再完成。
+    用户说「从某日到今天都练了但忘了记」或回复「好的/确认」补打卡时必须调用本工具，禁止口头说已补完。
+    """
+    try:
+        start = _iso_date(start_date, required=True)
+        end = _iso_date(end_date, required=True)
+        result = get_repo().backfill_planned_sets(start, end, rpe=rpe)
+        return _ok(result)
     except Exception as exc:  # noqa: BLE001
         return _ok({"ok": False, "error": str(exc)})
 
@@ -1106,6 +1130,7 @@ ALL_TOOLS = [
     get_today_workout,
     log_set,
     complete_incomplete_sets,
+    backfill_planned_sets,
     update_set,
     delete_set,
     delete_completed_sets,

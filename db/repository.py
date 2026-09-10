@@ -1550,6 +1550,62 @@ class Repository:
             "sets": updated,
         }
 
+    def backfill_planned_sets(
+        self,
+        start: date,
+        end: date,
+        *,
+        rpe: float | None = None,
+    ) -> dict[str, Any]:
+        """Seed missing plan sets then mark incomplete sets complete for [start, end]."""
+        if end < start:
+            start, end = end, start
+        days: list[dict[str, Any]] = []
+        cur = start
+        while cur <= end:
+            plan = self.get_plan_for_date(cur) or {}
+            rest = bool(plan.get("rest") or not (plan.get("exercises") or []))
+            workout = self.get_or_create_workout(cur)
+            sets_before = self.get_sets(int(workout["id"]))
+            if not sets_before and not rest:
+                self.ensure_today_sets_from_plan(cur, force=False)
+                workout = self.get_or_create_workout(cur)
+                sets_before = self.get_sets(int(workout["id"]))
+            incomplete_before = sum(1 for s in sets_before if not s.get("completed"))
+            if incomplete_before:
+                result = self.complete_incomplete_sets(
+                    int(workout["id"]), rpe=rpe
+                )
+                filled = int(result.get("completed_count") or 0)
+            else:
+                filled = 0
+                result = {
+                    "completed_count": 0,
+                    "remaining_incomplete": 0,
+                    "removed_duplicate_incomplete": 0,
+                }
+            days.append(
+                {
+                    "date": cur.isoformat(),
+                    "plan_name": plan.get("name") or ("休息" if rest else ""),
+                    "rest": rest,
+                    "incomplete_before": incomplete_before,
+                    "completed_now": filled,
+                    "remaining_incomplete": result.get("remaining_incomplete"),
+                    "removed_duplicate_incomplete": result.get(
+                        "removed_duplicate_incomplete"
+                    ),
+                }
+            )
+            cur += timedelta(days=1)
+        return {
+            "ok": True,
+            "start": start.isoformat(),
+            "end": end.isoformat(),
+            "total_completed_now": sum(int(d["completed_now"] or 0) for d in days),
+            "days": days,
+        }
+
     def drop_last_incomplete_set(self, workout_id: int, exercise_name: str) -> bool:
         row = self.conn.execute(
             """

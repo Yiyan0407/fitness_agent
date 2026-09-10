@@ -37,6 +37,7 @@ from agent.tools import (
     log_body_metrics,
     log_meals,
     log_set,
+    complete_incomplete_sets,
     mutate_plan_exercise,
     replace_today_exercise,
     resync_today_from_plan,
@@ -62,6 +63,7 @@ CORE_TOOLS = [
     get_energy_balance,
     log_meals,
     log_set,
+    complete_incomplete_sets,
     log_body_metrics,
 ]
 
@@ -141,6 +143,15 @@ _BUNDLE_KEYWORDS: dict[str, tuple[str, ...]] = {
     ),
     "workout": (
         "打卡",
+        "补打卡",
+        "补记录",
+        "补训练",
+        "补一下",
+        "开始补",
+        "继续补",
+        "忘了记录",
+        "漏记",
+        "漏打",
         "练完",
         "完成一组",
         "完成了",
@@ -242,7 +253,7 @@ _FOLLOW_UP_RE = re.compile(
     r"|改成.+"
     r"|换成.+"
     r"|改成\s*\d+"
-    r"|好的|嗯|对|是的|继续|就这个|这个"
+    r"|好的|嗯|对|是的|继续|继续补|开始补|就这个|这个"
     r")$",
 )
 

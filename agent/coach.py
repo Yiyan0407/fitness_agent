@@ -8,7 +8,13 @@ from typing import Any
 
 from langchain.agents import create_agent
 from langchain.agents.middleware import ToolCallLimitMiddleware
-from langchain_core.messages import AIMessage, AIMessageChunk, HumanMessage, SystemMessage
+from langchain_core.messages import (
+    AIMessage,
+    AIMessageChunk,
+    HumanMessage,
+    SystemMessage,
+    ToolMessage,
+)
 
 from agent.llm import get_llm
 from agent.middleware import (
@@ -53,7 +59,7 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
 ## 强制写库（最重要）
 用户只要在陈述事实（不是纯提问），就立刻用工具落库，不要只给建议、不要先指路去别的页面。
 - 吃了/喝了/来了杯/加了勺… → 立刻 log_meals（单条也用数组一项；多食物一次提交）；热量宏量自行估算写入，不要追问「要不要记」。
-- 练完了某组/某重量次数 → log_set；换今日动作 → replace_today_exercise；跳过 → skip_remaining_sets。
+- 练完了某组/某重量次数 → log_set（填原计划组）；漏记整日 → complete_incomplete_sets；换今日动作 → replace_today_exercise；跳过 → skip_remaining_sets。
 - 体重/体脂报数 → log_body_metrics；改目标/画像 → update_profile。
 - 一句话里同时有「记账/打卡」和「提问」：先写库，再用工具结果简短回答。
 - 写库成功后才可说「已记」；禁止在未调用工具时声称已记录。
@@ -80,7 +86,9 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
 - 需要同步周模板时再用 mutate_plan_exercise。
 
 ## 打卡与训练建议
-- 口述完成 → log_set；改组 → update_set；删组 → delete_set；跳过剩余 → skip_remaining_sets；
+- 口述完成一组 → log_set（会填入已有未完成计划组，不会叠出重复组）。
+  补整天/某动作漏记 → complete_incomplete_sets(日期)；禁止对已有计划组反复 log_set 追加。
+  改组 → update_set；删组 → delete_set；跳过剩余 → skip_remaining_sets；
   批量改剩余重量 → apply_to_remaining_sets；某动作再加一组 → add_planned_set；少一组 → drop_last_incomplete_set；
   状态/备注/手填消耗 → update_workout。
 - 计量约定（写计划/打卡/读历史时必须遵守）：
@@ -170,7 +178,7 @@ def build_agent(*, streaming: bool = False, tools: list | None = None):
         system_prompt=build_system_prompt(),
         middleware=[
             required_tool_choice_middleware,
-            ToolCallLimitMiddleware(run_limit=16, exit_behavior="end"),
+            ToolCallLimitMiddleware(run_limit=24, exit_behavior="continue"),
         ],
         name="fitness_coach",
     )
@@ -222,6 +230,29 @@ def _chunk_text(chunk: Any) -> str:
                 parts.append(block)
         return "".join(parts)
     return str(content)
+
+
+def _tool_failure_status(msg: Any) -> str | None:
+    name = getattr(msg, "name", None) or "?"
+    if name == NO_TOOL_NEEDED_NAME:
+        return None
+    status = getattr(msg, "status", None)
+    content = getattr(msg, "content", "") or ""
+    text = content if isinstance(content, str) else str(content)
+    is_error = status == "error"
+    if not is_error and text:
+        compact = text.replace(" ", "")
+        is_error = (
+            '"ok":false' in compact.lower()
+            or "工具调用次数达到上限" in text
+            or text.startswith("Error")
+        )
+    if not is_error:
+        return None
+    snippet = text.strip().replace("\n", " ")
+    if len(snippet) > 240:
+        snippet = snippet[:240] + "…"
+    return f"\0status:工具失败：{name} — {snippet}"
 
 
 def _prepare_messages(
@@ -340,67 +371,75 @@ def stream_coach(
     def _display_tool_names(names: list[str] | set[str]) -> list[str]:
         return [n for n in names if n and n != NO_TOOL_NEEDED_NAME]
 
-    # updates: tool / model step progress; messages: token chunks
-    for mode, data in agent.stream(
-        inputs,
-        stream_mode=["messages", "updates"],
-    ):
-        if mode == "updates" and isinstance(data, dict):
-            if "tools" in data:
-                names = _display_tool_names(seen_tool_names)
-                if names:
-                    yield f"\0status:正在执行：{', '.join(sorted(names))}"
-            elif "model" in data:
-                msgs = (data.get("model") or {}).get("messages") or []
-                if msgs:
-                    last = msgs[-1]
-                    tool_calls = getattr(last, "tool_calls", None) or []
-                    if tool_calls:
-                        names = []
-                        for tc in tool_calls:
-                            name = (
-                                tc.get("name", "?")
-                                if isinstance(tc, dict)
-                                else getattr(tc, "name", "?")
-                            )
-                            names.append(name)
-                            seen_tool_names.add(name)
-                        display = _display_tool_names(names)
-                        if display:
-                            yield f"\0status:准备调用：{', '.join(display)}"
+    try:
+        for mode, data in agent.stream(
+            inputs,
+            stream_mode=["messages", "updates"],
+        ):
+            if mode == "updates" and isinstance(data, dict):
+                if "tools" in data:
+                    payload = data.get("tools") or {}
+                    msgs = payload.get("messages") or []
+                    for msg in msgs:
+                        if isinstance(msg, ToolMessage) or getattr(msg, "type", None) == "tool":
+                            fail = _tool_failure_status(msg)
+                            if fail:
+                                yield fail
+                    names = _display_tool_names(seen_tool_names)
+                    if names:
+                        yield f"\0status:正在执行：{', '.join(sorted(names))}"
+                elif "model" in data:
+                    msgs = (data.get("model") or {}).get("messages") or []
+                    if msgs:
+                        last = msgs[-1]
+                        tool_calls = getattr(last, "tool_calls", None) or []
+                        if tool_calls:
+                            names = []
+                            for tc in tool_calls:
+                                name = (
+                                    tc.get("name", "?")
+                                    if isinstance(tc, dict)
+                                    else getattr(tc, "name", "?")
+                                )
+                                names.append(name)
+                                seen_tool_names.add(name)
+                            display = _display_tool_names(names)
+                            if display:
+                                yield f"\0status:准备调用：{', '.join(display)}"
+                        else:
+                            yield "\0status:正在生成回复…"
+                continue
+
+            if mode != "messages":
+                continue
+
+            if not isinstance(data, tuple) or len(data) < 2:
+                continue
+            chunk, metadata = data[0], data[1]
+            node = (metadata or {}).get("langgraph_node")
+            if node and node != "model":
+                continue
+            if not isinstance(chunk, (AIMessageChunk, AIMessage)):
+                continue
+
+            tool_chunks = getattr(chunk, "tool_call_chunks", None) or []
+            if tool_chunks:
+                for tc in tool_chunks:
+                    name = None
+                    if isinstance(tc, dict):
+                        name = tc.get("name")
                     else:
-                        yield "\0status:正在生成回复…"
-            continue
+                        name = getattr(tc, "name", None)
+                    if name and name not in seen_tool_names:
+                        seen_tool_names.add(name)
+                        if name != NO_TOOL_NEEDED_NAME:
+                            yield f"\0status:准备调用：{name}"
 
-        if mode != "messages":
-            continue
-
-        # data is (chunk, metadata)
-        if not isinstance(data, tuple) or len(data) < 2:
-            continue
-        chunk, metadata = data[0], data[1]
-        node = (metadata or {}).get("langgraph_node")
-        if node and node != "model":
-            continue
-        if not isinstance(chunk, (AIMessageChunk, AIMessage)):
-            continue
-
-        # early signal while tool-call args are still streaming
-        tool_chunks = getattr(chunk, "tool_call_chunks", None) or []
-        if tool_chunks:
-            for tc in tool_chunks:
-                name = None
-                if isinstance(tc, dict):
-                    name = tc.get("name")
-                else:
-                    name = getattr(tc, "name", None)
-                if name and name not in seen_tool_names:
-                    seen_tool_names.add(name)
-                    if name != NO_TOOL_NEEDED_NAME:
-                        yield f"\0status:准备调用：{name}"
-
-        text = _chunk_text(chunk)
-        if tool_chunks and not text:
-            continue
-        if text:
-            yield text
+            text = _chunk_text(chunk)
+            if tool_chunks and not text:
+                continue
+            if text:
+                yield text
+    except Exception as exc:  # noqa: BLE001
+        yield f"\0status:调用中断：{exc}"
+        yield f"调用中断：{exc}"

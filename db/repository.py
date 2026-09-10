@@ -638,6 +638,46 @@ class Repository:
     ) -> dict[str, Any]:
         target = date.fromisoformat(target_date) if target_date else date.today()
         workout = self.get_or_create_workout(target)
+
+        existing = None
+        if set_index is not None:
+            existing = self.conn.execute(
+                """
+                SELECT * FROM sets
+                WHERE workout_id = ? AND exercise_name = ? AND set_index = ?
+                  AND completed = 0
+                ORDER BY id ASC
+                LIMIT 1
+                """,
+                (workout["id"], exercise_name, int(set_index)),
+            ).fetchone()
+        else:
+            existing = self.conn.execute(
+                """
+                SELECT * FROM sets
+                WHERE workout_id = ? AND exercise_name = ? AND completed = 0
+                ORDER BY set_index ASC, id ASC
+                LIMIT 1
+                """,
+                (workout["id"], exercise_name),
+            ).fetchone()
+
+        if existing:
+            fields: dict[str, Any] = {"completed": True}
+            if weight_kg is not None:
+                fields["weight_kg"] = weight_kg
+            if reps is not None:
+                fields["reps"] = reps
+            if rpe is not None:
+                fields["rpe"] = rpe
+            if notes:
+                fields["notes"] = notes
+            if measure:
+                fields["measure"] = infer_measure(exercise_name, explicit=measure)
+            updated = self.update_set(int(existing["id"]), **fields)
+            self.update_workout(workout["id"], status="in_progress")
+            return updated
+
         if set_index is None:
             row = self.conn.execute(
                 """
@@ -1419,6 +1459,85 @@ class Repository:
             )
         self.conn.commit()
         return int(cur.rowcount or 0)
+
+    def complete_incomplete_sets(
+        self,
+        workout_id: int,
+        exercise_name: str | None = None,
+        *,
+        rpe: float | None = None,
+        weight_kg: float | None = None,
+        reps: int | None = None,
+        notes: str | None = None,
+    ) -> dict[str, Any]:
+        """Mark planned incomplete sets as completed (backfill), do not insert new rows."""
+        if exercise_name:
+            rows = self.conn.execute(
+                """
+                SELECT * FROM sets
+                WHERE workout_id = ? AND exercise_name = ? AND completed = 0
+                ORDER BY set_index ASC, id ASC
+                """,
+                (workout_id, exercise_name),
+            ).fetchall()
+        else:
+            rows = self.conn.execute(
+                """
+                SELECT * FROM sets
+                WHERE workout_id = ? AND completed = 0
+                ORDER BY exercise_name, set_index ASC, id ASC
+                """,
+                (workout_id,),
+            ).fetchall()
+
+        updated: list[dict[str, Any]] = []
+        removed_dupes = 0
+        for row in rows:
+            dupe = self.conn.execute(
+                """
+                SELECT id FROM sets
+                WHERE workout_id = ? AND exercise_name = ? AND set_index = ?
+                  AND completed = 1 AND id != ?
+                LIMIT 1
+                """,
+                (
+                    workout_id,
+                    row["exercise_name"],
+                    row["set_index"],
+                    row["id"],
+                ),
+            ).fetchone()
+            if dupe:
+                self.delete_set(int(row["id"]))
+                removed_dupes += 1
+                continue
+            fields: dict[str, Any] = {"completed": True}
+            if rpe is not None:
+                fields["rpe"] = rpe
+            if weight_kg is not None:
+                fields["weight_kg"] = weight_kg
+            if reps is not None:
+                fields["reps"] = reps
+            if notes is not None:
+                fields["notes"] = notes
+            updated.append(self.update_set(int(row["id"]), **fields))
+
+        remaining_row = self.conn.execute(
+            "SELECT COUNT(*) AS n FROM sets WHERE workout_id = ? AND completed = 0",
+            (workout_id,),
+        ).fetchone()
+        remaining = int(remaining_row["n"] if remaining_row else 0)
+        if updated or removed_dupes:
+            self.update_workout(
+                workout_id,
+                status="done" if remaining == 0 else "in_progress",
+            )
+        return {
+            "completed_count": len(updated),
+            "removed_duplicate_incomplete": removed_dupes,
+            "remaining_incomplete": remaining,
+            "sets": updated,
+        }
 
     def drop_last_incomplete_set(self, workout_id: int, exercise_name: str) -> bool:
         row = self.conn.execute(

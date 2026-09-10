@@ -222,23 +222,81 @@ def log_set(
 ) -> str:
     """用户口述完成一组时必须调用。不要只口头确认却不写库。
 
+    若该动作当天已有未完成计划组：填入对应组（按 set_index，未传则填下一组未完成），不会再插入一行。
+    只有没有未完成计划组时才会追加新组。补整日/整动作请用 complete_incomplete_sets。
+
     计量：哑铃 weight_kg=单手；单侧 reps=单侧次数（左右做完通常 1 组）；
     平板/静蹲等静力传 measure='seconds'，reps 为秒数。
-    注意：本工具只追加打卡，不会删除旧动作。换动作请用 replace_today_exercise。
+    换动作请用 replace_today_exercise。
     """
-    name = get_repo().resolve_exercise_name(exercise_name)
-    row = get_repo().log_set(
-        exercise_name=name,
-        weight_kg=weight_kg,
-        reps=reps,
-        rpe=rpe,
-        set_index=set_index,
-        completed=True,
-        notes=notes,
-        target_date=target_date,
-        measure=measure,
-    )
-    return _ok({"ok": True, "set": row})
+    try:
+        name = get_repo().resolve_exercise_name(exercise_name)
+        row = get_repo().log_set(
+            exercise_name=name,
+            weight_kg=weight_kg,
+            reps=reps,
+            rpe=rpe,
+            set_index=set_index,
+            completed=True,
+            notes=notes,
+            target_date=target_date,
+            measure=measure,
+        )
+        return _ok({"ok": True, "updated_existing": True, "set": row})
+    except Exception as exc:  # noqa: BLE001
+        return _ok({"ok": False, "error": str(exc)})
+
+
+@tool
+def complete_incomplete_sets(
+    target_date: Optional[str] = None,
+    exercise_name: Optional[str] = None,
+    rpe: Optional[float] = None,
+    weight_kg: Optional[float] = None,
+    reps: Optional[int] = None,
+    notes: Optional[str] = None,
+) -> str:
+    """把某日未完成的计划组标为已完成（补打卡/漏记）。沿用已有重量次数，不新增组。
+
+    用户说「那天练了但忘了记 / 按计划补打卡」时必须用本工具，禁止对每组反复 log_set。
+    不传 exercise_name 则补当天全部未完成组。重量次数默认用计划已填值；可另传 rpe。
+    """
+    try:
+        repo = get_repo()
+        name = repo.resolve_exercise_name(exercise_name) if exercise_name else None
+        workout = repo.get_today_workout(target_date)["workout"]
+        result = repo.complete_incomplete_sets(
+            int(workout["id"]),
+            name,
+            rpe=rpe,
+            weight_kg=weight_kg,
+            reps=reps,
+            notes=notes,
+        )
+        slim_sets = [
+            {
+                "id": s.get("id"),
+                "exercise_name": s.get("exercise_name"),
+                "set_index": s.get("set_index"),
+                "weight_kg": s.get("weight_kg"),
+                "reps": s.get("reps"),
+                "rpe": s.get("rpe"),
+                "completed": s.get("completed"),
+            }
+            for s in (result.get("sets") or [])
+        ]
+        return _ok(
+            {
+                "ok": True,
+                "date": workout.get("date") or target_date,
+                "completed_count": result.get("completed_count"),
+                "removed_duplicate_incomplete": result.get("removed_duplicate_incomplete"),
+                "remaining_incomplete": result.get("remaining_incomplete"),
+                "sets": slim_sets,
+            }
+        )
+    except Exception as exc:  # noqa: BLE001
+        return _ok({"ok": False, "error": str(exc)})
 
 
 @tool
@@ -921,6 +979,7 @@ ALL_TOOLS = [
     # today / sets
     get_today_workout,
     log_set,
+    complete_incomplete_sets,
     update_set,
     delete_set,
     add_today_exercise,

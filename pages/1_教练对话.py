@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from datetime import date
 
 import streamlit as st
@@ -80,6 +81,27 @@ def _active_session_id() -> int:
     if current is None or int(current) not in ids:
         st.session_state.active_chat_session_id = int(sessions[0]["id"])
     return int(st.session_state.active_chat_session_id)
+
+
+def _visible_chat_row(msg: dict) -> bool:
+    role = msg.get("role")
+    if role == "tool":
+        return False
+    if role == "assistant":
+        raw = msg.get("meta_json")
+        meta: dict = {}
+        if isinstance(raw, dict):
+            meta = raw
+        elif raw:
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, dict):
+                    meta = parsed
+            except json.JSONDecodeError:
+                meta = {}
+        if meta.get("tool_calls") and not (msg.get("content") or "").strip():
+            return False
+    return True
 
 
 def _log_meal_photo(session_id: int, uploaded, hint: str) -> None:
@@ -216,7 +238,11 @@ st.caption(" · ".join(diet_bits))
 
 st.divider()
 
-messages = repo.get_chat_messages(limit=200, session_id=session_id)
+messages = [
+    m
+    for m in repo.get_chat_messages(limit=400, session_id=session_id)
+    if _visible_chat_row(m)
+]
 
 if not messages:
     st.markdown(

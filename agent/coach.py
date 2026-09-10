@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 from datetime import datetime
+import json
 from typing import Any
 
 from langchain.agents import create_agent
@@ -54,7 +55,8 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
 
 重要原则：
 1. 读数据可以少调；写库必须调到做完，允许多次、多轮。
-2. 不要编造工具返回结果；没看到工具 JSON 里的 ok/completed_count，就等于没做。
+2. 不要编造工具返回结果。声称「已改/已记/已删/已补」前，本轮或对话历史里必须有对应工具消息（role=tool）且 JSON 含 ok。
+   你自己上一轮的正文不是依据。没有工具结果就先调工具，不要把提议当成已执行。
 3. 涉及记账/打卡/改计划/删除时，完成写库前不得调用 `no_tool_needed`。
 
 ## 强制写库（最重要）
@@ -81,7 +83,8 @@ SYSTEM_PROMPT_TEMPLATE = """你是用户的私人健身教练 Agent，只服务�
 - 禁止一天只给 1 个动作；复合动作为主，孤立动作为辅。
 
 ## 今日临时调整（器械占用、没凳子、改期等）
-- 替换 → replace_today_exercise(旧名, 新名, also_update_plan=true)；禁止用 log_set 追加冒充替换。
+- 替换周计划某天的动作（器械被占等）→ mutate_plan_exercise(weekday=monday..sunday, action=replace, …)。
+  只有今天也要换才再调 replace_today_exercise。禁止口头说已换却不调工具。
 - 删除/新增 → delete_today_exercise / add_today_exercise。
 - 本周临时改期（如周五没空→周六练）→ defer_workout(from_date, to_date)；
   只动这两天覆盖，饮食训练日/休息日会跟着变；禁止为此去改周模板 update_plan_day / save_plan。
@@ -188,15 +191,45 @@ def build_agent(*, streaming: bool = False, tools: list | None = None):
     )
 
 
+def _row_meta(row: dict) -> dict:
+    raw = row.get("meta_json")
+    if isinstance(raw, dict):
+        return raw
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
 def history_to_messages(rows: list[dict]) -> list:
     messages = []
     for row in rows:
         role = row.get("role")
         content = row.get("content") or ""
+        meta = _row_meta(row)
         if role == "user":
             messages.append(HumanMessage(content=content))
+        elif role == "tool":
+            messages.append(
+                ToolMessage(
+                    content=content,
+                    tool_call_id=str(
+                        meta.get("tool_call_id") or f"hist-{row.get('id') or 0}"
+                    ),
+                    name=str(meta.get("name") or ""),
+                )
+            )
         elif role == "assistant":
-            messages.append(AIMessage(content=content))
+            tool_calls = meta.get("tool_calls") or []
+            if tool_calls:
+                messages.append(
+                    AIMessage(content=content, tool_calls=tool_calls)
+                )
+            else:
+                messages.append(AIMessage(content=content))
         elif role == "system":
             messages.append(SystemMessage(content=content))
     return messages
@@ -259,6 +292,84 @@ def _tool_failure_status(msg: Any) -> str | None:
     return f"\0status:工具失败：{name} — {snippet}"
 
 
+def _serialize_tool_calls(message: Any) -> list[dict[str, Any]]:
+    raw = getattr(message, "tool_calls", None) or []
+    out: list[dict[str, Any]] = []
+    for tc in raw:
+        if isinstance(tc, dict):
+            out.append(
+                {
+                    "name": tc.get("name") or "",
+                    "args": tc.get("args") or {},
+                    "id": tc.get("id") or "",
+                    "type": "tool_call",
+                }
+            )
+        else:
+            out.append(
+                {
+                    "name": getattr(tc, "name", "") or "",
+                    "args": getattr(tc, "args", None) or {},
+                    "id": getattr(tc, "id", "") or "",
+                    "type": "tool_call",
+                }
+            )
+    return [tc for tc in out if tc.get("name")]
+
+
+def persist_tool_trace(session_id: int | None, messages: list) -> None:
+    """Save tool-call AIMessages + ToolMessages so the next turn has write evidence."""
+    if session_id is None or not messages:
+        return
+    from bootstrap import get_repo
+
+    repo = get_repo()
+    seen: set[str] = set()
+    for msg in messages:
+        if isinstance(msg, AIMessage):
+            tool_calls = _serialize_tool_calls(msg)
+            if not tool_calls:
+                continue
+            key = "ai:" + ",".join(str(tc.get("id") or tc["name"]) for tc in tool_calls)
+            if key in seen:
+                continue
+            seen.add(key)
+            repo.add_chat_message(
+                "assistant",
+                "",
+                session_id=int(session_id),
+                meta={"tool_calls": tool_calls},
+            )
+        elif isinstance(msg, ToolMessage):
+            call_id = str(getattr(msg, "tool_call_id", "") or "")
+            key = f"tool:{call_id}"
+            if call_id and key in seen:
+                continue
+            seen.add(key)
+            content = str(getattr(msg, "content", "") or "")
+            if len(content) > 2000:
+                content = content[:2000] + "…"
+            repo.add_chat_message(
+                "tool",
+                content,
+                session_id=int(session_id),
+                meta={
+                    "name": str(getattr(msg, "name", "") or ""),
+                    "tool_call_id": call_id,
+                },
+            )
+
+
+def _trace_after_user(messages: list, user_input: str) -> list:
+    last_user = -1
+    for i, msg in enumerate(messages):
+        if isinstance(msg, HumanMessage) and _message_text(msg) == user_input:
+            last_user = i
+    if last_user < 0:
+        return list(messages)
+    return list(messages[last_user + 1 :])
+
+
 def _prepare_messages(
     user_input: str,
     chat_history_rows: list[dict] | None = None,
@@ -266,9 +377,10 @@ def _prepare_messages(
     summary: str = "",
 ) -> list:
     history = history_to_messages(chat_history_rows or [])
-    # Hard safety net if compression did not run / failed.
-    if len(history) > 20:
-        history = history[-20:]
+    if len(history) > 60:
+        history = history[-60:]
+        while history and isinstance(history[0], ToolMessage):
+            history = history[1:]
     prepared: list = []
     summary = (summary or "").strip()
     if summary:
@@ -326,6 +438,7 @@ def run_coach(
     result = agent.invoke(
         {"messages": _prepare_messages(user_input, history, summary=summary)}
     )
+    persist_tool_trace(session_id, _trace_after_user(result.get("messages") or [], user_input))
     messages = result.get("messages") or []
     for msg in reversed(messages):
         if isinstance(msg, AIMessage):
@@ -365,6 +478,7 @@ def stream_coach(
     inputs = {"messages": _prepare_messages(user_input, history, summary=summary)}
 
     seen_tool_names: set[str] = set()
+    trace: list = []
 
     def _display_tool_names(names: list[str] | set[str]) -> list[str]:
         return [n for n in names if n and n != NO_TOOL_NEEDED_NAME]
@@ -380,6 +494,7 @@ def stream_coach(
                     msgs = payload.get("messages") or []
                     for msg in msgs:
                         if isinstance(msg, ToolMessage) or getattr(msg, "type", None) == "tool":
+                            trace.append(msg)
                             fail = _tool_failure_status(msg)
                             if fail:
                                 yield fail
@@ -390,6 +505,8 @@ def stream_coach(
                     msgs = (data.get("model") or {}).get("messages") or []
                     if msgs:
                         last = msgs[-1]
+                        if isinstance(last, AIMessage) and _serialize_tool_calls(last):
+                            trace.append(last)
                         tool_calls = getattr(last, "tool_calls", None) or []
                         if tool_calls:
                             names = []
@@ -441,3 +558,5 @@ def stream_coach(
     except Exception as exc:  # noqa: BLE001
         yield f"\0status:调用中断：{exc}"
         yield f"调用中断：{exc}"
+    finally:
+        persist_tool_trace(session_id, trace)

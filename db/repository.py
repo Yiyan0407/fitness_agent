@@ -1880,11 +1880,13 @@ class Repository:
         role: str,
         content: str,
         session_id: int | None = None,
+        meta: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
         sid = int(session_id) if session_id is not None else int(self.ensure_chat_session()["id"])
+        meta_json = json.dumps(meta or {}, ensure_ascii=False, default=str)
         cur = self.conn.execute(
-            "INSERT INTO chat_messages (session_id, role, content) VALUES (?, ?, ?)",
-            (sid, role, content),
+            "INSERT INTO chat_messages (session_id, role, content, meta_json) VALUES (?, ?, ?, ?)",
+            (sid, role, content or "", meta_json),
         )
         self.conn.commit()
         self.touch_chat_session(sid)

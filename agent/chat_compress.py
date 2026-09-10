@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -10,21 +11,22 @@ from agent.llm import get_llm
 from bootstrap import get_repo
 
 # Soft budget for model-facing context (summary + recent raw messages).
-CHAR_BUDGET = 12_000
+CHAR_BUDGET = 16_000
 # Compress when more than this many messages are not yet in the summary.
-UNSUMMARIZED_LIMIT = 24
-# Always keep this many newest messages as raw history for the model.
-KEEP_RECENT = 12
-# Absolute fallback truncate if summarization fails.
-FALLBACK_KEEP = 20
+UNSUMMARIZED_LIMIT = 80
+# Always keep this many newest user turns (plus their tool traces) as raw history.
+KEEP_RECENT_TURNS = 6
+# Absolute fallback: keep this many newest user turns if summarization lags.
+FALLBACK_KEEP_TURNS = 8
 
 SUMMARY_PROMPT = """你是对话压缩助手。把健身教练与用户的较早对话压成一段中文摘要，供后续教练继续服务。
 
 要求：
 1. 只输出摘要正文：无标题、无 markdown、无前后解释。
 2. 必须保留：目标与期限、伤病/禁忌、饮食偏好与忌口、已定热量/宏量目标、当前周计划结构、用户明确要求、未完成约定。
-3. 省略寒暄、重复确认、已过时的临时安排；控制在 500 字以内。
-4. 若已有旧摘要：与新片段合并成一份连贯摘要，不要简单首尾拼接。
+3. 若片段里有工具调用，记下「调了什么、是否 ok」；不要把教练口头提议当成已写库。
+4. 省略寒暄、重复确认、已过时的临时安排；控制在 500 字以内。
+5. 若已有旧摘要：与新片段合并成一份连贯摘要，不要简单首尾拼接。
 """
 
 
@@ -36,13 +38,58 @@ def _role_label(role: str) -> str:
     return role or "?"
 
 
+def _row_meta(row: dict[str, Any]) -> dict[str, Any]:
+    raw = row.get("meta_json")
+    if isinstance(raw, dict):
+        return raw
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+    except json.JSONDecodeError:
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _user_turn_count(rows: list[dict[str, Any]]) -> int:
+    return sum(1 for r in rows if r.get("role") == "user")
+
+
+def _slice_recent_turns(rows: list[dict[str, Any]], n_turns: int) -> list[dict[str, Any]]:
+    user_idxs = [i for i, r in enumerate(rows) if r.get("role") == "user"]
+    if not user_idxs or len(user_idxs) <= n_turns:
+        return list(rows)
+    return list(rows[user_idxs[-n_turns] :])
+
+
 def _format_transcript(rows: list[dict[str, Any]]) -> str:
     lines = []
     for row in rows:
+        role = str(row.get("role") or "")
         content = (row.get("content") or "").strip()
+        meta = _row_meta(row)
+        if role == "tool":
+            name = str(meta.get("name") or "tool")
+            snippet = content.replace("\n", " ")
+            if len(snippet) > 240:
+                snippet = snippet[:240] + "…"
+            lines.append(f"工具[{name}]：{snippet}")
+            continue
+        if role == "assistant":
+            tool_calls = meta.get("tool_calls") or []
+            if isinstance(tool_calls, list) and tool_calls:
+                names = []
+                for tc in tool_calls:
+                    if isinstance(tc, dict) and tc.get("name"):
+                        names.append(str(tc["name"]))
+                if names:
+                    lines.append("教练调用工具：" + ",".join(names))
+            if content:
+                lines.append(f"教练：{content}")
+            continue
         if not content:
             continue
-        lines.append(f"{_role_label(str(row.get('role')))}：{content}")
+        lines.append(f"{_role_label(role)}：{content}")
     return "\n".join(lines)
 
 
@@ -63,13 +110,12 @@ def build_model_history(
         recent = list(all_messages)
 
     # Safety: never send unbounded raw history even if summary lags.
-    if len(recent) > FALLBACK_KEEP:
-        recent = recent[-FALLBACK_KEEP:]
+    recent = _slice_recent_turns(recent, FALLBACK_KEEP_TURNS)
     return summary, recent
 
 
 def _needs_compress(summary: str, unsummarized: list[dict[str, Any]]) -> bool:
-    if len(unsummarized) <= KEEP_RECENT:
+    if _user_turn_count(unsummarized) <= KEEP_RECENT_TURNS:
         return False
     if len(unsummarized) > UNSUMMARIZED_LIMIT:
         return True
@@ -131,7 +177,8 @@ def ensure_context_budget(session_id: int) -> dict[str, Any]:
             "unsummarized": len(unsummarized),
         }
 
-    to_compress = unsummarized[:-KEEP_RECENT]
+    keep = _slice_recent_turns(unsummarized, KEEP_RECENT_TURNS)
+    to_compress = unsummarized[: max(0, len(unsummarized) - len(keep))]
     if not to_compress:
         return {"ok": True, "compressed": False, "summary": summary}
 

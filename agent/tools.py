@@ -209,7 +209,10 @@ def mutate_plan_exercise(
     - add: 需要 new_exercise_json，如 {"name":"上斜卧推","sets":3,"reps":"10-12","weight_kg":40}
     - remove: 需要 exercise_name
     - replace: 需要 exercise_name + new_exercise_json（用新动作替换旧动作）
-    weekday 可用「今天」。换器械/换动作优先用本工具（改模板）+ replace_today_exercise（改今日）。
+    weekday 必须是 monday 或「周一」。用户确认「把某天某动作换成另一个」时必须调用本工具。
+    例：绳索夹胸 → 哑铃飞鸟 →
+    weekday=monday, action=replace, exercise_name=绳索夹胸,
+    new_exercise_json={"name":"哑铃飞鸟","sets":3,"reps":"12-15","weight_kg":10}
     """
     try:
         new_ex = None

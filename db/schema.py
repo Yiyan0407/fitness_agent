@@ -121,6 +121,7 @@ CREATE TABLE IF NOT EXISTS chat_messages (
     session_id INTEGER,
     role TEXT NOT NULL,
     content TEXT NOT NULL,
+    meta_json TEXT NOT NULL DEFAULT '{}',
     created_at TEXT NOT NULL DEFAULT (datetime('now', 'localtime')),
     FOREIGN KEY (session_id) REFERENCES chat_sessions(id) ON DELETE CASCADE
 );
@@ -206,6 +207,11 @@ def init_db(db_path: Path | None = None) -> None:
         if "measure" not in set_cols:
             conn.execute(
                 "ALTER TABLE sets ADD COLUMN measure TEXT NOT NULL DEFAULT 'reps'"
+            )
+        chat_cols = {row[1] for row in conn.execute("PRAGMA table_info(chat_messages)").fetchall()}
+        if "meta_json" not in chat_cols:
+            conn.execute(
+                "ALTER TABLE chat_messages ADD COLUMN meta_json TEXT NOT NULL DEFAULT '{}'"
             )
         row = conn.execute("SELECT id FROM profile WHERE id = 1").fetchone()
         if row is None:

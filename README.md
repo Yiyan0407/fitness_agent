@@ -53,9 +53,10 @@ streamlit run app.py
 
 ## 动作库与配图
 
-- 本地库：`data/exercises.json`（约 900+ 动作，含中英文名、肌群、器械、要点、示范图 URL）
+- 本地库：`data/exercises.json`（free-exercise-db + [LogPress 动作数据](https://github.com/hasaneyldrm/exercises-dataset) 的杠铃/哑铃/绳索/史密斯变式，含中英文名、肌群、器械、要点；LogPress 条目无配图）
 - 自重/核心变式增量：`data/exercises_extra.json`（改完后需重跑下方 build）
-- 配图来自开源 [free-exercise-db](https://github.com/yuhonas/free-exercise-db)（jsDelivr CDN），**查看配图需要联网**；extras 条目可能无图
+- 配图来自开源 [free-exercise-db](https://github.com/yuhonas/free-exercise-db)（jsDelivr CDN），**查看配图需要联网**；extras / LogPress 条目可能无图
+  （LogPress 仓库的 GIF 版权属 Gym visual，未收入本库）
 - 设置里的器械条件（如「家庭哑铃杠铃」）会映射到动作库标签，教练筛选可用
 - 重新生成动作库：
 

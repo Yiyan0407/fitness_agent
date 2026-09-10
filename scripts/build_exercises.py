@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
 """Build data/exercises.json from free-exercise-db + local Chinese overrides + extras.
 
+Also merges unique barbell / dumbbell / cable / Smith variants from
+hasaneyldrm/exercises-dataset (MIT data only; Gym visual GIFs are not copied).
+
 Usage:
   python scripts/build_exercises.py
   python scripts/build_exercises.py --source /path/to/exercises.json
-
-Curated bodyweight / variations live in data/exercises_extra.json and are merged last.
 """
 
 from __future__ import annotations
@@ -13,6 +14,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import shutil
 import urllib.request
 from pathlib import Path
 
@@ -21,10 +23,14 @@ OUT_PATH = ROOT / "data" / "exercises.json"
 LEGACY_PATH = ROOT / "data" / "exercises.json"
 EXTRA_PATH = ROOT / "data" / "exercises_extra.json"
 CACHE_PATH = ROOT / "data" / "_free_exercises_cache.json"
+LOGPRESS_CACHE_PATH = ROOT / "data" / "_logpress_exercises_cache.json"
 
 # Prefer jsDelivr (more reachable than raw.githubusercontent in some networks)
 SOURCE_URL = (
     "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/dist/exercises.json"
+)
+LOGPRESS_URL = (
+    "https://cdn.jsdelivr.net/gh/hasaneyldrm/exercises-dataset@main/data/exercises.json"
 )
 IMAGE_BASE = (
     "https://cdn.jsdelivr.net/gh/yuhonas/free-exercise-db@main/exercises/"
@@ -165,6 +171,8 @@ EQUIP_MAP = {
     "foam roll": "泡沫轴",
     "kettlebells": "壶铃",
     "machine": "器械",
+    "smith machine": "史密斯",
+    "ez barbell": "曲杆",
     "medicine ball": "药球",
     "none": "无",
     "other": "其他",
@@ -188,6 +196,65 @@ MUSCLE_MAP = {
     "shoulders": "肩",
     "traps": "斜方肌",
     "triceps": "肱三头",
+}
+
+LOGPRESS_EQUIP_ALLOW = {"barbell", "dumbbell", "cable", "smith machine"}
+LOGPRESS_EQUIP_ZH = {
+    "barbell": "杠铃",
+    "dumbbell": "哑铃",
+    "cable": "绳索",
+    "smith machine": "史密斯",
+}
+LOGPRESS_TARGET_MUSCLE = {
+    "abs": "核心",
+    "pectorals": "胸",
+    "biceps": "肱二头",
+    "triceps": "肱三头",
+    "delts": "肩",
+    "glutes": "臀",
+    "lats": "背阔肌",
+    "upper back": "中背",
+    "quads": "股四头",
+    "hamstrings": "腘绳肌",
+    "calves": "小腿",
+    "forearms": "前臂",
+    "traps": "斜方肌",
+    "spine": "下背",
+    "adductors": "内收肌",
+    "abductors": "臀中肌",
+    "serratus anterior": "胸",
+    "levator scapulae": "颈",
+}
+LOGPRESS_BODY_MUSCLE = {
+    "chest": "胸",
+    "back": "背",
+    "shoulders": "肩",
+    "upper arms": "肱三头",
+    "upper legs": "股四头",
+    "waist": "核心",
+    "lower legs": "小腿",
+    "lower arms": "前臂",
+    "neck": "颈",
+}
+_NAME_FILLER = {
+    "a",
+    "an",
+    "the",
+    "and",
+    "or",
+    "with",
+    "on",
+    "to",
+    "of",
+    "from",
+    "for",
+    "using",
+    "medium",
+    "attachment",
+    "version",
+    "male",
+    "female",
+    "v",
 }
 
 # Multi-word phrases (lowercase), longest match first
@@ -287,6 +354,31 @@ PHRASE_DICT: dict[str, str] = {
     "band": "弹力带",
     "bands": "弹力带",
     "smith": "史密斯",
+    "high bar squat": "高杠深蹲",
+    "low bar squat": "低杠深蹲",
+    "floor press": "地板卧推",
+    "skull crusher": "碎颅者",
+    "jm bench press": "JM卧推",
+    "jefferson squat": "杰斐逊深蹲",
+    "zercher squat": "泽彻深蹲",
+    "reverse grip": "反握",
+    "behind neck": "颈后",
+    "behind head": "颈后",
+    "pendlay row": "潘德雷划船",
+    "pendlay": "潘德雷",
+    "palm rotational": "掌心旋转",
+    "wrist curl": "腕弯举",
+    "side bend": "侧屈",
+    "toe raise": "提踵",
+    "exercise ball": "健身球",
+    "bosu ball": "波速球",
+    "roll out": "滚动",
+    "rollout": "滚动",
+    "step up": "上台阶",
+    "french press": "法式推举",
+    "around world": "环绕",
+    "forward raise": "前平举",
+    "full can": "满罐",
     "standing": "站姿",
     "seated": "坐姿",
     "lying": "卧姿",
@@ -506,6 +598,47 @@ WORD_MAP = {
     "over": "",
     "under": "",
     "s": "",
+    "cambered": "弧杆",
+    "lever": "杠杆",
+    "pendlay": "潘德雷",
+    "wrist": "腕",
+    "rotate": "旋转",
+    "rotational": "旋转",
+    "palm": "掌心",
+    "toe": "脚尖",
+    "rocking": "摇摆",
+    "roller": "滚轮",
+    "rollout": "滚动",
+    "tuck": "收腹",
+    "bend": "侧屈",
+    "bosu": "波速球",
+    "sumo": "相扑",
+    "sitted": "坐姿",
+    "raises": "举起",
+    "exercise": "健身",
+    "elevated": "垫高",
+    "revers": "反向",
+    "reverswrist": "反腕",
+    "step": "台阶",
+    "supported": "支撑",
+    "support": "支撑",
+    "lateral": "侧",
+    "scott": "斯科特",
+    "upright": "直立",
+    "deltoid": "三角肌",
+    "skier": "滑雪",
+    "bradford": "布拉德福德",
+    "rocky": "洛基",
+    "forward": "前",
+    "kickbacks": "后踢",
+    "palms": "掌心",
+    "pronate": "旋前",
+    "pronated": "旋前",
+    "twisting": "扭转",
+    "stork": "鹤立",
+    "french": "法式",
+    "elbow": "肘",
+    "single": "单",
 }
 
 
@@ -593,6 +726,158 @@ def fetch_source(path: Path | None) -> list[dict]:
     CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
     CACHE_PATH.write_bytes(raw)
     return json.loads(raw.decode("utf-8"))
+
+
+def fetch_logpress(path: Path | None) -> list[dict]:
+    candidates = [
+        path,
+        Path("/tmp/exds/exercises.json"),
+        LOGPRESS_CACHE_PATH,
+    ]
+    for cand in candidates:
+        if cand is not None and cand.exists():
+            data = json.loads(cand.read_text(encoding="utf-8"))
+            if cand != LOGPRESS_CACHE_PATH:
+                LOGPRESS_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copyfile(cand, LOGPRESS_CACHE_PATH)
+            return data if isinstance(data, list) else []
+    print(f"Downloading {LOGPRESS_URL} ...")
+    req = urllib.request.Request(LOGPRESS_URL, headers={"User-Agent": "fitness-agent/1.0"})
+    with urllib.request.urlopen(req, timeout=120) as resp:
+        raw = resp.read()
+    LOGPRESS_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
+    LOGPRESS_CACHE_PATH.write_bytes(raw)
+    return json.loads(raw.decode("utf-8"))
+
+
+def _norm_en_name(name: str) -> str:
+    s = (name or "").lower()
+    s = s.replace("push-up", "push up").replace("pull-up", "pull up")
+    s = s.replace("sit-up", "sit up").replace("chin-up", "chin up")
+    s = re.sub(r"\([^)]*\)", " ", s)
+    s = re.sub(r"[^a-z0-9]+", " ", s)
+    return re.sub(r"\s+", " ", s).strip()
+
+
+def _name_tokens(name: str) -> set[str]:
+    tokens = {
+        t
+        for t in _norm_en_name(name).split()
+        if t and t not in _NAME_FILLER and len(t) > 1
+    }
+    tokens.discard("barbell")
+    tokens.discard("dumbbell")
+    tokens.discard("dumbbells")
+    tokens.discard("cable")
+    tokens.discard("smith")
+    tokens.discard("machine")
+    return tokens
+
+
+def _logpress_muscle(raw: dict) -> str:
+    target = str(raw.get("target") or "").strip().lower()
+    if target in LOGPRESS_TARGET_MUSCLE:
+        return LOGPRESS_TARGET_MUSCLE[target]
+    body = str(raw.get("body_part") or raw.get("category") or "").strip().lower()
+    return LOGPRESS_BODY_MUSCLE.get(body, "全身")
+
+
+def _logpress_tips(raw: dict) -> str:
+    instr = raw.get("instructions") or {}
+    text = ""
+    if isinstance(instr, dict):
+        text = str(instr.get("zh") or instr.get("en") or "").strip()
+    elif isinstance(instr, str):
+        text = instr.strip()
+    text = re.sub(r"\s+", " ", text)
+    return text[:180]
+
+
+def _clean_logpress_name(name: str) -> str | None:
+    n = (name or "").strip()
+    if not n:
+        return None
+    low = n.lower()
+    if "(female)" in low:
+        return None
+    if "stretch" in low:
+        return None
+    n = re.sub(r"\s*\(male\)\s*", " ", n, flags=re.I).strip()
+    return n or None
+
+
+def merge_logpress(out: list[dict], source: list[dict] | None = None) -> int:
+    """Add unique barbell/dumbbell/cable/Smith variants (text only, no Gym visual media)."""
+    try:
+        remote = source if source is not None else fetch_logpress(None)
+    except Exception as exc:  # noqa: BLE001
+        print(f"Skip LogPress merge: {exc}")
+        return 0
+    if not isinstance(remote, list):
+        return 0
+
+    used_ids = {str(e.get("id") or "") for e in out}
+    used_names = {str(e.get("name") or "") for e in out}
+    local_en = [str(e.get("name_en") or "") for e in out if e.get("name_en")]
+    local_norms = {_norm_en_name(x) for x in local_en}
+    local_tokens = [_name_tokens(x) for x in local_en]
+
+    def _dup(en_name: str) -> bool:
+        if _norm_en_name(en_name) in local_norms:
+            return True
+        a = _name_tokens(en_name)
+        for b in local_tokens:
+            if not a or not b:
+                continue
+            if a == b:
+                return True
+            extra = a - b if a >= b or b >= a else None
+            if extra is not None and extra <= {"grip", "grips", "full", "complete"}:
+                return True
+        return False
+
+    added = 0
+    for raw in remote:
+        if not isinstance(raw, dict):
+            continue
+        equip_en = str(raw.get("equipment") or "").strip().lower()
+        if equip_en not in LOGPRESS_EQUIP_ALLOW:
+            continue
+        en_name = _clean_logpress_name(str(raw.get("name") or ""))
+        if not en_name:
+            continue
+        if _dup(en_name):
+            continue
+
+        equip = LOGPRESS_EQUIP_ZH[equip_en]
+        zh_name = translate_name(en_name, equip)
+        if zh_name in used_names:
+            continue
+        if re.search(r"[A-Za-z]{3,}", zh_name):
+            continue
+        rid = str(raw.get("id") or "").strip() or slugify(en_name)
+        eid = f"logpress_{rid}"
+        if eid in used_ids:
+            continue
+
+        item = {
+            "id": eid,
+            "name": zh_name,
+            "name_en": en_name,
+            "muscle": _logpress_muscle(raw),
+            "equipment": equip,
+            "tips": _logpress_tips(raw),
+            "image_url": "",
+        }
+        used_ids.add(eid)
+        used_names.add(zh_name)
+        local_norms.add(_norm_en_name(en_name))
+        local_tokens.append(_name_tokens(en_name))
+        out.append(item)
+        added += 1
+    if added:
+        print(f"Merged {added} LogPress variants (barbell/dumbbell/cable/Smith)")
+    return added
 
 
 def load_legacy() -> list[dict]:
@@ -756,6 +1041,7 @@ def build(source: list[dict], legacy: list[dict]) -> list[dict]:
         )
 
     apply_name_fixes(out)
+    merge_logpress(out)
     merge_extras(out)
     out.sort(key=lambda x: (x.get("muscle") or "", x.get("name") or ""))
     return out

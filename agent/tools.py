@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from datetime import date, timedelta
 from typing import Any, Optional
 
 from langchain_core.tools import tool
@@ -12,6 +13,37 @@ from bootstrap import get_repo
 
 def _ok(data: Any) -> str:
     return json.dumps(data, ensure_ascii=False, default=str)
+
+
+def _iso_date(raw: Optional[str], *, required: bool = False) -> date:
+    """Tool args must be YYYY-MM-DD; the model fills this, not Chinese dates."""
+    text = (raw or "").strip()
+    if not text:
+        if required:
+            raise ValueError("必须传入 target_date，格式 YYYY-MM-DD，例如 2026-08-27")
+        return date.today()
+    try:
+        return date.fromisoformat(text[:10])
+    except ValueError as exc:
+        raise ValueError(
+            f"target_date 必须是 YYYY-MM-DD（例如 2026-08-27），收到：{raw!r}"
+        ) from exc
+
+
+def _slim_sets(sets: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    return [
+        {
+            "id": s.get("id"),
+            "exercise_name": s.get("exercise_name"),
+            "set_index": s.get("set_index"),
+            "weight_kg": s.get("weight_kg"),
+            "reps": s.get("reps"),
+            "rpe": s.get("rpe"),
+            "completed": bool(s.get("completed")),
+            "notes": (s.get("notes") or "")[:40],
+        }
+        for s in sets
+    ]
 
 
 def _parse_json_obj(raw: str, *, label: str = "JSON") -> dict[str, Any]:
@@ -204,9 +236,15 @@ def mutate_plan_exercise(
 
 @tool
 def get_today_workout(target_date: Optional[str] = None) -> str:
-    """获取今日（或指定日期 YYYY-MM-DD）的训练安排与已记录组数。
-    首次生成未完成组时，各组默认重量/次数优先取自上次同动作、同组号的完成记录。"""
-    return _ok(get_repo().get_today_workout(target_date))
+    """获取某日训练安排与组数。target_date 必须是 YYYY-MM-DD（如 2026-08-27）；不传则今天。
+    历史日期只读已有记录，不会按周计划新建空会话。以 sets 为准，不要只看 plan.rest。"""
+    try:
+        ds = _iso_date(target_date).isoformat() if target_date else None
+        data = get_repo().get_today_workout(ds)
+        data["sets"] = _slim_sets(data.get("sets") or [])
+        return _ok(data)
+    except Exception as exc:  # noqa: BLE001
+        return _ok({"ok": False, "error": str(exc)})
 
 
 @tool
@@ -264,7 +302,16 @@ def complete_incomplete_sets(
     try:
         repo = get_repo()
         name = repo.resolve_exercise_name(exercise_name) if exercise_name else None
-        workout = repo.get_today_workout(target_date)["workout"]
+        day = _iso_date(target_date).isoformat() if target_date else date.today().isoformat()
+        workout = repo.get_workout_by_date(date.fromisoformat(day))
+        if not workout:
+            return _ok(
+                {
+                    "ok": False,
+                    "date": day,
+                    "error": "该日没有训练会话，未改任何组。请改用 YYYY-MM-DD 再查 list_workout_days。",
+                }
+            )
         result = repo.complete_incomplete_sets(
             int(workout["id"]),
             name,
@@ -288,7 +335,7 @@ def complete_incomplete_sets(
         return _ok(
             {
                 "ok": True,
-                "date": workout.get("date") or target_date,
+                "date": workout.get("date") or day,
                 "completed_count": result.get("completed_count"),
                 "removed_duplicate_incomplete": result.get("removed_duplicate_incomplete"),
                 "remaining_incomplete": result.get("remaining_incomplete"),
@@ -345,20 +392,42 @@ def delete_completed_sets(
     target_date: Optional[str] = None,
     exercise_name: Optional[str] = None,
 ) -> str:
-    """删除某日已完成组（补错/清空打卡）。默认整天；可指定动作。未完成计划组会保留。
-
-    用户确认「删已完成 / 清空那天打卡」后必须立刻调用本工具，禁止口头说已删。
+    """删除某日已完成组。target_date 必须是 YYYY-MM-DD（如 2026-08-27），禁止省略（省略会删错天）。
+    未完成计划组会保留。用户确认后必须调用；返回 deleted_completed_sets=0 时不得声称已清空。
     """
     try:
         repo = get_repo()
+        if not (target_date or "").strip():
+            return _ok(
+                {
+                    "ok": False,
+                    "error": "删除必须传 target_date=YYYY-MM-DD，不能默认今天",
+                }
+            )
+        day = _iso_date(target_date, required=True)
         name = repo.resolve_exercise_name(exercise_name) if exercise_name else None
-        workout = repo.get_today_workout(target_date)["workout"]
+        workout = repo.get_workout_by_date(day)
+        if not workout:
+            return _ok(
+                {
+                    "ok": False,
+                    "date": day.isoformat(),
+                    "deleted_completed_sets": 0,
+                    "error": "该日没有训练会话。请先 list_workout_days 核对真实日期。",
+                }
+            )
+        before = repo.get_sets(int(workout["id"]))
+        before_done = sum(1 for s in before if s.get("completed"))
         n = repo.delete_completed_sets(int(workout["id"]), name)
+        after = repo.get_sets(int(workout["id"]))
         return _ok(
             {
                 "ok": True,
-                "date": workout.get("date") or target_date,
+                "date": day.isoformat(),
                 "deleted_completed_sets": n,
+                "completed_before": before_done,
+                "remaining_completed": sum(1 for s in after if s.get("completed")),
+                "remaining_incomplete": sum(1 for s in after if not s.get("completed")),
                 "exercise_name": name,
             }
         )
@@ -925,9 +994,37 @@ def get_energy_balance(target_date: Optional[str] = None) -> str:
 
 @tool
 def get_day_snapshot(target_date: Optional[str] = None) -> str:
-    """读取某日综合快照：画像摘要、计划、训练完成情况、饮食合计与目标、运动消耗。
-    需要一眼看懂整天时优先用本工具，比分别多次查询更省。"""
-    return _ok(get_repo().get_day_snapshot(target_date))
+    """读取某日综合快照。target_date 必须 YYYY-MM-DD。以 sets/completed_sets 为准，plan.rest 只表示周模板。"""
+    try:
+        ds = _iso_date(target_date).isoformat() if target_date else None
+        return _ok(get_repo().get_day_snapshot(ds))
+    except Exception as exc:  # noqa: BLE001
+        return _ok({"ok": False, "error": str(exc)})
+
+
+@tool
+def list_workout_days(days: int = 120) -> str:
+    """列出近 N 天里「实际有组」的训练日（日期、完成组/总组、计划名）。
+    用户说 8月27 时先调本工具，再用返回的 YYYY-MM-DD 去 get_today_workout / delete_completed_sets。"""
+    try:
+        n = max(7, min(int(days), 400))
+        start = date.today() - timedelta(days=n)
+        rows = get_repo().list_calendar_days(start, date.today())
+        slim = [
+            {
+                "date": r["date"],
+                "plan_name": r.get("plan_name"),
+                "plan_rest": r.get("rest"),
+                "total_sets": r.get("total_sets"),
+                "completed_sets": r.get("completed_sets"),
+                "kind": r.get("kind"),
+            }
+            for r in rows
+            if int(r.get("total_sets") or 0) > 0
+        ]
+        return _ok({"ok": True, "since": start.isoformat(), "days": slim})
+    except Exception as exc:  # noqa: BLE001
+        return _ok({"ok": False, "error": str(exc)})
 
 
 @tool
@@ -1028,6 +1125,7 @@ ALL_TOOLS = [
     get_exercise_progress,
     get_day_detail,
     get_day_snapshot,
+    list_workout_days,
     get_last_completed_set,
     get_week_completion,
     get_energy_balance,

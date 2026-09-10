@@ -423,6 +423,12 @@ class Repository:
             return date.today().isoformat()
         return date.fromisoformat(raw[:10]).isoformat()
 
+    def get_workout_by_date(self, target: date) -> dict[str, Any] | None:
+        row = self.conn.execute(
+            "SELECT * FROM workouts WHERE date = ?", (target.isoformat(),)
+        ).fetchone()
+        return dict(row) if row else None
+
     def resolve_calendar_date(self, raw: str | None) -> date:
         """Parse YYYY-MM-DD / 今天 / 明天 / 周五… into a calendar date (this week for weekday)."""
         text = (raw or "").strip()
@@ -1193,11 +1199,16 @@ class Repository:
         }
 
     def get_today_workout(self, target_date: str | None = None) -> dict[str, Any]:
-        target = date.fromisoformat(target_date) if target_date else date.today()
+        """Today: seed from plan. Other dates: read-only, do not create empty sessions."""
+        if target_date:
+            target = date.fromisoformat(str(target_date).strip()[:10])
+            if target != date.today():
+                return self.get_day_detail(target.isoformat())
+        else:
+            target = date.today()
         day_plan = self.get_plan_for_date(target)
         workout = self.get_or_create_workout(target)
         sets = self.ensure_today_sets_from_plan(target)
-        # refresh workout row after possible status reset
         workout = self.get_or_create_workout(target)
         return {
             "date": target.isoformat(),
